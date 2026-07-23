@@ -1,42 +1,8 @@
 /**
- * Data-driven level definition. Keeping layout as plain data (separate from the
- * scene logic) means designing a new level is just editing this file — and it's the
- * natural stepping stone to a Tiled tilemap later (Milestone 4).
- *
- * Coordinates are world pixels. Platforms are given by their top-left corner + size.
+ * 데이터 기반 레벨 정의. 레이아웃을 순수 데이터로 두어 씬 로직과 분리한다.
+ * 공유 타입은 ./types 참조.
  */
-
-export interface PlatformDef {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface Vec2 {
-  x: number;
-  y: number;
-}
-
-/** A spike hazard sits on top of a surface; width in whole spike-tiles (32px each). */
-export interface SpikeDef {
-  x: number;
-  y: number;
-  /** Number of 32px spike tiles laid side by side. */
-  tiles: number;
-}
-
-export interface LevelDef {
-  /** Total world size. Wider than the camera so the level scrolls. */
-  worldWidth: number;
-  worldHeight: number;
-  playerSpawn: Vec2;
-  platforms: PlatformDef[];
-  /** Enemies patrol left/right on whatever platform they stand on. */
-  enemies: Vec2[];
-  spikes: SpikeDef[];
-  goal: Vec2;
-}
+import type { LevelDef } from "./types";
 
 export const level1: LevelDef = {
   worldWidth: 2400,

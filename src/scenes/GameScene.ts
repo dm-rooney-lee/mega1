@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { COLORS, TEX } from "../config";
-import { level1, type LevelDef } from "../levels/level1";
+import { level1 } from "../levels/level1";
+import type { LevelDef } from "../levels/types";
 import { patrolBoundsFor } from "../levels/patrol";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";

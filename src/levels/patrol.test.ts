@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PlatformDef } from "./level1";
+import type { PlatformDef } from "./types";
 import { patrolBoundsFor } from "./patrol";
 
 describe("patrolBoundsFor", () => {

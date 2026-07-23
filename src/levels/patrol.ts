@@ -1,4 +1,4 @@
-import type { PlatformDef } from "./level1";
+import type { PlatformDef } from "./types";
 
 /**
  * Given the platforms in a level and an enemy's spawn point, find the platform the
