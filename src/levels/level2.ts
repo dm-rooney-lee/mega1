@@ -21,7 +21,7 @@ export const level2: LevelDef = {
     { x: 1260, y: 220, width: 100, height: 24 }, // 정점 · 대포2
     { x: 1440, y: 300, width: 110, height: 24 },
     { x: 1700, y: 380, width: 110, height: 24 },
-    { x: 2100, y: 330, width: 120, height: 24 },
+    { x: 2100, y: 360, width: 120, height: 24 },
   ],
   enemies: [
     { x: 960, y: 346 }, // 발판 900 위

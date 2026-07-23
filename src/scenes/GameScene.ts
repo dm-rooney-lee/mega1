@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, TEX } from "../config";
+import { CANNON, COLORS, TEX } from "../config";
 import { level2 } from "../levels/level2";
 import type { LevelDef } from "../levels/types";
 import { patrolBoundsFor } from "../levels/patrol";
@@ -169,7 +169,7 @@ export class GameScene extends Phaser.Scene {
     if (this.ending || this.player.dead || !ball.active) return;
     ball.destroy();
     if (this.time.now < this.hitCooldownUntil) return;
-    this.hitCooldownUntil = this.time.now + 150;
+    this.hitCooldownUntil = this.time.now + CANNON.HIT_COOLDOWN_MS;
     if (this.player.shieldCharges > 0) {
       this.player.absorbHit();
       this.cameras.main.flash(120, 41, 173, 255);

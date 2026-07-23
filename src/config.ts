@@ -42,6 +42,8 @@ export const CANNON = {
   FIRE_INTERVAL_MS: 1500,
   /** 대포알 수평 속도(px/s). */
   BALL_SPEED: 320,
+  /** ms of invulnerability after a cannonball hit is resolved (prevents one volley draining multiple shield charges in a single frame). */
+  HIT_COOLDOWN_MS: 150,
 } as const;
 
 export const SHIELD = {
@@ -60,7 +62,7 @@ export const COLORS = {
   GOAL: 0x00e436,
   CANNON: 0xc2c3c7,
   CANNONBALL: 0xffa300,
-  SHIELD: 0x29adff,
+  SHIELD: 0xffec27,
 } as const;
 
 /** Keys used to look up textures generated in BootScene. */

@@ -26,4 +26,7 @@ describe("isOffWorld", () => {
   it("[Boundary] 여백 경계값은 아직 on-world", () => {
     expect(isOffWorld(-40, 2600, 40)).toBe(false);
   });
+  it("[Boundary] 오른쪽 여백 경계값은 아직 on-world", () => {
+    expect(isOffWorld(2640, 2600, 40)).toBe(false);
+  });
 });
