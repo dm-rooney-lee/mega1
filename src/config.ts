@@ -37,6 +37,18 @@ export const ENEMY = {
   MOVE_SPEED: 70,
 } as const;
 
+export const CANNON = {
+  /** 발사 간격(ms). */
+  FIRE_INTERVAL_MS: 1500,
+  /** 대포알 수평 속도(px/s). */
+  BALL_SPEED: 320,
+} as const;
+
+export const SHIELD = {
+  /** 방패 획득 시 충전 횟수(막을 수 있는 대포알 수). */
+  MAX_CHARGES: 3,
+} as const;
+
 /** Placeholder-art palette (swapped for real sprites in Milestone 4). */
 export const COLORS = {
   BACKGROUND: 0x1d2b53,
@@ -46,6 +58,9 @@ export const COLORS = {
   ENEMY: 0xff004d,
   SPIKE: 0xfff1e8,
   GOAL: 0x00e436,
+  CANNON: 0xc2c3c7,
+  CANNONBALL: 0xffa300,
+  SHIELD: 0x29adff,
 } as const;
 
 /** Keys used to look up textures generated in BootScene. */
@@ -55,4 +70,7 @@ export const TEX = {
   ENEMY: "tex-enemy",
   SPIKE: "tex-spike",
   GOAL: "tex-goal",
+  CANNON: "tex-cannon",
+  CANNONBALL: "tex-cannonball",
+  SHIELD: "tex-shield",
 } as const;
