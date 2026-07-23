@@ -34,5 +34,9 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
     this.lastFiredAt = time;
     const ball = new Cannonball(this.scene, this.x, this.y, this.direction);
     this.balls.add(ball);
+    // Group#add re-applies the group's physics defaults (velocityX/Y default
+    // to 0) to every member, even one that already has a body — this silently
+    // zeroes the velocity set in the Cannonball constructor above. Re-apply it.
+    ball.reapplyVelocity();
   }
 }
