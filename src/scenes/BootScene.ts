@@ -18,6 +18,9 @@ export class BootScene extends Phaser.Scene {
     this.makeRectTexture(TEX.ENEMY, 32, 28, COLORS.ENEMY);
     this.makeSpikeTexture();
     this.makeGoalTexture();
+    this.makeRectTexture(TEX.CANNON, 40, 30, COLORS.CANNON, 0xffffff);
+    this.makeCannonballTexture();
+    this.makeShieldTexture();
 
     this.scene.start("MenuScene");
   }
@@ -83,6 +86,31 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(COLORS.GOAL, 1);
     g.fillTriangle(8, 4, 8, 30, 36, 17); // flag
     g.generateTexture(TEX.GOAL, w, h);
+    g.destroy();
+  }
+
+  /** 대포알: 작은 원. */
+  private makeCannonballTexture(): void {
+    const d = 16;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.CANNONBALL, 1);
+    g.fillCircle(d / 2, d / 2, d / 2);
+    g.generateTexture(TEX.CANNONBALL, d, d);
+    g.destroy();
+  }
+
+  /** 방패 아이템: 방패 모양 + 흰 십자. */
+  private makeShieldTexture(): void {
+    const w = 26;
+    const h = 30;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.SHIELD, 1);
+    g.fillRoundedRect(0, 0, w, h - 8, 5);
+    g.fillTriangle(0, h - 10, w, h - 10, w / 2, h);
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(w / 2 - 2, 6, 4, 12);
+    g.fillRect(w / 2 - 6, 10, 12, 4);
+    g.generateTexture(TEX.SHIELD, w, h);
     g.destroy();
   }
 }
