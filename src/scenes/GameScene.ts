@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { COLORS, GAME, TEX } from "../config";
 import { type LevelDef } from "../levels/level1";
 import { levels } from "../levels";
-import { patrolBoundsFor } from "../levels/patrol";
+import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
 import { Goal } from "../objects/Goal";
@@ -110,8 +110,10 @@ export class GameScene extends Phaser.Scene {
 
   private buildEnemies(): void {
     for (const e of this.level.enemies) {
-      const [left, right] = patrolBoundsFor(this.level.platforms, e.x, e.y);
-      this.enemies.push(new Enemy(this, e.x, e.y, left, right));
+      let bounds = patrolBoundsFor(this.level.platforms, e.x, e.y);
+      // Thorns act as patrol boundaries too, so enemies turn around at them.
+      bounds = narrowBoundsForSpikes(this.level.spikes, e.x, e.y, bounds);
+      this.enemies.push(new Enemy(this, e.x, e.y, bounds[0], bounds[1]));
     }
   }
 
