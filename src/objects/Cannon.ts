@@ -1,11 +1,12 @@
 import Phaser from "phaser";
-import { CANNON, TEX } from "../config";
+import { CANNON, DEPTH, TEX } from "../config";
 import type { CannonDef } from "../levels/types";
 import { shouldFire } from "./ballistics";
 import { Cannonball } from "./Cannonball";
 
 /**
- * 주기적으로 대포알을 발사하는 대포. 본체는 무해(충돌 미배선) — 대포알만 치명적.
+ * A cannon that periodically fires cannonballs. The body itself is harmless
+ * (not wired into any collider) — only its cannonballs are lethal.
  */
 export class Cannon extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -23,6 +24,7 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
     this.body.setImmovable(true);
     this.setOrigin(0.5, 0.5);
     this.setFlipX(def.direction === "left");
+    this.setDepth(DEPTH.HAZARD);
 
     this.direction = def.direction;
     this.intervalMs = def.intervalMs ?? CANNON.FIRE_INTERVAL_MS;

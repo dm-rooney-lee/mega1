@@ -1,9 +1,9 @@
 import Phaser from "phaser";
-import { CANNON, TEX } from "../config";
+import { CANNON, DEPTH, TEX } from "../config";
 
 /**
- * 대포 발사체: 등속 수평 이동, 중력 없음. Cannon이 생성하고,
- * GameScene이 발판 충돌·월드 이탈 시 소멸시킨다.
+ * A cannon's projectile: constant horizontal velocity, no gravity. Created by
+ * Cannon; GameScene destroys it on platform collision or leaving the world.
  */
 export class Cannonball extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -16,6 +16,7 @@ export class Cannonball extends Phaser.Physics.Arcade.Sprite {
     scene.physics.add.existing(this);
     this.body.setAllowGravity(false);
     this.setOrigin(0.5, 0.5);
+    this.setDepth(DEPTH.PROJECTILE);
     const sign = direction === "left" ? -1 : 1;
     this.launchVelocityX = sign * CANNON.BALL_SPEED;
     this.setVelocityX(this.launchVelocityX);

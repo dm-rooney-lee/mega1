@@ -1,4 +1,4 @@
-import type { PlatformDef } from "./types";
+import type { PlatformDef, SpikeDef } from "./level1";
 
 /**
  * Given the platforms in a level and an enemy's spawn point, find the platform the
@@ -27,4 +27,37 @@ export function patrolBoundsFor(
   if (best) return [best.left, best.right];
   // Fallback: patrol a fixed span around the spawn point.
   return [x - 120, x + 120];
+}
+
+/**
+ * Narrows an enemy's patrol span so it turns around at spike fields instead of
+ * walking through them. Only spikes on the enemy's own surface are considered
+ * (matched by vertical proximity, since a surface's enemies and spikes rest at
+ * roughly the same height). A spike field entirely to one side of the enemy
+ * pulls that side's bound in to the spike's near edge. Pure function, so it's
+ * easy to unit-test.
+ */
+export function narrowBoundsForSpikes(
+  spikes: SpikeDef[],
+  x: number,
+  y: number,
+  [left, right]: [number, number],
+): [number, number] {
+  for (const s of spikes) {
+    // Skip spikes that aren't on the same surface as the enemy.
+    if (Math.abs(y - s.y) > 48) continue;
+
+    const spikeLeft = s.x;
+    const spikeRight = s.x + s.tiles * 32;
+    if (spikeRight <= x) {
+      // Obstacle to the left: don't walk left past its right edge.
+      left = Math.max(left, spikeRight);
+    } else if (spikeLeft >= x) {
+      // Obstacle to the right: don't walk right past its left edge.
+      right = Math.min(right, spikeLeft);
+    }
+    // If the enemy spawns inside a spike span, leave the bounds alone — that's a
+    // level-authoring problem, not something to silently clamp.
+  }
+  return [left, right];
 }

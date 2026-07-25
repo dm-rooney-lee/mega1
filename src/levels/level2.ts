@@ -1,41 +1,42 @@
-import type { LevelDef } from "./types";
+import type { LevelDef } from "./level1";
 
 /**
- * 두 번째 스테이지. 좁은 발판 정밀 점프 + 대포 2문(하늘/종반)·방패 1개.
- * 좌표는 월드 픽셀. 발판은 왼쪽 위 모서리 + 크기.
+ * Stage 2 — a measured step up from stage 1: longer (3000 vs 2400), two pits
+ * instead of one, two spike fields instead of one, and five enemies instead of
+ * three. Everything on the main ground route stays within the player's jump
+ * envelope (~165px up, and the 140px pits are comfortably clearable at run
+ * speed). The high platforms (y≈268/300) and the enemies perched on platforms
+ * are optional — you can beat the stage on the ground alone, so the *mandatory*
+ * difficulty bump is gentle while there's extra challenge for those who climb.
  */
 export const level2: LevelDef = {
-  worldWidth: 2600,
+  worldWidth: 3000,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },
   platforms: [
-    // 땅(구멍으로 분리): PIT1=680~800, PIT2=1880~1980
-    { x: 0, y: 496, width: 680, height: 44 },
-    { x: 800, y: 496, width: 1080, height: 44 },
-    { x: 1980, y: 496, width: 620, height: 44 },
-    // 좁은 공중 발판(90~120px)
-    { x: 340, y: 380, width: 110, height: 24 },
-    { x: 620, y: 330, width: 90, height: 24 },
-    { x: 900, y: 360, width: 110, height: 24 },
-    { x: 1080, y: 270, width: 100, height: 24 }, // 방패 위치
-    { x: 1260, y: 220, width: 100, height: 24 }, // 정점 · 대포2
-    { x: 1440, y: 300, width: 110, height: 24 },
-    { x: 1700, y: 380, width: 110, height: 24 },
-    { x: 2100, y: 360, width: 120, height: 24 },
+    // Ground in three segments separated by two 140px pits.
+    { x: 0, y: 496, width: 560, height: 44 }, // start
+    { x: 700, y: 496, width: 760, height: 44 }, // mid run (pit 560..700)
+    { x: 1600, y: 496, width: 1400, height: 44 }, // long run to goal (pit 1460..1600)
+    // Floating platforms — traversal + enemy perches, with two optional high hops.
+    { x: 320, y: 384, width: 150, height: 24 },
+    { x: 780, y: 372, width: 180, height: 24 },
+    { x: 1040, y: 300, width: 140, height: 24 }, // optional high route
+    { x: 1280, y: 372, width: 160, height: 24 },
+    { x: 1720, y: 360, width: 200, height: 24 },
+    { x: 2040, y: 268, width: 150, height: 24 }, // optional high route
+    { x: 2360, y: 372, width: 180, height: 24 },
   ],
   enemies: [
-    { x: 960, y: 346 }, // 발판 900 위
-    { x: 1300, y: 482 }, // 중앙 땅
-    { x: 1750, y: 366 }, // 발판 1700 위
+    { x: 860, y: 332 }, // on the x=780 platform
+    { x: 1050, y: 456 }, // patrols the mid ground segment
+    { x: 1340, y: 332 }, // on the x=1280 platform
+    { x: 1820, y: 320 }, // on the x=1720 platform
+    { x: 2500, y: 456 }, // patrols the long final segment
   ],
   spikes: [
-    { x: 1000, y: 472, tiles: 2 },
-    { x: 1500, y: 472, tiles: 2 },
+    { x: 1150, y: 472, tiles: 3 }, // on the mid ground segment
+    { x: 2150, y: 472, tiles: 3 }, // on the long final segment
   ],
-  cannons: [
-    { x: 1270, y: 205, direction: "left" }, // 하늘(정점 발판 왼쪽 끝)
-    { x: 2360, y: 452, direction: "left" }, // 종반 지면
-  ],
-  shields: [{ x: 1120, y: 250 }], // 발판 1080 위, 하늘 초소 직전
-  goal: { x: 2540, y: 432 },
+  goal: { x: 2860, y: 432 },
 };

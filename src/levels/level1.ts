@@ -1,10 +1,18 @@
 /**
- * 데이터 기반 레벨 정의. 레이아웃을 순수 데이터로 두어 씬 로직과 분리한다.
- * 공유 타입은 ./types 참조.
+ * The first level. Layout is plain data (see `types.ts` for the schema), separate
+ * from scene logic, so designing a level is just editing a data file.
+ *
+ * Coordinates are world pixels. Platforms are given by their top-left corner + size.
+ *
+ * The type re-exports below keep older imports (`from "./level1"`) working after the
+ * schema moved into the shared `types.ts` module.
  */
+export type { PlatformDef, Vec2, SpikeDef, HazardDef, LevelDef } from "./types";
+
 import type { LevelDef } from "./types";
 
 export const level1: LevelDef = {
+  name: "1 — Warm Up",
   worldWidth: 2400,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },
@@ -22,7 +30,7 @@ export const level1: LevelDef = {
   ],
   enemies: [
     { x: 950, y: 320 }, // patrols the wide floating platform
-    { x: 1200, y: 456 }, // patrols the long ground segment
+    { x: 1420, y: 456 }, // patrols the long ground segment (right of the spikes)
     { x: 1820, y: 456 }, // patrols near the goal
   ],
   spikes: [
