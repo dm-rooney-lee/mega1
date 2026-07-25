@@ -3,8 +3,15 @@ import { GAME } from "../config";
 
 /** Shown on death. Retry restarts the level; Esc returns to the menu. */
 export class GameOverScene extends Phaser.Scene {
+  private level = 0;
+
   constructor() {
     super("GameOverScene");
+  }
+
+  /** The stage the player died on, so retry restarts that same stage. */
+  init(data: { level?: number }): void {
+    this.level = data.level ?? 0;
   }
 
   create(): void {
@@ -35,10 +42,11 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const retry = () => this.scene.start("GameScene", { level: this.level });
     const kb = this.input.keyboard!;
-    kb.once("keydown-SPACE", () => this.scene.start("GameScene"));
-    kb.once("keydown-ENTER", () => this.scene.start("GameScene"));
+    kb.once("keydown-SPACE", retry);
+    kb.once("keydown-ENTER", retry);
     kb.once("keydown-ESC", () => this.scene.start("MenuScene"));
-    this.input.once("pointerdown", () => this.scene.start("GameScene"));
+    this.input.once("pointerdown", retry);
   }
 }

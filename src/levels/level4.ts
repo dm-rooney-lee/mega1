@@ -1,55 +1,44 @@
 import type { LevelDef } from "./types";
 
 /**
- * Level 4 — "Snipers": the projectile enemies (group D), eased in, then a finale
- * that combines them with a moving platform. FIXED turret on a ledge (learn to
- * stomp / dodge a straight shot) → AIMING turret behind a cover pillar → a pit
- * you cross on a moving platform while a second aiming turret fires (time the
- * crossing off its telegraph). Aim locks at the telegraph, so it's "step out of
- * the line", not a homing lock-on. Coordinates are world pixels; tune in play.
+ * Level 4 — "Traps": the state-machine hazards (group C), introduced one at a
+ * time. Pop-up-spike rhythm → a thwomp corridor → an arrow gauntlet with cover.
+ * No turrets here — projectile enemies get their own level (5) so the ramp from
+ * level 3 stays gentle. Coordinates are world pixels; expect to playtest-tune.
  */
 export const level4: LevelDef = {
-  name: "4 — Snipers",
-  worldWidth: 2500,
+  name: "4 — Traps",
+  worldWidth: 2400,
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },
   platforms: [
-    // Approach + a low ledge holding the fixed turret (stomp it from above).
-    { x: 0, y: 496, width: 900, height: 44 },
-    { x: 520, y: 400, width: 160, height: 24 }, // turret ledge
-
-    // Pit 900..1040, then the aiming-turret gauntlet with cover.
-    { x: 1040, y: 496, width: 560, height: 44 },
-    { x: 1240, y: 360, width: 40, height: 136 }, // cover pillar
-
-    // Finale: pit 1600..1860 crossed by a moving platform, under sniper fire.
-    {
-      x: 1600, y: 452, width: 120, height: 22,
-      type: "moving", axis: "horizontal", range: 160, speed: 95,
-    },
-
-    // Landing + run to the goal.
-    { x: 1860, y: 496, width: 640, height: 44 },
+    // Pop-up-spike stretch (learn the telegraph → rise rhythm).
+    { x: 0, y: 496, width: 700, height: 44 },
+    // Thwomp corridor.
+    { x: 700, y: 496, width: 500, height: 44 },
+    { x: 700, y: 0, width: 500, height: 110 }, // ceiling the thwomp hangs from
+    // Arrow gauntlet with a cover pillar to wait behind.
+    { x: 1200, y: 496, width: 600, height: 44 },
+    { x: 1440, y: 360, width: 40, height: 136 }, // cover pillar
+    // Run-out to the goal.
+    { x: 1800, y: 496, width: 600, height: 44 },
   ],
-  enemies: [{ x: 2250, y: 456 }],
+  enemies: [{ x: 1300, y: 456 }],
   spikes: [],
   hazards: [
-    // Fixed turret: fires straight left toward the approaching player; stompable.
-    { kind: "turret", x: 600, y: 400, aimMode: "fixed", direction: -1 },
+    // Two pop-up spikes, phase-staggered into a rhythm (both telegraph first).
+    { kind: "popupSpike", x: 300, y: 496, tiles: 2, phase: 0 },
+    { kind: "popupSpike", x: 520, y: 496, tiles: 2, phase: 0.5 },
 
-    // Aiming turret behind the pillar: slower shot + long locked telegraph.
+    // Thwomp slamming into the corridor floor; pass under during its slow return.
     {
-      kind: "turret",
-      x: 1520, y: 496,
-      aimMode: "aim", projectileSpeed: 240, intervalMs: 2400,
+      kind: "thwomp",
+      x: 940, y: 110, width: 70, height: 70,
+      dropDistance: 300, detectWidth: 90,
     },
 
-    // Second aiming turret past the pit — fires while you ride the platform across.
-    {
-      kind: "turret",
-      x: 2100, y: 496,
-      aimMode: "aim", projectileSpeed: 250, intervalMs: 2200,
-    },
+    // Arrow shooter firing left across the gauntlet — wait behind the pillar.
+    { kind: "arrowShooter", x: 1770, y: 452, direction: -1, intervalMs: 1700 },
   ],
-  goal: { x: 2400, y: 432 },
+  goal: { x: 2280, y: 432 },
 };

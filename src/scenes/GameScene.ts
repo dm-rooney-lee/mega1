@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { COLORS, DEPTH, TEX } from "../config";
-import { levelAt, hasLevel } from "../levels/index";
+import { COLORS, DEPTH, GAME, TEX } from "../config";
+import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
-import { patrolBoundsFor } from "../levels/patrol";
+import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
 import { Goal } from "../objects/Goal";
@@ -19,9 +19,9 @@ import { Projectile } from "../objects/Projectile";
 import { ProjectilePool } from "../objects/ProjectilePool";
 
 /**
- * The playable level. Reads a LevelDef (selected by the registry's levelIndex),
- * builds the world, wires up every physics interaction, and drives the
- * win / lose / next-level transitions.
+ * The playable level. Reads a LevelDef (selected by the `level` index the scene
+ * is started with), builds the world, wires up every physics interaction, and
+ * drives the win / lose / next-level transitions.
  */
 export class GameScene extends Phaser.Scene {
   private level!: LevelDef;
@@ -50,8 +50,12 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  /** `level` is an index into the `levels` registry; defaults to the first. */
+  init(data: { level?: number }): void {
+    this.levelIndex = data.level ?? 0;
+  }
+
   create(): void {
-    this.levelIndex = (this.registry.get("levelIndex") as number | undefined) ?? 0;
     this.level = levelAt(this.levelIndex);
 
     // Reset all per-run state (G6 — a restart always starts from a clean slate).
@@ -239,8 +243,10 @@ export class GameScene extends Phaser.Scene {
 
   private buildEnemies(): void {
     for (const e of this.level.enemies) {
-      const [left, right] = patrolBoundsFor(this.level.platforms, e.x, e.y);
-      const enemy = new Enemy(this, e.x, e.y, left, right);
+      let bounds = patrolBoundsFor(this.level.platforms, e.x, e.y);
+      // Thorns act as patrol boundaries too, so enemies turn around at them.
+      bounds = narrowBoundsForSpikes(this.level.spikes, e.x, e.y, bounds);
+      const enemy = new Enemy(this, e.x, e.y, bounds[0], bounds[1]);
       enemy.setDepth(DEPTH.ENEMY);
       this.enemies.push(enemy);
     }
@@ -376,9 +382,10 @@ export class GameScene extends Phaser.Scene {
     const next = this.levelIndex + 1;
     this.time.delayedCall(500, () => {
       if (hasLevel(next)) {
-        this.registry.set("levelIndex", next);
-        this.scene.restart();
+        // Advance to the next stage.
+        this.scene.start("GameScene", { level: next });
       } else {
+        // Cleared the final stage.
         this.scene.start("WinScene");
       }
     });
@@ -390,7 +397,10 @@ export class GameScene extends Phaser.Scene {
     this.player.die();
     this.cameras.main.stopFollow();
     this.cameras.main.shake(200, 0.01);
-    this.time.delayedCall(800, () => this.scene.start("GameOverScene"));
+    // Retry should restart the stage the player died on.
+    this.time.delayedCall(800, () =>
+      this.scene.start("GameOverScene", { level: this.levelIndex }),
+    );
   }
 
   // --- Presentation ---
@@ -414,6 +424,18 @@ export class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.HUD);
     hint.setStroke("#1d2b53", 4);
     this.tweens.add({ targets: hint, alpha: 0, delay: 5000, duration: 1000 });
+
+    // Stage indicator, top-right — always on, so progress is readable mid-play.
+    const stage = this.add
+      .text(GAME.WIDTH - 16, 14, `STAGE ${this.levelIndex + 1}/${levels.length}`, {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#00e436",
+      })
+      .setOrigin(1, 0)
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD);
+    stage.setStroke("#1d2b53", 4);
 
     // Brief level-name banner.
     if (this.level.name) {

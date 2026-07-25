@@ -1,55 +1,42 @@
-import type { LevelDef } from "./types";
+import type { LevelDef } from "./level1";
 
 /**
- * Level 2 — "Machines": the platform/movement content (group A) plus a pendulum.
- * Conveyor → moving platform over a pit → pendulum walkway → crumbling bridge →
- * spring over a wall → goal. Coordinates are world pixels; expect to playtest-tune.
+ * Stage 2 — a measured step up from stage 1: longer (3000 vs 2400), two pits
+ * instead of one, two spike fields instead of one, and five enemies instead of
+ * three. Everything on the main ground route stays within the player's jump
+ * envelope (~165px up, and the 140px pits are comfortably clearable at run
+ * speed). The high platforms (y≈268/300) and the enemies perched on platforms
+ * are optional — you can beat the stage on the ground alone, so the *mandatory*
+ * difficulty bump is gentle while there's extra challenge for those who climb.
  */
 export const level2: LevelDef = {
-  name: "2 — Machines",
-  worldWidth: 2800,
+  worldWidth: 3000,
   worldHeight: 540,
-  playerSpawn: { x: 70, y: 420 },
+  playerSpawn: { x: 80, y: 400 },
   platforms: [
-    // Start, then a conveyor that pushes you along (stand still = carried right).
-    { x: 0, y: 496, width: 600, height: 44 },
-    { x: 600, y: 496, width: 320, height: 44, type: "conveyor", direction: 1, beltSpeed: 160 },
-
-    // Pit 920..1080, crossed by a horizontal moving platform.
-    {
-      x: 940, y: 470, width: 130, height: 22,
-      type: "moving", axis: "horizontal", range: 130, speed: 85,
-    },
-
-    // Walkway guarded by a pendulum (see hazards).
-    { x: 1080, y: 496, width: 360, height: 44 },
-
-    // Pit 1440..1620, crossed by two crumbling platforms (they fall — keep moving).
-    { x: 1450, y: 470, width: 110, height: 22, type: "fake", collapseMs: 320, respawn: true },
-    { x: 1590, y: 470, width: 110, height: 22, type: "fake", collapseMs: 320, respawn: true },
-
-    // Ground with a spring; a tall wall blocks the path — bounce over it.
-    { x: 1620, y: 496, width: 400, height: 44 },
-    { x: 1880, y: 472, width: 60, height: 24, type: "spring", power: -1000 },
-    { x: 2040, y: 300, width: 40, height: 240 }, // wall
-
-    // Landing + run to the goal.
-    { x: 2120, y: 496, width: 680, height: 44 },
+    // Ground in three segments separated by two 140px pits.
+    { x: 0, y: 496, width: 560, height: 44 }, // start
+    { x: 700, y: 496, width: 760, height: 44 }, // mid run (pit 560..700)
+    { x: 1600, y: 496, width: 1400, height: 44 }, // long run to goal (pit 1460..1600)
+    // Floating platforms — traversal + enemy perches, with two optional high hops.
+    { x: 320, y: 384, width: 150, height: 24 },
+    { x: 780, y: 372, width: 180, height: 24 },
+    { x: 1040, y: 300, width: 140, height: 24 }, // optional high route
+    { x: 1280, y: 372, width: 160, height: 24 },
+    { x: 1720, y: 360, width: 200, height: 24 },
+    { x: 2040, y: 268, width: 150, height: 24 }, // optional high route
+    { x: 2360, y: 372, width: 180, height: 24 },
   ],
   enemies: [
-    { x: 300, y: 456 },
-    { x: 1200, y: 456 },
-    { x: 2400, y: 456 },
+    { x: 860, y: 332 }, // on the x=780 platform
+    { x: 1050, y: 456 }, // patrols the mid ground segment
+    { x: 1340, y: 332 }, // on the x=1280 platform
+    { x: 1820, y: 320 }, // on the x=1720 platform
+    { x: 2500, y: 456 }, // patrols the long final segment
   ],
   spikes: [
-    { x: 1180, y: 472, tiles: 3 }, // under the pendulum — don't dawdle
+    { x: 1150, y: 472, tiles: 3 }, // on the mid ground segment
+    { x: 2150, y: 472, tiles: 3 }, // on the long final segment
   ],
-  hazards: [
-    {
-      kind: "pendulum",
-      x: 1260, y: 250,
-      length: 170, amplitudeDeg: 58, periodMs: 2100,
-    },
-  ],
-  goal: { x: 2680, y: 432 },
+  goal: { x: 2860, y: 432 },
 };

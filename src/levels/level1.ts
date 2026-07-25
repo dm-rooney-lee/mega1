@@ -30,7 +30,7 @@ export const level1: LevelDef = {
   ],
   enemies: [
     { x: 950, y: 320 }, // patrols the wide floating platform
-    { x: 1200, y: 456 }, // patrols the long ground segment
+    { x: 1420, y: 456 }, // patrols the long ground segment (right of the spikes)
     { x: 1820, y: 456 }, // patrols near the goal
   ],
   spikes: [

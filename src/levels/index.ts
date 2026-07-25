@@ -1,15 +1,17 @@
 /**
- * Level registry + progression. The playable order lives here so GameScene stays
- * level-agnostic (it just reads `registry.levelIndex`), and adding a level is a
- * one-line change.
+ * Level registry + progression. The ordered list of stages lives here so
+ * GameScene stays level-agnostic (it's started with a `level` index into this
+ * array); clearing a stage advances to the next, and clearing the last one wins
+ * the game. Adding a stage is a one-line change.
  */
 import type { LevelDef } from "./types";
 import { level1 } from "./level1";
 import { level2 } from "./level2";
 import { level3 } from "./level3";
 import { level4 } from "./level4";
+import { level5 } from "./level5";
 
-export const levels: LevelDef[] = [level1, level2, level3, level4];
+export const levels: LevelDef[] = [level1, level2, level3, level4, level5];
 
 /** The level at `index`, clamped to the first level for out-of-range indices. */
 export function levelAt(index: number): LevelDef {

@@ -11,11 +11,19 @@ export class WinScene extends Phaser.Scene {
     const cx = GAME.WIDTH / 2;
 
     this.add
-      .text(cx, 200, "ALL LEVELS CLEAR!", {
+      .text(cx, 200, "YOU WIN!", {
         fontFamily: "monospace",
         fontSize: "52px",
         color: "#00e436",
         fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(cx, 260, "all stages cleared", {
+        fontFamily: "monospace",
+        fontSize: "20px",
+        color: "#fff1e8",
       })
       .setOrigin(0.5);
 
@@ -35,14 +43,11 @@ export class WinScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const replay = () => {
-      this.registry.set("levelIndex", 0); // start a fresh run from level 1
-      this.scene.start("GameScene");
-    };
+    const playAgain = () => this.scene.start("GameScene", { level: 0 });
     const kb = this.input.keyboard!;
-    kb.once("keydown-SPACE", replay);
-    kb.once("keydown-ENTER", replay);
+    kb.once("keydown-SPACE", playAgain);
+    kb.once("keydown-ENTER", playAgain);
     kb.once("keydown-ESC", () => this.scene.start("MenuScene"));
-    this.input.once("pointerdown", replay);
+    this.input.once("pointerdown", playAgain);
   }
 }
