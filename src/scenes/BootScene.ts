@@ -31,6 +31,11 @@ export class BootScene extends Phaser.Scene {
     this.makeShooterTexture();
     this.makeTurretTexture();
 
+    // Cannon + shield (ported from the level2 branch).
+    this.makeRectTexture(TEX.CANNON, 40, 30, COLORS.CANNON, 0xffffff);
+    this.makeCannonballTexture();
+    this.makeShieldTexture();
+
     this.scene.start("MenuScene");
   }
 
@@ -213,6 +218,31 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xffec27, 1);
     g.fillCircle(w / 2, 18, 3); // eye
     g.generateTexture(TEX.TURRET, w, h);
+    g.destroy();
+  }
+
+  /** Cannonball: a small circle. */
+  private makeCannonballTexture(): void {
+    const d = 16;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.CANNONBALL, 1);
+    g.fillCircle(d / 2, d / 2, d / 2);
+    g.generateTexture(TEX.CANNONBALL, d, d);
+    g.destroy();
+  }
+
+  /** Shield pickup: a shield shape with a white cross. */
+  private makeShieldTexture(): void {
+    const w = 26;
+    const h = 30;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.SHIELD, 1);
+    g.fillRoundedRect(0, 0, w, h - 8, 5);
+    g.fillTriangle(0, h - 10, w, h - 10, w / 2, h);
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(w / 2 - 2, 6, 4, 12);
+    g.fillRect(w / 2 - 6, 10, 12, 4);
+    g.generateTexture(TEX.SHIELD, w, h);
     g.destroy();
   }
 }

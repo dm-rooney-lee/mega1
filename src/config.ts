@@ -123,6 +123,22 @@ export const TURRET = {
   TELEGRAPH_MS: 550,
 } as const;
 
+/** E-1 Cannon (ported from the level2 branch's cannon+shield stage). */
+export const CANNON = {
+  /** Fire interval (ms). */
+  FIRE_INTERVAL_MS: 1500,
+  /** Cannonball horizontal speed (px/s). */
+  BALL_SPEED: 320,
+  /** ms of invulnerability after a cannonball hit is resolved (prevents one volley draining multiple shield charges in a single frame). */
+  HIT_COOLDOWN_MS: 150,
+} as const;
+
+/** E-2 Shield pickup (blocks a number of cannonball hits before breaking). */
+export const SHIELD = {
+  /** Charges granted on pickup (number of cannonballs it can absorb). */
+  MAX_CHARGES: 3,
+} as const;
+
 /** Placeholder-art palette (swapped for real sprites in Milestone 4). */
 export const COLORS = {
   BACKGROUND: 0x1d2b53,
@@ -146,6 +162,9 @@ export const COLORS = {
   SHOOTER: 0x422136,
   TURRET: 0xab5236,
   TELEGRAPH: 0xff004d,
+  CANNON: 0xc2c3c7,
+  CANNONBALL: 0xffa300,
+  SHIELD: 0xffec27,
 } as const;
 
 /** Keys used to look up textures generated in BootScene. */
@@ -165,6 +184,9 @@ export const TEX = {
   PROJECTILE: "tex-projectile",
   SHOOTER: "tex-shooter",
   TURRET: "tex-turret",
+  CANNON: "tex-cannon",
+  CANNONBALL: "tex-cannonball",
+  SHIELD: "tex-shield",
 } as const;
 
 /**

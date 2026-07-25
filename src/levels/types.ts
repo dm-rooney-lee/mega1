@@ -144,12 +144,24 @@ export interface TurretDef {
   intervalMs?: number;
 }
 
+/** E-1 — cannon: fires cannonballs on a timer along a fixed left/right line. */
+export interface CannonDef {
+  kind: "cannon";
+  /** Firing origin — also the cannonball's spawn height. */
+  x: number;
+  y: number;
+  direction: "left" | "right";
+  /** Defaults to config's CANNON.FIRE_INTERVAL_MS when omitted. */
+  intervalMs?: number;
+}
+
 export type HazardDef =
   | PendulumDef
   | PopupSpikeDef
   | ThwompDef
   | ShooterDef
-  | TurretDef;
+  | TurretDef
+  | CannonDef;
 
 // --- Level ------------------------------------------------------------------
 
@@ -164,7 +176,9 @@ export interface LevelDef {
   /** Enemies patrol left/right on whatever platform they stand on. */
   enemies: Vec2[];
   spikes: SpikeDef[];
-  /** New content (pendulums, pop-up spikes, thwomps, shooters, turrets). */
+  /** New content (pendulums, pop-up spikes, thwomps, shooters, turrets, cannons). */
   hazards?: HazardDef[];
+  /** Shield pickup spawn points — collecting one grants absorbing charges. */
+  shieldPickups?: Vec2[];
   goal: Vec2;
 }

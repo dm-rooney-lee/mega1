@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { PLAYER, TEX } from "../config";
+import { COLORS, PLAYER, SHIELD, TEX } from "../config";
+import { absorbHit as absorbShieldHit } from "./shield";
 
 type Keys = {
   left: Phaser.Input.Keyboard.Key[];
@@ -13,6 +14,7 @@ type Keys = {
  *   - coyote time: a short grace period to still jump just after walking off a ledge
  *   - jump buffering: a jump pressed slightly before landing still fires on touchdown
  *   - variable jump height: releasing early cuts the jump short (tap = hop, hold = full)
+ * Also tracks shield state (absorbing charges that block a cannonball hit).
  */
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -28,6 +30,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
    * required "spring is an exception to jump-cut" rule.
    */
   private springLaunched = false;
+  private shieldChargesValue = 0;
+  private shieldRing?: Phaser.GameObjects.Arc;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.PLAYER);
@@ -63,6 +67,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** Call from GameScene.update(). `time` is the scene time in ms. */
   update(time: number): void {
+    // The shield ring follows the player whether alive or dead.
+    if (this.shieldRing) this.shieldRing.setPosition(this.x, this.y);
     if (this.isDead) return;
 
     const onGround = this.body.blocked.down || this.body.touching.down;
@@ -137,10 +143,40 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     return this.isDead;
   }
 
+  get shieldCharges(): number {
+    return this.shieldChargesValue;
+  }
+
+  /** Grants a full shield (charges reset to max) and shows the aura ring. */
+  giveShield(): void {
+    this.shieldChargesValue = SHIELD.MAX_CHARGES;
+    if (!this.shieldRing) {
+      this.shieldRing = this.scene.add
+        .circle(this.x, this.y, 26)
+        .setStrokeStyle(3, COLORS.SHIELD, 0.9)
+        .setDepth(this.depth - 1);
+    }
+  }
+
+  /** Absorbs one cannonball hit. Returns whether it was blocked; removes the ring at 0 charges. */
+  absorbHit(): boolean {
+    const result = absorbShieldHit(this.shieldChargesValue);
+    this.shieldChargesValue = result.charges;
+    if (this.shieldChargesValue === 0 && this.shieldRing) {
+      this.shieldRing.destroy();
+      this.shieldRing = undefined;
+    }
+    return result.blocked;
+  }
+
   /** Play a short death reaction and disable control. */
   die(): void {
     if (this.isDead) return;
     this.isDead = true;
+    if (this.shieldRing) {
+      this.shieldRing.destroy();
+      this.shieldRing = undefined;
+    }
     this.setTint(0xff004d);
     this.body.setVelocity(0, -300);
     this.body.checkCollision.none = true; // fall through the world

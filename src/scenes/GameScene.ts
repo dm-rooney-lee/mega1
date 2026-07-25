@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, DEPTH, GAME, TEX } from "../config";
+import { CANNON, COLORS, DEPTH, GAME, TEX } from "../config";
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
@@ -15,6 +15,9 @@ import { PopupSpike } from "../objects/PopupSpike";
 import { Thwomp } from "../objects/Thwomp";
 import { Shooter } from "../objects/Shooter";
 import { Turret } from "../objects/Turret";
+import { Cannon } from "../objects/Cannon";
+import { ShieldItem } from "../objects/ShieldItem";
+import { isOffWorld } from "../objects/ballistics";
 import { Projectile } from "../objects/Projectile";
 import { ProjectilePool } from "../objects/ProjectilePool";
 
@@ -44,7 +47,13 @@ export class GameScene extends Phaser.Scene {
   private thwomps: Thwomp[] = [];
   private shooters: Shooter[] = [];
   private turrets: Turret[] = [];
+  private cannons: Cannon[] = [];
+  private cannonballs!: Phaser.Physics.Arcade.Group;
   private pool!: ProjectilePool;
+  private shieldText!: Phaser.GameObjects.Text;
+
+  /** ms until the player can take another cannonball hit (debounces one volley). */
+  private hitCooldownUntil = 0;
 
   constructor() {
     super("GameScene");
@@ -69,6 +78,8 @@ export class GameScene extends Phaser.Scene {
     this.thwomps = [];
     this.shooters = [];
     this.turrets = [];
+    this.cannons = [];
+    this.hitCooldownUntil = 0;
 
     // World + camera bounds. Leave the bottom edge open so the player can fall
     // into pits (that's a death), while walls/ceiling still contain them.
@@ -82,8 +93,10 @@ export class GameScene extends Phaser.Scene {
     this.buildEnemies();
 
     this.pool = new ProjectilePool(this);
+    this.cannonballs = this.physics.add.group({ allowGravity: false });
     const popupGroup = this.physics.add.group({ allowGravity: false, immovable: true });
     this.buildHazards(popupGroup);
+    const shieldItems = this.buildShields();
 
     this.player = new Player(this, this.level.playerSpawn.x, this.level.playerSpawn.y);
     this.player.setDepth(DEPTH.PLAYER);
@@ -140,6 +153,20 @@ export class GameScene extends Phaser.Scene {
       (proj as Projectile).deactivate(),
     );
 
+    // Cannonballs: destroyed by terrain; a hit is absorbed by a shield charge
+    // if the player has one, otherwise it's lethal like any other projectile.
+    this.physics.add.collider(this.cannonballs, this.platforms, (ball) => {
+      (ball as Phaser.Physics.Arcade.Sprite).destroy();
+    });
+    this.physics.add.overlap(this.player, this.cannonballs, (_pl, ball) =>
+      this.handleCannonballHit(ball as Phaser.Physics.Arcade.Sprite),
+    );
+
+    // Shield pickups.
+    this.physics.add.overlap(this.player, shieldItems, (_pl, item) =>
+      (item as ShieldItem).collect(this.player),
+    );
+
     // Goal.
     this.physics.add.overlap(this.player, goal, () => this.handleWin());
 
@@ -160,6 +187,16 @@ export class GameScene extends Phaser.Scene {
     for (const t of this.thwomps) t.update(delta, this.player);
     for (const sh of this.shooters) sh.update(delta);
     for (const tu of this.turrets) tu.update(delta, this.player);
+    for (const c of this.cannons) c.update(this.elapsedMs);
+
+    // Cannonballs that fly off the world are destroyed (avoid leaking objects).
+    // destroy() mutates the group's array, so iterate over a copy.
+    for (const ball of [...this.cannonballs.getChildren()]) {
+      const b = ball as Phaser.Physics.Arcade.Sprite;
+      if (isOffWorld(b.x, this.level.worldWidth)) b.destroy();
+    }
+
+    this.shieldText.setText(this.shieldLabel());
 
     this.applyCarries(delta);
     this.applyConveyors();
@@ -309,7 +346,14 @@ export class GameScene extends Phaser.Scene {
           }),
         );
         break;
+      case "cannon":
+        this.cannons.push(new Cannon(this, h, this.cannonballs));
+        break;
     }
+  }
+
+  private buildShields(): ShieldItem[] {
+    return (this.level.shieldPickups ?? []).map((p) => new ShieldItem(this, p.x, p.y));
   }
 
   // --- Carry physics (moving platforms + conveyors) ---
@@ -373,6 +417,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** A cannonball hit: absorbed by a shield charge if the player has one, else lethal. */
+  private handleCannonballHit(ball: Phaser.Physics.Arcade.Sprite): void {
+    if (this.ending || this.player.dead || !ball.active) return;
+    ball.destroy();
+
+    if (this.time.now < this.hitCooldownUntil) return;
+    this.hitCooldownUntil = this.time.now + CANNON.HIT_COOLDOWN_MS;
+
+    if (this.player.shieldCharges > 0) {
+      this.player.absorbHit();
+      this.cameras.main.flash(120, 41, 173, 255);
+    } else {
+      this.handleDeath();
+    }
+  }
+
   private handleWin(): void {
     if (this.ending) return;
     this.ending = true;
@@ -412,6 +472,12 @@ export class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.BACKGROUND);
   }
 
+  /** "Shield: ●●●" while charges remain, "Shield: --" once depleted (or never picked up). */
+  private shieldLabel(): string {
+    const n = this.player.shieldCharges;
+    return n > 0 ? `Shield: ${"●".repeat(n)}` : "Shield: --";
+  }
+
   private drawHud(): void {
     const hint = this.add
       .text(
@@ -424,6 +490,17 @@ export class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.HUD);
     hint.setStroke("#1d2b53", 4);
     this.tweens.add({ targets: hint, alpha: 0, delay: 5000, duration: 1000 });
+
+    // Shield charge counter, just under the hint — always on, like the stage indicator.
+    this.shieldText = this.add
+      .text(16, 40, this.shieldLabel(), {
+        fontFamily: "monospace",
+        fontSize: "18px",
+        color: "#29adff",
+      })
+      .setScrollFactor(0)
+      .setDepth(DEPTH.HUD);
+    this.shieldText.setStroke("#1d2b53", 4);
 
     // Stage indicator, top-right — always on, so progress is readable mid-play.
     const stage = this.add
