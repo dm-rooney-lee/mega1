@@ -22,6 +22,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private jumpPressedAt = -Infinity;
   private jumpHeld = false;
   private isDead = false;
+  /**
+   * True while rising from a spring launch. Suppresses the variable-jump-cut so a
+   * bounce isn't halved the instant the (unheld) jump button check runs — the
+   * required "spring is an exception to jump-cut" rule.
+   */
+  private springLaunched = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.PLAYER);
@@ -62,6 +68,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const onGround = this.body.blocked.down || this.body.touching.down;
     if (onGround) this.lastGroundedAt = time;
 
+    // A spring launch ends once we stop rising (or land again).
+    if (this.springLaunched && (this.body.velocity.y >= 0 || onGround)) {
+      this.springLaunched = false;
+    }
+
     // Horizontal movement.
     const left = this.anyDown(this.keys.left);
     const right = this.anyDown(this.keys.right);
@@ -91,7 +102,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Variable jump height: cut upward velocity when jump released mid-rise.
-    if (!jumpDown && this.jumpHeld && this.body.velocity.y < 0) {
+    // A spring launch is exempt (otherwise an unheld button halves it instantly).
+    if (
+      !jumpDown &&
+      this.jumpHeld &&
+      this.body.velocity.y < 0 &&
+      !this.springLaunched
+    ) {
       this.setVelocityY(this.body.velocity.y * PLAYER.JUMP_CUT_MULTIPLIER);
     }
     this.jumpHeld = jumpDown;
@@ -104,6 +121,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** Bounce after stomping an enemy. */
   bounce(): void {
     this.setVelocityY(PLAYER.STOMP_BOUNCE);
+  }
+
+  /**
+   * Launched by a jump pad. Applies a strong upward velocity that ignores the
+   * jump-cut (see `springLaunched`), so the full bounce lands even with no button held.
+   */
+  launch(power: number): void {
+    if (this.isDead) return;
+    this.setVelocityY(power);
+    this.springLaunched = true;
   }
 
   get dead(): boolean {
