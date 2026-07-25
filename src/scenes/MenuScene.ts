@@ -43,7 +43,10 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    const start = () => this.scene.start("GameScene");
+    const start = () => {
+      this.registry.set("levelIndex", 0); // always begin at the first level
+      this.scene.start("GameScene");
+    };
     this.input.keyboard!.once("keydown", start);
     this.input.once("pointerdown", start);
   }

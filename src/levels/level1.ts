@@ -1,44 +1,18 @@
 /**
- * Data-driven level definition. Keeping layout as plain data (separate from the
- * scene logic) means designing a new level is just editing this file — and it's the
- * natural stepping stone to a Tiled tilemap later (Milestone 4).
+ * The first level. Layout is plain data (see `types.ts` for the schema), separate
+ * from scene logic, so designing a level is just editing a data file.
  *
  * Coordinates are world pixels. Platforms are given by their top-left corner + size.
+ *
+ * The type re-exports below keep older imports (`from "./level1"`) working after the
+ * schema moved into the shared `types.ts` module.
  */
+export type { PlatformDef, Vec2, SpikeDef, HazardDef, LevelDef } from "./types";
 
-export interface PlatformDef {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface Vec2 {
-  x: number;
-  y: number;
-}
-
-/** A spike hazard sits on top of a surface; width in whole spike-tiles (32px each). */
-export interface SpikeDef {
-  x: number;
-  y: number;
-  /** Number of 32px spike tiles laid side by side. */
-  tiles: number;
-}
-
-export interface LevelDef {
-  /** Total world size. Wider than the camera so the level scrolls. */
-  worldWidth: number;
-  worldHeight: number;
-  playerSpawn: Vec2;
-  platforms: PlatformDef[];
-  /** Enemies patrol left/right on whatever platform they stand on. */
-  enemies: Vec2[];
-  spikes: SpikeDef[];
-  goal: Vec2;
-}
+import type { LevelDef } from "./types";
 
 export const level1: LevelDef = {
+  name: "1 — Warm Up",
   worldWidth: 2400,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

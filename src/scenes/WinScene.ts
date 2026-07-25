@@ -11,7 +11,7 @@ export class WinScene extends Phaser.Scene {
     const cx = GAME.WIDTH / 2;
 
     this.add
-      .text(cx, 200, "LEVEL COMPLETE!", {
+      .text(cx, 200, "ALL LEVELS CLEAR!", {
         fontFamily: "monospace",
         fontSize: "52px",
         color: "#00e436",
@@ -35,10 +35,14 @@ export class WinScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const replay = () => {
+      this.registry.set("levelIndex", 0); // start a fresh run from level 1
+      this.scene.start("GameScene");
+    };
     const kb = this.input.keyboard!;
-    kb.once("keydown-SPACE", () => this.scene.start("GameScene"));
-    kb.once("keydown-ENTER", () => this.scene.start("GameScene"));
+    kb.once("keydown-SPACE", replay);
+    kb.once("keydown-ENTER", replay);
     kb.once("keydown-ESC", () => this.scene.start("MenuScene"));
-    this.input.once("pointerdown", () => this.scene.start("GameScene"));
+    this.input.once("pointerdown", replay);
   }
 }
