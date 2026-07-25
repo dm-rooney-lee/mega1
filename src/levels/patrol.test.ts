@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { PlatformDef } from "./level1";
-import { patrolBoundsFor } from "./patrol";
+import type { PlatformDef, SpikeDef } from "./level1";
+import { patrolBoundsFor, narrowBoundsForSpikes } from "./patrol";
 
 describe("patrolBoundsFor", () => {
   const ground: PlatformDef = { x: 0, y: 496, width: 640, height: 44 };
@@ -29,5 +29,45 @@ describe("patrolBoundsFor", () => {
 
   it("falls back to a fixed span around x when no platform matches", () => {
     expect(patrolBoundsFor([], 1000, 456)).toEqual([880, 1120]);
+  });
+});
+
+describe("narrowBoundsForSpikes", () => {
+  // A ground-level spike field spanning x = 1120..1216 (3 tiles of 32px).
+  const groundSpikes: SpikeDef = { x: 1120, y: 472, tiles: 3 };
+  const groundY = 456;
+
+  it("clamps the right bound when the spikes are to the enemy's right", () => {
+    // Enemy at x=1000, spikes start at 1120 → can't walk right past 1120.
+    expect(
+      narrowBoundsForSpikes([groundSpikes], 1000, groundY, [760, 1660]),
+    ).toEqual([760, 1120]);
+  });
+
+  it("clamps the left bound when the spikes are to the enemy's left", () => {
+    // Enemy at x=1420, spikes end at 1216 → can't walk left past 1216.
+    expect(
+      narrowBoundsForSpikes([groundSpikes], 1420, groundY, [760, 1660]),
+    ).toEqual([1216, 1660]);
+  });
+
+  it("ignores spikes on a different surface (far vertically)", () => {
+    // Enemy up on a platform (y=332) vs ground spikes (y=472) → not clamped.
+    expect(
+      narrowBoundsForSpikes([groundSpikes], 1000, 332, [900, 1300]),
+    ).toEqual([900, 1300]);
+  });
+
+  it("leaves bounds unchanged when there are no spikes", () => {
+    expect(narrowBoundsForSpikes([], 1000, groundY, [760, 1660])).toEqual([
+      760, 1660,
+    ]);
+  });
+
+  it("leaves bounds alone when the enemy spawns inside a spike span", () => {
+    // x=1150 is within 1120..1216 — an authoring bug we don't paper over.
+    expect(
+      narrowBoundsForSpikes([groundSpikes], 1150, groundY, [760, 1660]),
+    ).toEqual([760, 1660]);
   });
 });

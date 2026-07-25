@@ -1,7 +1,8 @@
 import Phaser from "phaser";
-import { COLORS, TEX } from "../config";
-import { level1, type LevelDef } from "../levels/level1";
-import { patrolBoundsFor } from "../levels/patrol";
+import { COLORS, GAME, TEX } from "../config";
+import { type LevelDef } from "../levels/level1";
+import { levels } from "../levels";
+import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
 import { Goal } from "../objects/Goal";
@@ -13,6 +14,7 @@ import { Goal } from "../objects/Goal";
  */
 export class GameScene extends Phaser.Scene {
   private level!: LevelDef;
+  private levelIndex = 0;
   private player!: Player;
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private enemies!: Enemy[];
@@ -22,8 +24,13 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  /** `level` is an index into the `levels` registry; defaults to the first. */
+  init(data: { level?: number }): void {
+    this.levelIndex = data.level ?? 0;
+  }
+
   create(): void {
-    this.level = level1;
+    this.level = levels[this.levelIndex] ?? levels[0];
     this.ending = false;
     this.enemies = [];
 
@@ -103,8 +110,10 @@ export class GameScene extends Phaser.Scene {
 
   private buildEnemies(): void {
     for (const e of this.level.enemies) {
-      const [left, right] = patrolBoundsFor(this.level.platforms, e.x, e.y);
-      this.enemies.push(new Enemy(this, e.x, e.y, left, right));
+      let bounds = patrolBoundsFor(this.level.platforms, e.x, e.y);
+      // Thorns act as patrol boundaries too, so enemies turn around at them.
+      bounds = narrowBoundsForSpikes(this.level.spikes, e.x, e.y, bounds);
+      this.enemies.push(new Enemy(this, e.x, e.y, bounds[0], bounds[1]));
     }
   }
 
@@ -130,7 +139,16 @@ export class GameScene extends Phaser.Scene {
     this.ending = true;
     this.player.body.stop();
     this.cameras.main.flash(200, 255, 255, 255);
-    this.time.delayedCall(500, () => this.scene.start("WinScene"));
+    const next = this.levelIndex + 1;
+    this.time.delayedCall(500, () => {
+      if (next < levels.length) {
+        // Advance to the next stage.
+        this.scene.start("GameScene", { level: next });
+      } else {
+        // Cleared the final stage.
+        this.scene.start("WinScene");
+      }
+    });
   }
 
   private handleDeath(): void {
@@ -139,7 +157,10 @@ export class GameScene extends Phaser.Scene {
     this.player.die();
     this.cameras.main.stopFollow();
     this.cameras.main.shake(200, 0.01);
-    this.time.delayedCall(800, () => this.scene.start("GameOverScene"));
+    // Retry should restart the stage the player died on.
+    this.time.delayedCall(800, () =>
+      this.scene.start("GameOverScene", { level: this.levelIndex }),
+    );
   }
 
   private drawHud(): void {
@@ -157,6 +178,18 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(1000);
     hint.setStroke("#1d2b53", 4);
+
+    // Stage indicator, top-right.
+    const stage = this.add
+      .text(GAME.WIDTH - 16, 14, `STAGE ${this.levelIndex + 1}/${levels.length}`, {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#00e436",
+      })
+      .setOrigin(1, 0)
+      .setScrollFactor(0)
+      .setDepth(1000);
+    stage.setStroke("#1d2b53", 4);
 
     // Fade the hint out after a few seconds so it doesn't clutter play.
     this.tweens.add({
