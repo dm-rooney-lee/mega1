@@ -107,6 +107,31 @@ export function popupSpikePhase(
   return "active";
 }
 
+export type TrapFloorPhase = "solid" | "telegraph" | "open";
+
+/**
+ * Phase of a disguised trap floor. The cycle is fixed at safe -> telegraph ->
+ * safe -> telegraph -> open (warn twice, then the floor opens) — the "twice" is
+ * a deliberate design decision, so it is not a parameter. Only "open" removes
+ * collision; "telegraph" is a visible warning but still safe to stand on.
+ */
+export function trapFloorPhase(
+  elapsedMs: number,
+  telegraphMs: number,
+  safeMs: number,
+  openMs: number,
+  phase01 = 0,
+): TrapFloorPhase {
+  const cycleMs = 2 * safeMs + 2 * telegraphMs + openMs;
+  if (cycleMs <= 0) return "solid";
+  const t = mod(elapsedMs + phase01 * cycleMs, cycleMs);
+  if (t < safeMs) return "solid";
+  if (t < safeMs + telegraphMs) return "telegraph";
+  if (t < 2 * safeMs + telegraphMs) return "solid";
+  if (t < 2 * safeMs + 2 * telegraphMs) return "telegraph";
+  return "open";
+}
+
 /** Positive modulo (JS `%` keeps the sign of the dividend). */
 function mod(a: number, n: number): number {
   return ((a % n) + n) % n;

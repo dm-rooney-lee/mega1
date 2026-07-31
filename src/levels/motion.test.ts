@@ -5,7 +5,7 @@ import {
   pendulumHead,
   popupSpikePhase,
   gearRotationRad,
-  // trapFloorPhase, // TODO: implement in Task 2
+  trapFloorPhase,
 } from "./motion";
 
 describe("pendulumAngleRad", () => {
@@ -118,5 +118,41 @@ describe("gearRotationRad", () => {
 
   it("returns a constant (phase-only) angle when degPerSec is 0", () => {
     expect(gearRotationRad(5000, 0, 0.25)).toBeCloseTo(Math.PI / 2);
+  });
+});
+
+describe("trapFloorPhase", () => {
+  // telegraph 400, safe 600, open 1000 -> cycle = 600+400+600+400+1000 = 3000.
+  it("is solid at the start of the cycle", () => {
+    expect(trapFloorPhase(0, 400, 600, 1000)).toBe("solid");
+  });
+
+  it("enters the first telegraph after the first safe window", () => {
+    expect(trapFloorPhase(700, 400, 600, 1000)).toBe("telegraph");
+  });
+
+  it("returns to solid between the two telegraphs", () => {
+    expect(trapFloorPhase(1100, 400, 600, 1000)).toBe("solid");
+  });
+
+  it("enters the second telegraph after the second safe window", () => {
+    expect(trapFloorPhase(1800, 400, 600, 1000)).toBe("telegraph");
+  });
+
+  it("opens after both telegraphs", () => {
+    expect(trapFloorPhase(2500, 400, 600, 1000)).toBe("open");
+  });
+
+  it("wraps deterministically back to solid after a full cycle", () => {
+    expect(trapFloorPhase(3000, 400, 600, 1000)).toBe("solid");
+  });
+
+  it("phase offset shifts the cycle", () => {
+    // 0.8 of the 3000ms cycle = offset 2400, which falls in the "open" window (2000..3000).
+    expect(trapFloorPhase(0, 400, 600, 1000, 0.8)).toBe("open");
+  });
+
+  it("guards a degenerate (all-zero) cycle by staying solid", () => {
+    expect(trapFloorPhase(1234, 0, 0, 0)).toBe("solid");
   });
 });
