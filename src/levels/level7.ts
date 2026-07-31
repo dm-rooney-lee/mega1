@@ -50,6 +50,7 @@ export const level7: LevelDef = {
     // --- Zone 4: finale (4000-5200) — cannon + gear + trap floor together.
     // PIT4=4260..4360.
     { x: 4000, y: 496, width: 260, height: 44 },
+    { x: 4000, y: 430, width: 24, height: 66 }, // bullet-stop pillar: confines zone-4 cannon fire to zone 4, doesn't block zone-3
     { x: 4360, y: 496, width: 140, height: 44 },
     { x: 4500, y: 496, width: 120, height: 44, type: "trapfloor", phase: 0.5 },
     { x: 4620, y: 496, width: 580, height: 44 }, // final run — cannon fires here
@@ -64,7 +65,7 @@ export const level7: LevelDef = {
   ],
   spikes: [
     { x: 1000, y: 472, tiles: 2 }, // zone 1
-    { x: 3260, y: 472, tiles: 2 }, // zone 3, on a "safe" island
+    { x: 3260, y: 472, tiles: 1 }, // zone 3, on a "safe" island
   ],
   hazards: [
     { kind: "cannon", x: 1060, y: 245, direction: "left" }, // zone 1 crest cannon

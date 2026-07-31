@@ -77,7 +77,6 @@ export class GameScene extends Phaser.Scene {
     this.enemies = [];
     this.movingPlatforms = [];
     this.conveyors = [];
-    this.trapFloors = [];
     this.pendulums = [];
     this.popupSpikes = [];
     this.thwomps = [];
