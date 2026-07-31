@@ -16,6 +16,7 @@ import { Thwomp } from "../objects/Thwomp";
 import { Shooter } from "../objects/Shooter";
 import { Turret } from "../objects/Turret";
 import { Cannon } from "../objects/Cannon";
+import { Gear } from "../objects/Gear";
 import { ShieldItem } from "../objects/ShieldItem";
 import { isOffWorld } from "../objects/ballistics";
 import { Projectile } from "../objects/Projectile";
@@ -48,6 +49,7 @@ export class GameScene extends Phaser.Scene {
   private shooters: Shooter[] = [];
   private turrets: Turret[] = [];
   private cannons: Cannon[] = [];
+  private gears: Gear[] = [];
   private cannonballs!: Phaser.Physics.Arcade.Group;
   private pool!: ProjectilePool;
   private shieldText!: Phaser.GameObjects.Text;
@@ -79,6 +81,7 @@ export class GameScene extends Phaser.Scene {
     this.shooters = [];
     this.turrets = [];
     this.cannons = [];
+    this.gears = [];
     this.hitCooldownUntil = 0;
 
     // World + camera bounds. Leave the bottom edge open so the player can fall
@@ -132,6 +135,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, popupGroup, () => this.handleDeath());
     for (const p of this.pendulums) {
       this.physics.add.overlap(this.player, p.head, () => this.handleDeath());
+    }
+    for (const g of this.gears) {
+      this.physics.add.overlap(this.player, g, () => this.handleDeath());
     }
     for (const t of this.thwomps) {
       this.physics.add.overlap(this.player, t, () => {
@@ -188,6 +194,7 @@ export class GameScene extends Phaser.Scene {
     for (const sh of this.shooters) sh.update(delta);
     for (const tu of this.turrets) tu.update(delta, this.player);
     for (const c of this.cannons) c.update(this.elapsedMs);
+    for (const g of this.gears) g.update(this.elapsedMs, delta);
 
     // Cannonballs that fly off the world are destroyed (avoid leaking objects).
     // destroy() mutates the group's array, so iterate over a copy.
@@ -348,6 +355,18 @@ export class GameScene extends Phaser.Scene {
         break;
       case "cannon":
         this.cannons.push(new Cannon(this, h, this.cannonballs));
+        break;
+      case "gear":
+        this.gears.push(
+          new Gear(this, h.x, h.y, {
+            axis: h.axis,
+            range: h.range,
+            speed: h.speed,
+            phase: h.phase,
+            waitMs: h.waitMs,
+            rotateDegPerSec: h.rotateDegPerSec,
+          }),
+        );
         break;
     }
   }

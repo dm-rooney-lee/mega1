@@ -98,6 +98,16 @@ export const THWOMP = {
   TELEGRAPH_MS: 220,
 } as const;
 
+/** F-1 Gear hazard (level7) — rail-riding, spinning, instant-death on contact. */
+export const GEAR = {
+  /** Rail travel speed (px/s), same scale as MOVING_PLATFORM.SPEED. */
+  SPEED: 90,
+  /** Visual spin rate — purely cosmetic (hitbox stays circular). */
+  ROTATE_DEG_PER_SEC: 220,
+  /** Circular hitbox radius. */
+  RADIUS: 20,
+} as const;
+
 /** D Projectiles (shared by arrow shooters and turrets). */
 export const PROJECTILE = {
   SPEED: 300,
@@ -158,6 +168,7 @@ export const COLORS = {
   CHAIN: 0xc2c3c7,
   THWOMP: 0x7e2553,
   THWOMP_FACE: 0xffccaa,
+  GEAR: 0x8f8f8f,
   PROJECTILE: 0xffec27,
   SHOOTER: 0x422136,
   TURRET: 0xab5236,
@@ -181,6 +192,7 @@ export const TEX = {
   FAKE: "tex-fake",
   PENDULUM_HEAD: "tex-pendulum-head",
   THWOMP: "tex-thwomp",
+  GEAR: "tex-gear",
   PROJECTILE: "tex-projectile",
   SHOOTER: "tex-shooter",
   TURRET: "tex-turret",

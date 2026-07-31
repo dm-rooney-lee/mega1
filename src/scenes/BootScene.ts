@@ -36,6 +36,9 @@ export class BootScene extends Phaser.Scene {
     this.makeCannonballTexture();
     this.makeShieldTexture();
 
+    // Gear hazard (level7).
+    this.makeGearTexture();
+
     this.scene.start("MenuScene");
   }
 
@@ -178,6 +181,28 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(38, 22, 8, 10); // right eye
     g.fillRect(18, 44, 24, 5); // gritted mouth
     g.generateTexture(TEX.THWOMP, w, h);
+    g.destroy();
+  }
+
+  /** Gear: a circular hub with square teeth around the rim (distinct silhouette from the pendulum's spikes). */
+  private makeGearTexture(): void {
+    const s = 44;
+    const c = s / 2;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.GEAR, 1);
+    g.fillCircle(c, c, 15);
+    const teeth = 8;
+    for (let i = 0; i < teeth; i++) {
+      const a = (i / teeth) * Math.PI * 2;
+      g.save();
+      g.translateCanvas(c + Math.cos(a) * 15, c + Math.sin(a) * 15);
+      g.rotateCanvas(a);
+      g.fillRect(-4, -4, 8, 8);
+      g.restore();
+    }
+    g.fillStyle(0x4a4a4a, 1);
+    g.fillCircle(c, c, 6); // dark hub
+    g.generateTexture(TEX.GEAR, s, s);
     g.destroy();
   }
 

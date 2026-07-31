@@ -155,13 +155,28 @@ export interface CannonDef {
   intervalMs?: number;
 }
 
+/** F-1 — gear: rides a rail (like a moving platform) while spinning; instant death on contact. */
+export interface GearDef {
+  kind: "gear";
+  /** Home position (pivot) — where the rail path starts. */
+  x: number;
+  y: number;
+  axis?: "horizontal" | "vertical";
+  range?: number;
+  speed?: number;
+  phase?: number;
+  waitMs?: number;
+  rotateDegPerSec?: number;
+}
+
 export type HazardDef =
   | PendulumDef
   | PopupSpikeDef
   | ThwompDef
   | ShooterDef
   | TurretDef
-  | CannonDef;
+  | CannonDef
+  | GearDef;
 
 // --- Level ------------------------------------------------------------------
 
