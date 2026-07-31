@@ -10,6 +10,7 @@ import { MovingPlatform } from "../objects/MovingPlatform";
 import { Conveyor } from "../objects/Conveyor";
 import { Spring } from "../objects/Spring";
 import { CrumblingPlatform } from "../objects/CrumblingPlatform";
+import { TrapFloor } from "../objects/TrapFloor";
 import { Pendulum } from "../objects/Pendulum";
 import { PopupSpike } from "../objects/PopupSpike";
 import { Thwomp } from "../objects/Thwomp";
@@ -43,6 +44,7 @@ export class GameScene extends Phaser.Scene {
   private conveyors: Conveyor[] = [];
   private springs: Spring[] = [];
   private crumbles: CrumblingPlatform[] = [];
+  private trapFloors: TrapFloor[] = [];
   private pendulums: Pendulum[] = [];
   private popupSpikes: PopupSpike[] = [];
   private thwomps: Thwomp[] = [];
@@ -75,6 +77,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies = [];
     this.movingPlatforms = [];
     this.conveyors = [];
+    this.trapFloors = [];
     this.pendulums = [];
     this.popupSpikes = [];
     this.thwomps = [];
@@ -123,6 +126,7 @@ export class GameScene extends Phaser.Scene {
         cp.trigger();
       }
     });
+    this.physics.add.collider(this.player, this.trapFloors);
 
     // Enemies.
     for (const enemy of this.enemies) {
@@ -189,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     for (const enemy of this.enemies) enemy.update();
     for (const p of this.pendulums) p.update(this.elapsedMs);
     for (const s of this.popupSpikes) s.update(this.elapsedMs);
+    for (const tf of this.trapFloors) tf.update(this.elapsedMs);
     for (const mp of this.movingPlatforms) mp.update(this.elapsedMs, delta);
     for (const t of this.thwomps) t.update(delta, this.player);
     for (const sh of this.shooters) sh.update(delta);
@@ -218,6 +223,7 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.springs = [];
     this.crumbles = [];
+    this.trapFloors = [];
 
     for (const p of this.level.platforms) {
       switch (p.type ?? "static") {
@@ -237,6 +243,16 @@ export class GameScene extends Phaser.Scene {
             new CrumblingPlatform(this, p.x, p.y, p.width, p.height, {
               collapseMs: p.collapseMs,
               respawn: p.respawn,
+            }),
+          );
+          break;
+        case "trapfloor":
+          this.trapFloors.push(
+            new TrapFloor(this, p.x, p.y, p.width, p.height, {
+              telegraphMs: p.telegraphMs,
+              safeMs: p.safeMs,
+              openMs: p.openMs,
+              phase: p.phase,
             }),
           );
           break;

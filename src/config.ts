@@ -108,6 +108,16 @@ export const GEAR = {
   RADIUS: 20,
 } as const;
 
+/** F-2 Trap floor (level7) — disguised ground that warns twice, then opens. */
+export const TRAP_FLOOR = {
+  /** Warning-flicker duration (ms), same scale as POPUP_SPIKE.TELEGRAPH_MS. */
+  TELEGRAPH_MS: 450,
+  /** Disguised/safe duration between warnings (ms). */
+  SAFE_MS: 650,
+  /** How long the floor stays open (no collision) before resetting (ms). */
+  OPEN_MS: 1300,
+} as const;
+
 /** D Projectiles (shared by arrow shooters and turrets). */
 export const PROJECTILE = {
   SPEED: 300,
