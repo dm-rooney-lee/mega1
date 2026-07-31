@@ -39,7 +39,25 @@ export class BootScene extends Phaser.Scene {
     // Gear hazard (level7).
     this.makeGearTexture();
 
+    // Dev-only: `?level=N` (1-indexed, matching the in-game "STAGE N" label)
+    // skips the menu and jumps straight into that level. Stripped from
+    // production builds along with every other `import.meta.env.DEV` branch.
+    if (import.meta.env.DEV) {
+      const level = this.devLevelFromQuery();
+      if (level !== null) {
+        this.scene.start("GameScene", { level });
+        return;
+      }
+    }
+
     this.scene.start("MenuScene");
+  }
+
+  private devLevelFromQuery(): number | null {
+    const raw = new URLSearchParams(window.location.search).get("level");
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 1 ? n - 1 : null;
   }
 
   /** A flat-colored rectangle, optionally with a lighter top edge for depth. */
