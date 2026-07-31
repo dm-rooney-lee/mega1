@@ -4,6 +4,8 @@ import {
   pendulumAngleRad,
   pendulumHead,
   popupSpikePhase,
+  gearRotationRad,
+  // trapFloorPhase, // TODO: implement in Task 2
 } from "./motion";
 
 describe("pendulumAngleRad", () => {
@@ -96,5 +98,25 @@ describe("popupSpikePhase", () => {
 
   it("guards an empty cycle", () => {
     expect(popupSpikePhase(50, 0, 0, 0)).toBe("hidden");
+  });
+});
+
+describe("gearRotationRad", () => {
+  it("is zero at t=0 with no phase", () => {
+    expect(gearRotationRad(0, 180)).toBe(0);
+  });
+
+  it("advances proportionally to degPerSec and elapsed time", () => {
+    // 180 deg/s for 1000ms = 180 degrees = PI radians.
+    expect(gearRotationRad(1000, 180)).toBeCloseTo(Math.PI);
+  });
+
+  it("applies a phase offset even at elapsedMs=0", () => {
+    // phase 0.5 of a full turn = 180 degrees = PI radians.
+    expect(gearRotationRad(0, 180, 0.5)).toBeCloseTo(Math.PI);
+  });
+
+  it("returns a constant (phase-only) angle when degPerSec is 0", () => {
+    expect(gearRotationRad(5000, 0, 0.25)).toBeCloseTo(Math.PI / 2);
   });
 });

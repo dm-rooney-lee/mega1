@@ -70,6 +70,21 @@ export function oscillateOffset(
   return 0; // dwell at origin
 }
 
+/**
+ * Rotation angle (radians) for a spinning gear hazard. Purely a visual effect —
+ * the gear's hitbox is circular, so rotating it never changes the hit shape.
+ * Pure linear function of elapsed time, mirroring how `pendulumAngleRad` derives
+ * its motion from `elapsedMs` alone (deterministic, restart-safe).
+ */
+export function gearRotationRad(
+  elapsedMs: number,
+  degPerSec: number,
+  phase01 = 0,
+): number {
+  const deg = degPerSec * (elapsedMs / 1000) + phase01 * 360;
+  return (deg * Math.PI) / 180;
+}
+
 export type PopupSpikePhase = "hidden" | "telegraph" | "active";
 
 /**
