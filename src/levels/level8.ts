@@ -1,15 +1,15 @@
 import type { LevelDef } from "./types";
 
 /**
- * Stage 7 — level6's cannon/shield idea doubled in length (2600 -> 5200px) and
+ * Stage 8 — level6's cannon/shield idea doubled in length (2600 -> 5200px) and
  * escalated across four zones: warm-up (cannon recap) -> gearworks (the new
  * Gear hazard alone) -> trapped ground (the new TrapFloor hazard alone) ->
  * finale (cannon + gear + trap floor together). No checkpoints, same as every
  * other stage — dying restarts the whole level. Coordinates are world pixels;
  * expect to playtest-tune (same convention as level3/level6).
  */
-export const level7: LevelDef = {
-  name: "7 — Cogs & Pitfalls",
+export const level8: LevelDef = {
+  name: "8 — Cogs & Pitfalls",
   worldWidth: 5200,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },
