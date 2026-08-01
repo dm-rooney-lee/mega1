@@ -22,13 +22,17 @@ export interface Vec2 {
  *   - spring:   bounces anything that lands on top.
  *   - fake:     looks solid, then crumbles away shortly after being stepped on
  *               (also serves as the trapdoor; `collapseMs: 0` ≈ pure fake floor).
+ *   - trapfloor: disguised as a normal platform; auto-cycles forever between
+ *               solid, a warning flicker (twice), and briefly having no
+ *               collision at all (a hole) before resetting.
  */
 export type PlatformType =
   | "static"
   | "moving"
   | "conveyor"
   | "spring"
-  | "fake";
+  | "fake"
+  | "trapfloor";
 
 export interface PlatformDef {
   x: number;
@@ -64,6 +68,14 @@ export interface PlatformDef {
   collapseMs?: number;
   /** Whether it respawns after collapsing. */
   respawn?: boolean;
+
+  // type === "trapfloor" (reuses `phase` above for the stagger offset)
+  /** Warning-flicker duration (ms). Defaults to TRAP_FLOOR.TELEGRAPH_MS. */
+  telegraphMs?: number;
+  /** Disguised/safe duration between warnings (ms). Defaults to TRAP_FLOOR.SAFE_MS. */
+  safeMs?: number;
+  /** How long the floor stays open (ms). Defaults to TRAP_FLOOR.OPEN_MS. */
+  openMs?: number;
 }
 
 /** A spike hazard sits on top of a surface; width in whole spike-tiles (32px each). */
@@ -155,13 +167,28 @@ export interface CannonDef {
   intervalMs?: number;
 }
 
+/** F-1 — gear: rides a rail (like a moving platform) while spinning; instant death on contact. */
+export interface GearDef {
+  kind: "gear";
+  /** Home position (pivot) — where the rail path starts. */
+  x: number;
+  y: number;
+  axis?: "horizontal" | "vertical";
+  range?: number;
+  speed?: number;
+  phase?: number;
+  waitMs?: number;
+  rotateDegPerSec?: number;
+}
+
 export type HazardDef =
   | PendulumDef
   | PopupSpikeDef
   | ThwompDef
   | ShooterDef
   | TurretDef
-  | CannonDef;
+  | CannonDef
+  | GearDef;
 
 // --- Level ------------------------------------------------------------------
 

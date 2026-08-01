@@ -70,6 +70,21 @@ export function oscillateOffset(
   return 0; // dwell at origin
 }
 
+/**
+ * Rotation angle (radians) for a spinning gear hazard. Purely a visual effect —
+ * the gear's hitbox is circular, so rotating it never changes the hit shape.
+ * Pure linear function of elapsed time, mirroring how `pendulumAngleRad` derives
+ * its motion from `elapsedMs` alone (deterministic, restart-safe).
+ */
+export function gearRotationRad(
+  elapsedMs: number,
+  degPerSec: number,
+  phase01 = 0,
+): number {
+  const deg = degPerSec * (elapsedMs / 1000) + phase01 * 360;
+  return (deg * Math.PI) / 180;
+}
+
 export type PopupSpikePhase = "hidden" | "telegraph" | "active";
 
 /**
@@ -90,6 +105,31 @@ export function popupSpikePhase(
   if (t < hiddenMs) return "hidden";
   if (t < hiddenMs + telegraphMs) return "telegraph";
   return "active";
+}
+
+export type TrapFloorPhase = "solid" | "telegraph" | "open";
+
+/**
+ * Phase of a disguised trap floor. The cycle is fixed at safe -> telegraph ->
+ * safe -> telegraph -> open (warn twice, then the floor opens) — the "twice" is
+ * a deliberate design decision, so it is not a parameter. Only "open" removes
+ * collision; "telegraph" is a visible warning but still safe to stand on.
+ */
+export function trapFloorPhase(
+  elapsedMs: number,
+  telegraphMs: number,
+  safeMs: number,
+  openMs: number,
+  phase01 = 0,
+): TrapFloorPhase {
+  const cycleMs = 2 * safeMs + 2 * telegraphMs + openMs;
+  if (cycleMs <= 0) return "solid";
+  const t = mod(elapsedMs + phase01 * cycleMs, cycleMs);
+  if (t < safeMs) return "solid";
+  if (t < safeMs + telegraphMs) return "telegraph";
+  if (t < 2 * safeMs + telegraphMs) return "solid";
+  if (t < 2 * safeMs + 2 * telegraphMs) return "telegraph";
+  return "open";
 }
 
 /** Positive modulo (JS `%` keeps the sign of the dividend). */

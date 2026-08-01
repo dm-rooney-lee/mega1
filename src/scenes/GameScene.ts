@@ -10,12 +10,14 @@ import { MovingPlatform } from "../objects/MovingPlatform";
 import { Conveyor } from "../objects/Conveyor";
 import { Spring } from "../objects/Spring";
 import { CrumblingPlatform } from "../objects/CrumblingPlatform";
+import { TrapFloor } from "../objects/TrapFloor";
 import { Pendulum } from "../objects/Pendulum";
 import { PopupSpike } from "../objects/PopupSpike";
 import { Thwomp } from "../objects/Thwomp";
 import { Shooter } from "../objects/Shooter";
 import { Turret } from "../objects/Turret";
 import { Cannon } from "../objects/Cannon";
+import { Gear } from "../objects/Gear";
 import { ShieldItem } from "../objects/ShieldItem";
 import { isOffWorld } from "../objects/ballistics";
 import { Projectile } from "../objects/Projectile";
@@ -44,12 +46,14 @@ export class GameScene extends Phaser.Scene {
   private conveyors: Conveyor[] = [];
   private springs: Spring[] = [];
   private crumbles: CrumblingPlatform[] = [];
+  private trapFloors: TrapFloor[] = [];
   private pendulums: Pendulum[] = [];
   private popupSpikes: PopupSpike[] = [];
   private thwomps: Thwomp[] = [];
   private shooters: Shooter[] = [];
   private turrets: Turret[] = [];
   private cannons: Cannon[] = [];
+  private gears: Gear[] = [];
   private cannonballs!: Phaser.Physics.Arcade.Group;
   private pool!: ProjectilePool;
   private shieldText!: Phaser.GameObjects.Text;
@@ -86,6 +90,7 @@ export class GameScene extends Phaser.Scene {
     this.shooters = [];
     this.turrets = [];
     this.cannons = [];
+    this.gears = [];
     this.hitCooldownUntil = 0;
 
     // World + camera bounds. Leave the bottom edge open so the player can fall
@@ -131,6 +136,7 @@ export class GameScene extends Phaser.Scene {
         cp.trigger();
       }
     });
+    this.physics.add.collider(this.player, this.trapFloors);
 
     // Enemies.
     for (const enemy of this.enemies) {
@@ -143,6 +149,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, popupGroup, () => this.handleDeath());
     for (const p of this.pendulums) {
       this.physics.add.overlap(this.player, p.head, () => this.handleDeath());
+    }
+    for (const g of this.gears) {
+      this.physics.add.overlap(this.player, g, () => this.handleDeath());
     }
     for (const t of this.thwomps) {
       this.physics.add.overlap(this.player, t, () => {
@@ -194,11 +203,13 @@ export class GameScene extends Phaser.Scene {
     for (const enemy of this.enemies) enemy.update();
     for (const p of this.pendulums) p.update(this.elapsedMs);
     for (const s of this.popupSpikes) s.update(this.elapsedMs);
+    for (const tf of this.trapFloors) tf.update(this.elapsedMs);
     for (const mp of this.movingPlatforms) mp.update(this.elapsedMs, delta);
     for (const t of this.thwomps) t.update(delta, this.player);
     for (const sh of this.shooters) sh.update(delta);
     for (const tu of this.turrets) tu.update(delta, this.player);
     for (const c of this.cannons) c.update(this.elapsedMs);
+    for (const g of this.gears) g.update(this.elapsedMs, delta);
 
     // Cannonballs that fly off the world are destroyed (avoid leaking objects).
     // destroy() mutates the group's array, so iterate over a copy.
@@ -222,6 +233,7 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.springs = [];
     this.crumbles = [];
+    this.trapFloors = [];
 
     for (const p of this.level.platforms) {
       switch (p.type ?? "static") {
@@ -241,6 +253,16 @@ export class GameScene extends Phaser.Scene {
             new CrumblingPlatform(this, p.x, p.y, p.width, p.height, {
               collapseMs: p.collapseMs,
               respawn: p.respawn,
+            }),
+          );
+          break;
+        case "trapfloor":
+          this.trapFloors.push(
+            new TrapFloor(this, p.x, p.y, p.width, p.height, {
+              telegraphMs: p.telegraphMs,
+              safeMs: p.safeMs,
+              openMs: p.openMs,
+              phase: p.phase,
             }),
           );
           break;
@@ -359,6 +381,18 @@ export class GameScene extends Phaser.Scene {
         break;
       case "cannon":
         this.cannons.push(new Cannon(this, h, this.cannonballs));
+        break;
+      case "gear":
+        this.gears.push(
+          new Gear(this, h.x, h.y, {
+            axis: h.axis,
+            range: h.range,
+            speed: h.speed,
+            phase: h.phase,
+            waitMs: h.waitMs,
+            rotateDegPerSec: h.rotateDegPerSec,
+          }),
+        );
         break;
     }
   }
