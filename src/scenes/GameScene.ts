@@ -31,6 +31,8 @@ import { ProjectilePool } from "../objects/ProjectilePool";
 export class GameScene extends Phaser.Scene {
   private level!: LevelDef;
   private levelIndex = 0;
+  /** Dev-only spawn-x override (see `init`); undefined = use the level's own. */
+  private spawnX?: number;
   private player!: Player;
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private enemies: Enemy[] = [];
@@ -63,9 +65,14 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  /** `level` is an index into the `levels` registry; defaults to the first. */
-  init(data: { level?: number }): void {
+  /**
+   * `level` is an index into the `levels` registry; defaults to the first.
+   * `spawnX` overrides the level's own spawn x — only ever set by the dev-only
+   * `?stage=N&x=…` route in `MenuScene`, and carried through death/retry.
+   */
+  init(data: { level?: number; spawnX?: number }): void {
     this.levelIndex = data.level ?? 0;
+    this.spawnX = data.spawnX;
   }
 
   create(): void {
@@ -103,7 +110,11 @@ export class GameScene extends Phaser.Scene {
     this.buildHazards(popupGroup);
     const shieldItems = this.buildShields();
 
-    this.player = new Player(this, this.level.playerSpawn.x, this.level.playerSpawn.y);
+    this.player = new Player(
+      this,
+      this.spawnX ?? this.level.playerSpawn.x,
+      this.level.playerSpawn.y,
+    );
     this.player.setDepth(DEPTH.PLAYER);
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
@@ -491,9 +502,10 @@ export class GameScene extends Phaser.Scene {
     this.player.die();
     this.cameras.main.stopFollow();
     this.cameras.main.shake(200, 0.01);
-    // Retry should restart the stage the player died on.
+    // Retry should restart the stage the player died on — including a dev-only
+    // spawn-x override, so debugging a late hazard doesn't replay the run-up.
     this.time.delayedCall(800, () =>
-      this.scene.start("GameOverScene", { level: this.levelIndex }),
+      this.scene.start("GameOverScene", { level: this.levelIndex, spawnX: this.spawnX }),
     );
   }
 
