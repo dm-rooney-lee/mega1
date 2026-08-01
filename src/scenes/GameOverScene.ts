@@ -4,14 +4,19 @@ import { GAME } from "../config";
 /** Shown on death. Retry restarts the level; Esc returns to the menu. */
 export class GameOverScene extends Phaser.Scene {
   private level = 0;
+  private spawnX?: number;
 
   constructor() {
     super("GameOverScene");
   }
 
-  /** The stage the player died on, so retry restarts that same stage. */
-  init(data: { level?: number }): void {
+  /**
+   * The stage the player died on, so retry restarts that same stage — carrying
+   * the dev-only spawn-x override through with it.
+   */
+  init(data: { level?: number; spawnX?: number }): void {
     this.level = data.level ?? 0;
+    this.spawnX = data.spawnX;
   }
 
   create(): void {
@@ -42,7 +47,8 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    const retry = () => this.scene.start("GameScene", { level: this.level });
+    const retry = () =>
+      this.scene.start("GameScene", { level: this.level, spawnX: this.spawnX });
     const kb = this.input.keyboard!;
     kb.once("keydown-SPACE", retry);
     kb.once("keydown-ENTER", retry);
