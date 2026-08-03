@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME } from "../config";
+import { centredTextScreen } from "./textScreen";
 
 /** Shown on death. Retry restarts the level; Esc returns to the menu. */
 export class GameOverScene extends Phaser.Scene {
@@ -20,32 +20,11 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
-    const cx = GAME.WIDTH / 2;
-
-    this.add
-      .text(cx, 200, "YOU DIED", {
-        fontFamily: "monospace",
-        fontSize: "56px",
-        color: "#ff004d",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, 300, "press SPACE / ENTER to retry", {
-        fontFamily: "monospace",
-        fontSize: "22px",
-        color: "#fff1e8",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, 340, "ESC for menu", {
-        fontFamily: "monospace",
-        fontSize: "18px",
-        color: "#7d7460",
-      })
-      .setOrigin(0.5);
+    const screen = centredTextScreen(this);
+    screen.add(200, 56, "YOU DIED", "#ff004d", true);
+    screen.add(300, 22, "press SPACE / ENTER to retry", "#fff1e8");
+    screen.add(340, 18, "ESC for menu", "#7d7460");
+    screen.start();
 
     const retry = () =>
       this.scene.start("GameScene", { level: this.level, spawnX: this.spawnX });

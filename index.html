@@ -21,7 +21,9 @@
         justify-content: center;
       }
       canvas {
-        image-rendering: pixelated;
+        /* No image-rendering override: the buffer already matches the screen's
+           physical pixels, so the browser has nothing left to interpolate. */
+        display: block;
       }
     </style>
   </head>

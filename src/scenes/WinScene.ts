@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME } from "../config";
+import { centredTextScreen } from "./textScreen";
 
 /** Shown on reaching the goal. Play again restarts; Esc returns to the menu. */
 export class WinScene extends Phaser.Scene {
@@ -8,40 +8,12 @@ export class WinScene extends Phaser.Scene {
   }
 
   create(): void {
-    const cx = GAME.WIDTH / 2;
-
-    this.add
-      .text(cx, 200, "YOU WIN!", {
-        fontFamily: "monospace",
-        fontSize: "52px",
-        color: "#00e436",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, 260, "all stages cleared", {
-        fontFamily: "monospace",
-        fontSize: "20px",
-        color: "#fff1e8",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, 300, "press SPACE / ENTER to play again", {
-        fontFamily: "monospace",
-        fontSize: "22px",
-        color: "#fff1e8",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(cx, 340, "ESC for menu", {
-        fontFamily: "monospace",
-        fontSize: "18px",
-        color: "#7d7460",
-      })
-      .setOrigin(0.5);
+    const screen = centredTextScreen(this);
+    screen.add(200, 52, "YOU WIN!", "#00e436", true);
+    screen.add(260, 20, "all stages cleared", "#fff1e8");
+    screen.add(300, 22, "press SPACE / ENTER to play again", "#fff1e8");
+    screen.add(340, 18, "ESC for menu", "#7d7460");
+    screen.start();
 
     const playAgain = () => this.scene.start("GameScene", { level: 0 });
     const kb = this.input.keyboard!;

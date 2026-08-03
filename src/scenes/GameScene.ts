@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { CANNON, COLORS, DEPTH, GAME, TEX } from "../config";
+import { CANNON, COLORS, DEPTH, TEX } from "../config";
+import { cameraZoom } from "../display";
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
@@ -56,7 +57,13 @@ export class GameScene extends Phaser.Scene {
   private gears: Gear[] = [];
   private cannonballs!: Phaser.Physics.Arcade.Group;
   private pool!: ProjectilePool;
+
+  // HUD. Held so `layoutHud` can re-anchor them to the camera's view; see there
+  // for why they are not simply pinned with a zero scroll factor.
+  private hudHint!: Phaser.GameObjects.Text;
   private shieldText!: Phaser.GameObjects.Text;
+  private stageText!: Phaser.GameObjects.Text;
+  private levelBanner?: Phaser.GameObjects.Text;
 
   /** ms until the player can take another cannonball hit (debounces one volley). */
   private hitCooldownUntil = 0;
@@ -98,6 +105,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.level.worldWidth, this.level.worldHeight);
     this.physics.world.setBoundsCollision(true, true, true, false);
     this.cameras.main.setBounds(0, 0, this.level.worldWidth, this.level.worldHeight);
+    // Recover the logical coordinate space: the canvas buffer is sized in physical
+    // pixels, so the camera zooms 540 logical units up to fill its height.
+    this.cameras.main.setZoom(cameraZoom(this.scale.height));
 
     this.drawBackground();
     this.buildPlatforms();
@@ -116,7 +126,7 @@ export class GameScene extends Phaser.Scene {
       this.level.playerSpawn.y,
     );
     this.player.setDepth(DEPTH.PLAYER);
-    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.followPlayer();
 
     const goal = new Goal(this, this.level.goal.x, this.level.goal.y);
     goal.setDepth(DEPTH.HAZARD);
@@ -191,9 +201,41 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, goal, () => this.handleWin());
 
     this.drawHud();
+    this.layoutHud();
+
+    // The Scale Manager is global, so drop the listener when the scene ends —
+    // otherwise every restart leaves another one attached.
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
+    });
+  }
+
+  /**
+   * Soft follow, so the camera trails the player rather than snapping to them.
+   *
+   * Pixel rounding is off: it only ever applies at whole-number camera zooms
+   * anyway, so leaving it on would snap the world on some window sizes and not
+   * others. Fractional scroll is what we want now that filtering is smooth.
+   */
+  private followPlayer(): void {
+    this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
+  }
+
+  /** Window resized: the buffer changed, so the camera zoom has to follow it. */
+  private onDisplayResize(): void {
+    const zoom = cameraZoom(this.scale.height);
+    this.cameras.main.setZoom(zoom);
+    // Re-following snaps the scroll to the new zoom. Without it the camera spends
+    // half a second lerping back into place, dragging the HUD along with it.
+    if (!this.ending) this.followPlayer();
+    for (const text of this.hudTexts()) text.setResolution(zoom);
+    this.layoutHud();
   }
 
   update(_time: number, delta: number): void {
+    this.layoutHud();
+
     // Death/win arc keeps playing under physics, but the world freezes (G6).
     this.player.update(this.time.now);
     if (this.ending) return;
@@ -524,56 +566,88 @@ export class GameScene extends Phaser.Scene {
     return n > 0 ? `Shield: ${"●".repeat(n)}` : "Shield: --";
   }
 
+  /**
+   * Builds the HUD. Positions are placeholders — `layoutHud` owns them.
+   *
+   * Font sizes and stroke widths stay in logical units: the camera zoom scales
+   * them up, so they keep the size they always had. `setResolution` rasterises
+   * the glyphs at that zoom instead of letting the camera magnify a small
+   * texture, which is what made the text mushy before.
+   */
   private drawHud(): void {
-    const hint = this.add
+    const zoom = cameraZoom(this.scale.height);
+    this.levelBanner = undefined;
+
+    this.hudHint = this.add
       .text(
-        16,
-        14,
+        0,
+        0,
         "Arrows / A,D to move  •  Space / W / Up to jump  •  stomp enemies, reach the flag",
         { fontFamily: "monospace", fontSize: "15px", color: "#fff1e8" },
       )
-      .setScrollFactor(0)
       .setDepth(DEPTH.HUD);
-    hint.setStroke("#1d2b53", 4);
-    this.tweens.add({ targets: hint, alpha: 0, delay: 5000, duration: 1000 });
+    this.hudHint.setStroke("#1d2b53", 4);
+    this.tweens.add({ targets: this.hudHint, alpha: 0, delay: 5000, duration: 1000 });
 
     // Shield charge counter, just under the hint — always on, like the stage indicator.
     this.shieldText = this.add
-      .text(16, 40, this.shieldLabel(), {
+      .text(0, 0, this.shieldLabel(), {
         fontFamily: "monospace",
         fontSize: "18px",
         color: "#29adff",
       })
-      .setScrollFactor(0)
       .setDepth(DEPTH.HUD);
     this.shieldText.setStroke("#1d2b53", 4);
 
     // Stage indicator, top-right — always on, so progress is readable mid-play.
-    const stage = this.add
-      .text(GAME.WIDTH - 16, 14, `STAGE ${this.levelIndex + 1}/${levels.length}`, {
+    this.stageText = this.add
+      .text(0, 0, `STAGE ${this.levelIndex + 1}/${levels.length}`, {
         fontFamily: "monospace",
         fontSize: "16px",
         color: "#00e436",
       })
       .setOrigin(1, 0)
-      .setScrollFactor(0)
       .setDepth(DEPTH.HUD);
-    stage.setStroke("#1d2b53", 4);
+    this.stageText.setStroke("#1d2b53", 4);
 
     // Brief level-name banner.
     if (this.level.name) {
-      const banner = this.add
-        .text(this.scale.width / 2, 80, this.level.name, {
+      this.levelBanner = this.add
+        .text(0, 0, this.level.name, {
           fontFamily: "monospace",
           fontSize: "28px",
           color: "#ffec27",
           fontStyle: "bold",
         })
         .setOrigin(0.5)
-        .setScrollFactor(0)
         .setDepth(DEPTH.HUD);
-      banner.setStroke("#1d2b53", 5);
-      this.tweens.add({ targets: banner, alpha: 0, delay: 1800, duration: 800 });
+      this.levelBanner.setStroke("#1d2b53", 5);
+      this.tweens.add({ targets: this.levelBanner, alpha: 0, delay: 1800, duration: 800 });
     }
+
+    for (const text of this.hudTexts()) text.setResolution(zoom);
+  }
+
+  private hudTexts(): Phaser.GameObjects.Text[] {
+    const texts = [this.hudHint, this.shieldText, this.stageText];
+    return this.levelBanner ? [...texts, this.levelBanner] : texts;
+  }
+
+  /**
+   * Re-anchors the HUD to the camera's current view, in logical units from its
+   * edges. A zoomed camera scales everything it draws — including objects with a
+   * zero scroll factor — so pinning to `worldView` keeps the arithmetic obvious
+   * where compensating for the zoom by hand would not.
+   *
+   * `worldView` reflects the previous frame's scroll, since the camera updates it
+   * during render. With the camera's 0.1 lerp that trails by well under a logical
+   * pixel, which is invisible.
+   */
+  private layoutHud(): void {
+    const view = this.cameras.main.worldView;
+    this.hudHint.setPosition(view.x + 16, view.y + 14);
+    this.shieldText.setPosition(view.x + 16, view.y + 40);
+    this.stageText.setPosition(view.right - 16, view.y + 14);
+    this.levelBanner?.setPosition(view.centerX, view.y + 80);
   }
 }
