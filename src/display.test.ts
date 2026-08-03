@@ -7,6 +7,7 @@ import {
   LOGICAL_WIDTH_MAX,
   LOGICAL_WIDTH_MIN,
   MAX_PIXEL_RATIO,
+  shakeCamera,
 } from "./display";
 
 describe("computeDisplay", () => {
@@ -117,6 +118,60 @@ describe("computeDisplay", () => {
       expect(d.bufferWidth).toBeGreaterThan(0);
       expect(d.bufferHeight).toBeGreaterThan(0);
       expect(d.zoom).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("shakeCamera", () => {
+  const spy = (zoom: number) => {
+    const calls: { duration: number; intensity: number }[] = [];
+    return {
+      camera: { zoom, shake: (duration: number, intensity: number) => calls.push({ duration, intensity }) },
+      calls,
+    };
+  };
+
+  it("[Happy] 카메라 배율을 나눠서 화면상 흔들림 크기를 일정하게 유지", () => {
+    const { camera, calls } = spy(3.3333333333333335);
+    shakeCamera(camera, 180, 0.012);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].duration).toBe(180);
+    expect(calls[0].intensity).toBeCloseTo(0.012 / 3.3333333333333335, 10);
+  });
+
+  it("[Happy] 서로 다른 배율에서도 화면상 흔들림이 같아진다", () => {
+    // Phaser의 실제 계산: 오프셋 = intensity × 버퍼폭 × 배율.
+    // 화면(CSS) 크기로 환산하면 intensity × 배율 × CSS폭이므로, 배율을 나눠주면
+    // 어떤 배율에서도 같은 CSS 픽셀만큼 흔들려야 한다.
+    const cssWidth = 1512;
+    const apparent = (zoom: number) => {
+      const { camera, calls } = spy(zoom);
+      shakeCamera(camera, 200, 0.01);
+      return calls[0].intensity * zoom * cssWidth;
+    };
+    expect(apparent(1)).toBeCloseTo(apparent(3.3333), 6);
+    expect(apparent(1.6667)).toBeCloseTo(apparent(3.3333), 6);
+    expect(apparent(1)).toBeCloseTo(0.01 * cssWidth, 6);
+  });
+
+  it("[Boundary] 배율 1이면 그대로 전달", () => {
+    const { camera, calls } = spy(1);
+    shakeCamera(camera, 100, 0.02);
+    expect(calls[0].intensity).toBe(0.02);
+  });
+
+  it("[Boundary] 흔들림 0은 0으로 남는다", () => {
+    const { camera, calls } = spy(2);
+    shakeCamera(camera, 100, 0);
+    expect(calls[0].intensity).toBe(0);
+  });
+
+  it("[Error] 배율이 0·음수·NaN이면 1로 취급해 나눗셈이 깨지지 않는다", () => {
+    for (const bad of [0, -2, Number.NaN]) {
+      const { camera, calls } = spy(bad);
+      shakeCamera(camera, 100, 0.01);
+      expect(calls[0].intensity).toBe(0.01);
+      expect(Number.isFinite(calls[0].intensity)).toBe(true);
     }
   });
 });

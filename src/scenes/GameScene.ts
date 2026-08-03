@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { CANNON, COLORS, DEPTH, TEX } from "../config";
-import { cameraZoom } from "../display";
+import { cameraZoom, shakeCamera } from "../display";
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
@@ -203,11 +203,20 @@ export class GameScene extends Phaser.Scene {
     this.drawHud();
     this.layoutHud();
 
+    // Re-anchor the HUD from inside the camera's own update, which is where the
+    // view it is measured against becomes current. Doing it from `update()` reads
+    // the previous frame's view, and since the camera keeps pace with the player
+    // that leaves the HUD a full frame of travel behind — a visible wobble.
+    this.cameras.main.on(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE, this.layoutHud, this);
+
     // The Scale Manager is global, so drop the listener when the scene ends —
     // otherwise every restart leaves another one attached.
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
+      // The camera manager tears itself down on this same event and gets there
+      // first, so `main` may already be gone — its listeners went with it.
+      this.cameras.main?.off(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE, this.layoutHud, this);
     });
   }
 
@@ -234,8 +243,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    this.layoutHud();
-
     // Death/win arc keeps playing under physics, but the world freezes (G6).
     this.player.update(this.time.now);
     if (this.ending) return;
@@ -543,7 +550,7 @@ export class GameScene extends Phaser.Scene {
     this.ending = true;
     this.player.die();
     this.cameras.main.stopFollow();
-    this.cameras.main.shake(200, 0.01);
+    shakeCamera(this.cameras.main, 200, 0.01);
     // Retry should restart the stage the player died on — including a dev-only
     // spawn-x override, so debugging a late hazard doesn't replay the run-up.
     this.time.delayedCall(800, () =>
@@ -639,9 +646,9 @@ export class GameScene extends Phaser.Scene {
    * zero scroll factor — so pinning to `worldView` keeps the arithmetic obvious
    * where compensating for the zoom by hand would not.
    *
-   * `worldView` reflects the previous frame's scroll, since the camera updates it
-   * during render. With the camera's 0.1 lerp that trails by well under a logical
-   * pixel, which is invisible.
+   * Called from the camera's FOLLOW_UPDATE (see `create`), because `worldView` is
+   * only current inside the camera's own update. Once the camera stops following
+   * — the death and win arcs — it no longer moves, so no further calls are needed.
    */
   private layoutHud(): void {
     const view = this.cameras.main.worldView;

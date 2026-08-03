@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLORS, DEPTH, THWOMP, TEX } from "../config";
+import { shakeCamera } from "../display";
 import type { Player } from "./Player";
 
 type ThwompState = "idle" | "telegraph" | "dropping" | "bottom" | "rising";
@@ -98,7 +99,7 @@ export class Thwomp extends Phaser.Physics.Arcade.Sprite {
           this.y = this.homeY + this.dropDistance;
           this.mode = "bottom";
           this.timerMs = 0;
-          this.scene.cameras.main.shake(180, 0.012);
+          shakeCamera(this.scene.cameras.main, 180, 0.012);
         }
         break;
       }

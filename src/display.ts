@@ -73,6 +73,29 @@ const positive = (value: number, fallback: number): number =>
 export const cameraZoom = (bufferHeight: number): number =>
   positive(bufferHeight, LOGICAL_HEIGHT) / LOGICAL_HEIGHT;
 
+/** Just enough of a camera to shake it, so this module stays Phaser-free. */
+type ShakeableCamera = {
+  zoom: number;
+  shake(duration: number, intensity: number): unknown;
+};
+
+/**
+ * Shakes the camera, with `intensity` read as a fraction of the visible area.
+ *
+ * Phaser scales the shake offset by the camera's pixel width *and* its zoom. Both
+ * grew when the buffer moved to physical pixels, so passing a raw intensity now
+ * throws the screen `zoom` times further than the gameplay asked for — a crusher
+ * landing went from an 18px nudge to a 60px lurch. Dividing the zoom back out
+ * restores the authored amount at any window size.
+ */
+export function shakeCamera(
+  camera: ShakeableCamera,
+  duration: number,
+  intensity: number,
+): void {
+  camera.shake(duration, intensity / positive(camera.zoom, 1));
+}
+
 /**
  * Works out every size the renderer needs from the window and its pixel ratio.
  *
