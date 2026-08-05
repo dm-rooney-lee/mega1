@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
 import { centredTextScreen } from "./textScreen";
+import { startBgmOnce } from "../audio";
 
 /** Title screen. Press any key (or click/tap) to start the level. */
 export class MenuScene extends Phaser.Scene {
@@ -32,6 +33,7 @@ export class MenuScene extends Phaser.Scene {
               `[dev] ?x=${askedX} is outside stage ${requested + 1} (0-${worldWidth}); using its normal spawn point.`,
             );
           }
+          startBgmOnce(this);
           this.scene.start("GameScene", { level: requested, spawnX: spawnX ?? undefined });
           return;
         }
@@ -52,7 +54,10 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    const start = () => this.scene.start("GameScene", { level: 0 });
+    const start = () => {
+      startBgmOnce(this);
+      this.scene.start("GameScene", { level: 0 });
+    };
     this.input.keyboard!.once("keydown", start);
     this.input.once("pointerdown", start);
   }

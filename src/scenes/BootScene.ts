@@ -13,6 +13,10 @@ export class BootScene extends Phaser.Scene {
     super("BootScene");
   }
 
+  preload(): void {
+    this.load.audio("bgm", "audio/bgm.mp3");
+  }
+
   create(): void {
     this.makePlayerTexture();
     this.makeGroundTileTexture();
