@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { CAMERA, CANNON, COLORS, DEPTH, TEX } from "../config";
+import { CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
 import {
   cameraViewOrigin,
   cameraZoom,
@@ -29,6 +29,7 @@ import { ShieldItem } from "../objects/ShieldItem";
 import { isOffWorld } from "../objects/ballistics";
 import { Projectile } from "../objects/Projectile";
 import { ProjectilePool } from "../objects/ProjectilePool";
+import { worldForStage } from "../worlds";
 
 /**
  * The playable level. Reads a LevelDef (selected by the `level` index the scene
@@ -44,6 +45,7 @@ export class GameScene extends Phaser.Scene {
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private enemies: Enemy[] = [];
   private ending = false;
+  private farBg!: Phaser.GameObjects.TileSprite;
 
   /** Scene time since create(); drives all deterministic (time-based) content. */
   private elapsedMs = 0;
@@ -266,6 +268,7 @@ export class GameScene extends Phaser.Scene {
       snapToDevicePixel(cam.clampY(y), cam.zoom),
     );
     this.layoutHud();
+    this.layoutParallax();
   }
 
   /** Window resized: the buffer changed, so the camera zoom has to follow it. */
@@ -606,10 +609,18 @@ export class GameScene extends Phaser.Scene {
   // --- Presentation ---
 
   private drawBackground(): void {
+    const world = worldForStage(this.levelIndex);
+    const fillColor =
+      world === "grassland" ? COLORS.PLAYER : world === "sunset" ? COLORS.SKY_DUSK_TOP : COLORS.BACKGROUND;
     this.add
-      .rectangle(0, 0, this.level.worldWidth, this.level.worldHeight, COLORS.BACKGROUND)
+      .rectangle(0, 0, this.level.worldWidth, this.level.worldHeight, fillColor)
       .setOrigin(0, 0)
       .setDepth(DEPTH.BACKGROUND);
+
+    const bgTex =
+      world === "grassland" ? TEX.BG_GRASSLAND : world === "sunset" ? TEX.BG_SUNSET : TEX.BG_UNDERGROUND;
+    this.farBg = this.add.tileSprite(0, 0, 1, 1, bgTex).setOrigin(0, 0).setDepth(DEPTH.BACKGROUND_FAR);
+    this.farBg.setTileScale(1 / TEXTURE_SCALE, 1 / TEXTURE_SCALE);
   }
 
   /** "Shield: ●●●" while charges remain, "Shield: --" once depleted (or never picked up). */
@@ -683,6 +694,21 @@ export class GameScene extends Phaser.Scene {
   private hudTexts(): Phaser.GameObjects.Text[] {
     const texts = [this.hudHint, this.shieldText, this.stageText];
     return this.levelBanner ? [...texts, this.levelBanner] : texts;
+  }
+
+  /**
+   * 먼 배경 레이어를 뷰포트 크기로 맞춰 카메라 앞에 고정하고, tilePositionX로 5배
+   * 느린 시차를 낸다. tilePositionX도 소수점이면 일렁이므로 snapToDevicePixel로
+   * 스냅한다(display.ts 재사용, 새 스냅 함수 없음).
+   */
+  private layoutParallax(): void {
+    if (!this.farBg) return;
+    const cam = this.cameras.main;
+    const left = cameraViewOrigin(cam.scrollX, cam.width, cam.zoom);
+    const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
+    this.farBg.setPosition(left, top);
+    this.farBg.setSize(cam.width / cam.zoom, cam.height / cam.zoom);
+    this.farBg.tilePositionX = snapToDevicePixel(cam.scrollX * PARALLAX.FAR_FACTOR, cam.zoom);
   }
 
   /**

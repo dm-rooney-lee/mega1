@@ -40,6 +40,9 @@ export class BootScene extends Phaser.Scene {
     // Gear hazard (level7).
     this.makeGearTexture();
 
+    // Per-world parallax background layer (Task 9).
+    this.makeBackgroundTextures();
+
     // Dev-only: `?level=N` (1-indexed, matching the in-game "STAGE N" label)
     // skips the menu and jumps straight into that level. Stripped from
     // production builds along with every other `import.meta.env.DEV` branch.
@@ -401,5 +404,70 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(w / 2 - 2, 6, 4, 12);
     g.fillRect(w / 2 - 6, 10, 12, 4);
     this.endTexture(g, TEX.SHIELD, w, h);
+  }
+
+  /** 세계별 먼 배경 레이어(뷰포트 크기로 반복 배치될 소스 타일). */
+  private makeBackgroundTextures(): void {
+    this.makeGrasslandBg();
+    this.makeSunsetBg();
+    this.makeUndergroundBg();
+  }
+
+  private makeGrasslandBg(): void {
+    const w = 480;
+    const h = 468;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.PLAYER, 1); // sky blue (same hue as the player — outline solves the readability risk)
+    g.fillRect(0, 0, w, h);
+    g.fillStyle(0xfff1e8, 1);
+    g.fillRect(40, 40, 60, 12); // cloud
+    g.fillRect(60, 28, 40, 12);
+    g.fillRect(300, 60, 70, 12);
+    g.fillStyle(COLORS.HILL_FAR, 1);
+    g.fillRect(0, h - 120, 160, 120);
+    g.fillRect(180, h - 90, 140, 90);
+    g.fillRect(340, h - 130, 140, 130);
+    this.endTexture(g, TEX.BG_GRASSLAND, w, h);
+  }
+
+  private makeSunsetBg(): void {
+    const w = 480;
+    const h = 468;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.SKY_DUSK_TOP, 1);
+    g.fillRect(0, 0, w, h * 0.3);
+    g.fillStyle(COLORS.SKY_DUSK_MID, 1);
+    g.fillRect(0, h * 0.3, w, h * 0.25);
+    g.fillStyle(COLORS.SKY_DUSK_BOTTOM, 1);
+    g.fillRect(0, h * 0.55, w, h * 0.45);
+    g.fillStyle(0xffec27, 1);
+    g.fillRect(w / 2 - 30, h * 0.4, 60, 40); // low sun
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(30, h - 140, 12, 140); // tree trunk
+    g.fillRect(10, h - 200, 50, 70); // tree canopy
+    g.fillRect(380, h - 160, 12, 160);
+    g.fillRect(355, h - 220, 60, 80);
+    this.endTexture(g, TEX.BG_SUNSET, w, h);
+  }
+
+  private makeUndergroundBg(): void {
+    const w = 480;
+    const h = 468;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.BACKGROUND, 1);
+    g.fillRect(0, 0, w, h);
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(0, 0, w, 40);
+    g.fillStyle(COLORS.DIRT, 1);
+    g.fillRect(60, 40, 10, 50); // root
+    g.fillRect(220, 40, 8, 70);
+    g.fillRect(380, 40, 10, 40);
+    g.fillStyle(COLORS.CAVE_ROCK, 1);
+    g.fillRect(120, 40, 16, 60); // stalactite
+    g.fillRect(300, 40, 20, 80);
+    g.fillStyle(0xff77a8, 1);
+    g.fillRect(150, h - 120, 8, 8); // glowing mushroom accent
+    g.fillRect(340, h - 100, 8, 8);
+    this.endTexture(g, TEX.BG_UNDERGROUND, w, h);
   }
 }
