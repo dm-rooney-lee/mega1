@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { COLORS, TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * Generates all placeholder textures procedurally (no image files needed), then
@@ -60,6 +61,51 @@ export class BootScene extends Phaser.Scene {
     return Number.isInteger(n) && n >= 1 ? n - 1 : null;
   }
 
+  /**
+   * Graphics pre-scaled so every drawing command below stays in logical units
+   * while the pixels it lays down are `TEXTURE_SCALE` times denser. Pair with
+   * `endTexture`, which bakes it at the matching size.
+   */
+  private beginTexture(): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    g.scaleCanvas(TEXTURE_SCALE, TEXTURE_SCALE);
+    return g;
+  }
+
+  /**
+   * Bakes the drawing into a texture that many times larger than its logical size.
+   * Sprites shrink back down to match — see `src/objects/hitbox.ts` for what that
+   * means for their bodies.
+   */
+  private endTexture(
+    g: Phaser.GameObjects.Graphics,
+    key: string,
+    width: number,
+    height: number,
+  ): void {
+    g.generateTexture(key, width * TEXTURE_SCALE, height * TEXTURE_SCALE);
+    g.destroy();
+    this.clampTextureEdges(key);
+  }
+
+  /**
+   * Stops a texture's edges from sampling the opposite side.
+   *
+   * Phaser gives any power-of-two texture `REPEAT` wrapping, so smooth filtering
+   * along an edge pixel blends in the far edge. On the spikes — empty at the top,
+   * solid white along the bottom — that drew a white hairline across the tips.
+   * Every size here is a power of two once multiplied by the texture scale, so
+   * clamp them all.
+   */
+  private clampTextureEdges(key: string): void {
+    const renderer = this.sys.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+    const glTexture = this.textures.get(key).source[0].glTexture;
+    // The Canvas renderer has no wrap modes and no glTexture.
+    if (!renderer.gl || !glTexture) return;
+    const clamp = renderer.gl.CLAMP_TO_EDGE;
+    renderer.setTextureWrap(glTexture, clamp, clamp);
+  }
+
   /** A flat-colored rectangle, optionally with a lighter top edge for depth. */
   private makeRectTexture(
     key: string,
@@ -68,22 +114,21 @@ export class BootScene extends Phaser.Scene {
     color: number,
     topColor?: number,
   ): void {
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(color, 1);
     g.fillRect(0, 0, w, h);
     if (topColor !== undefined) {
       g.fillStyle(topColor, 1);
       g.fillRect(0, 0, w, 6);
     }
-    g.generateTexture(key, w, h);
-    g.destroy();
+    this.endTexture(g, key, w, h);
   }
 
   /** Player: a rounded body with two little "eyes" so facing is readable. */
   private makePlayerTexture(): void {
     const w = 28;
     const h = 40;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.PLAYER, 1);
     g.fillRoundedRect(0, 0, w, h, 6);
     g.fillStyle(0xffffff, 1);
@@ -92,14 +137,13 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x000000, 1);
     g.fillCircle(10, 13, 1.5);
     g.fillCircle(20, 13, 1.5);
-    g.generateTexture(TEX.PLAYER, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.PLAYER, w, h);
   }
 
   /** A row-friendly triangular spike tile (32x32). */
   private makeSpikeTexture(): void {
     const s = 32;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.SPIKE, 1);
     // Three teeth across the tile.
     for (let i = 0; i < 3; i++) {
@@ -107,28 +151,26 @@ export class BootScene extends Phaser.Scene {
       const step = s / 3;
       g.fillTriangle(base, s, base + step / 2, 0, base + step, s);
     }
-    g.generateTexture(TEX.SPIKE, s, s);
-    g.destroy();
+    this.endTexture(g, TEX.SPIKE, s, s);
   }
 
   /** Goal: a flag on a pole. */
   private makeGoalTexture(): void {
     const w = 40;
     const h = 64;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(0xffffff, 1);
     g.fillRect(4, 0, 4, h); // pole
     g.fillStyle(COLORS.GOAL, 1);
     g.fillTriangle(8, 4, 8, 30, 36, 17); // flag
-    g.generateTexture(TEX.GOAL, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.GOAL, w, h);
   }
 
   /** Jump pad: a springy base with a bright top plate. */
   private makeSpringTexture(): void {
     const w = 32;
     const h = 20;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(0x1a4d2e, 1);
     // A couple of coil zig-zags for a springy read.
     for (let i = 0; i < 3; i++) {
@@ -136,30 +178,28 @@ export class BootScene extends Phaser.Scene {
     }
     g.fillStyle(COLORS.SPRING, 1);
     g.fillRect(0, 0, w, 7); // top plate
-    g.generateTexture(TEX.SPRING, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.SPRING, w, h);
   }
 
   /** Conveyor: dark belt with chevrons hinting at the push direction (drawn →). */
   private makeConveyorTexture(): void {
     const w = 64;
     const h = 24;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.CONVEYOR, 1);
     g.fillRect(0, 0, w, h);
     g.fillStyle(COLORS.CONVEYOR_ARROW, 1);
     for (let x = 4; x < w; x += 20) {
       g.fillTriangle(x, 6, x, 18, x + 10, 12); // right-pointing chevron
     }
-    g.generateTexture(TEX.CONVEYOR, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.CONVEYOR, w, h);
   }
 
   /** Pendulum head: a spiked ball. */
   private makePendulumHeadTexture(): void {
     const s = 40;
     const c = s / 2;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.PENDULUM_HEAD, 1);
     // Spikes radiating out.
     const spikes = 8;
@@ -181,15 +221,14 @@ export class BootScene extends Phaser.Scene {
     g.fillCircle(c, c, rInner);
     g.fillStyle(0x8a5a00, 1);
     g.fillCircle(c, c, 5); // dark core
-    g.generateTexture(TEX.PENDULUM_HEAD, s, s);
-    g.destroy();
+    this.endTexture(g, TEX.PENDULUM_HEAD, s, s);
   }
 
   /** Thwomp: a chunky block with an angry face on the bottom. */
   private makeThwompTexture(): void {
     const w = 60;
     const h = 60;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.THWOMP, 1);
     g.fillRect(0, 0, w, h);
     g.fillStyle(0x5a1a3c, 1);
@@ -198,15 +237,14 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(14, 22, 8, 10); // left eye
     g.fillRect(38, 22, 8, 10); // right eye
     g.fillRect(18, 44, 24, 5); // gritted mouth
-    g.generateTexture(TEX.THWOMP, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.THWOMP, w, h);
   }
 
   /** Gear: a circular hub with square teeth around the rim (distinct silhouette from the pendulum's spikes). */
   private makeGearTexture(): void {
     const s = 44;
     const c = s / 2;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.GEAR, 1);
     g.fillCircle(c, c, 15);
     const teeth = 8;
@@ -220,72 +258,66 @@ export class BootScene extends Phaser.Scene {
     }
     g.fillStyle(0x4a4a4a, 1);
     g.fillCircle(c, c, 6); // dark hub
-    g.generateTexture(TEX.GEAR, s, s);
-    g.destroy();
+    this.endTexture(g, TEX.GEAR, s, s);
   }
 
   /** Projectile: a small dart pointing right (flipped when fired left). */
   private makeProjectileTexture(): void {
     const w = 22;
     const h = 10;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.PROJECTILE, 1);
     g.fillRect(0, h / 2 - 2, w - 8, 4); // shaft
     g.fillTriangle(w - 10, 0, w - 10, h, w, h / 2); // head
-    g.generateTexture(TEX.PROJECTILE, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.PROJECTILE, w, h);
   }
 
   /** Wall-mounted arrow launcher. */
   private makeShooterTexture(): void {
     const w = 26;
     const h = 34;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.SHOOTER, 1);
     g.fillRect(0, 0, w, h);
     g.fillStyle(0x1a0d16, 1);
     g.fillRect(w - 10, h / 2 - 5, 10, 10); // muzzle
-    g.generateTexture(TEX.SHOOTER, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.SHOOTER, w, h);
   }
 
   /** Turret: a squat body with a barrel; stompable from above. */
   private makeTurretTexture(): void {
     const w = 34;
     const h = 30;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.TURRET, 1);
     g.fillRoundedRect(0, 6, w, h - 6, 4);
     g.fillStyle(0x6b2f1e, 1);
     g.fillRect(w / 2 - 4, 0, 8, 12); // barrel
     g.fillStyle(0xffec27, 1);
     g.fillCircle(w / 2, 18, 3); // eye
-    g.generateTexture(TEX.TURRET, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.TURRET, w, h);
   }
 
   /** Cannonball: a small circle. */
   private makeCannonballTexture(): void {
     const d = 16;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.CANNONBALL, 1);
     g.fillCircle(d / 2, d / 2, d / 2);
-    g.generateTexture(TEX.CANNONBALL, d, d);
-    g.destroy();
+    this.endTexture(g, TEX.CANNONBALL, d, d);
   }
 
   /** Shield pickup: a shield shape with a white cross. */
   private makeShieldTexture(): void {
     const w = 26;
     const h = 30;
-    const g = this.add.graphics();
+    const g = this.beginTexture();
     g.fillStyle(COLORS.SHIELD, 1);
     g.fillRoundedRect(0, 0, w, h - 8, 5);
     g.fillTriangle(0, h - 10, w, h - 10, w / 2, h);
     g.fillStyle(0xffffff, 1);
     g.fillRect(w / 2 - 2, 6, 4, 12);
     g.fillRect(w / 2 - 6, 10, 12, 4);
-    g.generateTexture(TEX.SHIELD, w, h);
-    g.destroy();
+    this.endTexture(g, TEX.SHIELD, w, h);
   }
 }

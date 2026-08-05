@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { DEPTH, PROJECTILE, TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * A single reusable projectile. It self-culls (in preUpdate) once it has flown
@@ -15,6 +16,7 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.PROJECTILE);
+    this.setScale(1 / TEXTURE_SCALE);
     this.setDepth(DEPTH.PROJECTILE);
   }
 

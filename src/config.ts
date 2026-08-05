@@ -1,14 +1,24 @@
 /**
  * Central tuning knobs for the game. Keeping these in one place makes it easy to
  * tweak "game feel" without hunting through the code.
+ *
+ * Every value here is in logical units — the same space the levels are authored
+ * in. The viewport is no longer a fixed size (it is 540 logical units tall with a
+ * width that follows the window), but that is a rendering concern only: see
+ * `src/display.ts`.
  */
-export const GAME = {
-  WIDTH: 960,
-  HEIGHT: 540,
-} as const;
 
 /** Size of one tile-based hazard cell (spikes, pop-up spikes). */
 export const TILE = 32;
+
+/** How the camera trails the player. */
+export const CAMERA = {
+  /**
+   * Follow smoothing, per second. 6.32 reproduces the old per-frame lerp of 0.1
+   * at 60fps (`1 - e^(-6.32/60) = 0.1`) while staying the same at any frame rate.
+   */
+  SMOOTH_PER_SEC: 6.32,
+} as const;
 
 export const PHYSICS = {
   /** Downward acceleration (px/s^2). Higher = heavier, snappier fall. */

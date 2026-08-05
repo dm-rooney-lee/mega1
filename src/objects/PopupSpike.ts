@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { COLORS, DEPTH, POPUP_SPIKE, TILE, TEX } from "../config";
 import { popupSpikePhase } from "../levels/motion";
+import { TEXTURE_SCALE } from "../display";
+import { setLogicalBodySize, setLogicalBodyOffset } from "./hitbox";
 
 /**
  * C-2 — spikes hidden in the floor that rise on a cycle. Deadly only while
@@ -47,12 +49,14 @@ export class PopupSpike {
     for (let i = 0; i < count; i++) {
       const t = scene.physics.add
         .image(x + i * TILE + TILE / 2, this.hiddenY, TEX.SPIKE)
+        .setScale(1 / TEXTURE_SCALE)
         .setDepth(DEPTH.HAZARD);
       const body = t.body as Phaser.Physics.Arcade.Body;
       body.setAllowGravity(false);
       body.setImmovable(true);
       // Only the pointy upper portion hurts (matches the static spikes).
-      body.setSize(28, 18).setOffset(2, 14);
+      setLogicalBodySize(t, 28, 18);
+      setLogicalBodyOffset(t, 2, 14);
       body.enable = false;
       t.setVisible(false);
       group.add(t);

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * The level-end flag. Physics-enabled only so it can participate in an overlap
@@ -10,6 +11,7 @@ export class Goal extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.GOAL);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 

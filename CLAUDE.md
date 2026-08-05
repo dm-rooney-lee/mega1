@@ -7,6 +7,24 @@
 - 새 해저드·오브젝트 타입을 추가할 때는 `add-hazard-type` Skill을 참고한다(여러 파일을 락스텝으로 고쳐야 함).
 
 # 알려진 함정
+- 캔버스 크기와 게임 좌표는 분리되어 있다. `main.ts`가 캔버스를 화면의 물리 픽셀 크기로 잡고, `GameScene`이 카메라 배율로 논리 좌표계(세로 540 고정, 가로 854~1100 가변)를 되돌린다. 자세한 계산은 `src/display.ts`.
+  - 레벨 좌표·중력·속도는 전부 논리 단위다 — 화면 크기에 맞춰 곱하지 말 것.
+  - 세로 540은 고정값이다. 8개 스테이지가 모두 세로 540이고 level7은 천장을 y=0에 두고 있어 여유가 없다.
+  - 화면에 고정할 표시물은 `setScrollFactor(0)`으로 해결되지 않는다 — 카메라 배율이 그것까지 확대한다. `GameScene.layoutHud()`처럼 `cameras.main.worldView` 기준으로 배치할 것.
+  - 그때 `worldView`를 `update()`에서 읽으면 **한 프레임 전 값**이다(카메라는 렌더 중에 시야를 갱신한다). 대신 `cameraViewOrigin()`으로 지금 정한 스크롤에서 직접 계산할 것 — `GameScene.layoutHud()`가 그 방식이다.
+- **카메라는 `startFollow`를 쓰지 않고 `GameScene.updateCamera()`가 직접 움직인다.** 스크롤을 바꿀 일이 있으면 반드시 `setCameraScroll()`을 통할 것 — 여기서 레벨 경계 클램프, 물리 픽셀 격자 스냅, HUD 재배치가 한꺼번에 일어난다.
+  - **격자 스냅이 핵심이다.** 스크롤이 소수점이면 매 프레임 모든 텍스처가 다른 서브픽셀 위상으로 다시 샘플링되어, 위치는 완벽히 매끄러운데도 화면 전체가 일렁이는 것처럼 보인다(눈이 아플 정도). 스냅 단위는 물리 픽셀 1개(논리 픽셀의 약 1/3)라 움직임 자체는 매끄럽다.
+  - 추적 부드러움은 `CAMERA.SMOOTH_PER_SEC`이며 **초 단위**다. Phaser의 `startFollow` lerp는 프레임당 비율이라 프레임레이트에 따라 추적 속도가 달라진다 — 그래서 쓰지 않는다.
+  - 카메라 흔들림은 `cameras.main.shake()`를 직접 부르지 말고 `shakeCamera()`(src/display.ts)를 쓸 것. Phaser가 흔들림 크기를 `intensity × 카메라폭 × 카메라배율`로 계산하는데 폭이 물리 픽셀이고 배율이 1이 아니므로, 직접 부르면 의도한 것보다 배율배(레티나에서 약 3.3배) 크게 흔들린다.
+  - 씬 종료(`SHUTDOWN`) 핸들러에서 `cameras.main`은 이미 `undefined`일 수 있다 — 카메라 매니저가 같은 이벤트로 먼저 정리된다. 접근할 때 `?.`를 쓸 것(안 쓰면 예외가 게임 루프를 멈춘다).
+  - 플레이 화면의 `Text`는 `setResolution(카메라 배율)`이 필요하다. 없으면 작은 텍스처가 확대되어 뭉개진다. 제목·게임오버·클리어 화면은 카메라 배율이 1이라 불필요하다(`scenes/textScreen.ts`).
+  - **`BootScene`의 텍스처는 논리 크기의 `TEXTURE_SCALE`배로 생성된다** (화면 배율 2에서 4배). 카메라 확대를 상쇄해 선명하게 보이기 위한 것이다. 새 텍스처를 추가할 때는 `beginTexture()`/`endTexture()`를 쓸 것 — 그리기 좌표는 논리 단위 그대로 쓰면 된다.
+  - 그 텍스처로 스프라이트를 만들면 **논리 크기로 되돌려야 한다**. `setDisplaySize(논리폭, 논리높이)`를 이미 부르고 있으면 그대로 두면 되고, 아니면 `setScale(1 / TEXTURE_SCALE)`을 추가한다. 빠뜨리면 그림이 4배로 커진다.
+  - 그다음 히트박스: **동적 바디**의 명시적 크기는 스프라이트 배율에 연동되므로 `objects/hitbox.ts`의 `setLogicalBodySize`/`setLogicalBodyCircle`/`setLogicalBodyOffset`을 쓸 것(`body.setSize`/`setCircle`/`setOffset` 직접 호출 금지). **정적 바디**는 절대값이라 그대로 쓰면 되지만, 스프라이트 배율을 바꾼 뒤에는 `body.updateFromGameObject()`로 위치를 다시 읽어야 한다.
+  - 크기를 `this.width`(텍스처 폭)로 넘기는 코드는 자기보정되므로 건드리지 말 것 (`Thwomp`, `MovingPlatform`).
+  - 원형 바디의 `radius` 필드는 텍스처 픽셀 단위로 남는다. 충돌 판정은 `halfWidth`를 쓰므로 정상이다 — `radius` 값만 보고 히트박스가 커졌다고 오해하지 말 것.
+  - Phaser는 **2의 거듭제곱 크기 텍스처에 `REPEAT` 감싸기를 기본 적용**한다. 그러면 위쪽 가장자리를 그릴 때 아래쪽 끝 행이 배어 나온다(가시 텍스처는 바닥이 흰색이라 가시 끝에 흰 가로선이 그어졌었다). `endTexture()`가 `CLAMP_TO_EDGE`로 되돌리므로 `generateTexture`를 직접 부르지 말 것.
+- 물리는 **120Hz 고정 스텝**이다(`main.ts`의 `physics.arcade.fps`). 60Hz로 두면 화면 갱신 주기와 어긋나 어떤 프레임은 두 번, 어떤 프레임은 0번 갱신되어 캐릭터가 눈에 띄게 떨린다. 이 값을 바꾸면 **점프 높이가 미세하게 달라진다** — 스텝이 잘수록 이론값(165px)에 가까워진다. 60Hz에서 159.5px, 120Hz에서 162.3px이며, 레벨이 요구하는 최대 상승은 136px이다.
 - `physics.add.group(...)`에 스프라이트를 추가하면 그룹의 기본 속도(0,0)가 기존 속도를 조용히 덮어쓴다. `Cannon.ts`/`Cannonball.ts`의 `reapplyVelocity()` 패턴으로 우회한다.
 - 발사체 생명주기 패턴이 `ProjectilePool`(고정 크기 재사용)과 대포알(무제한 그룹 + 수동 `destroy()`) 2종류로 공존한다 — 새로 만들 때 유사한 기존 오브젝트를 참고해 판단한다.
 - `docs/superpowers/`의 옛 설계문서가 말하는 "level2"(대포·실드 스테이지)는 현재 코드의 `level6.ts`다 — 두 팀이 동시에 "level2"를 만들어 병합 시 재번호됐다.

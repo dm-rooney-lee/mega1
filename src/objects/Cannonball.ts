@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { CANNON, DEPTH, TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * A cannon's projectile: constant horizontal velocity, no gravity. Created by
@@ -12,6 +13,7 @@ export class Cannonball extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number, direction: "left" | "right") {
     super(scene, x, y, TEX.CANNONBALL);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.body.setAllowGravity(false);

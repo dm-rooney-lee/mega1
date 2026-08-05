@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { COLORS, DEPTH, PROJECTILE, TURRET, TEX } from "../config";
 import type { Player } from "./Player";
 import type { ProjectilePool } from "./ProjectilePool";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * D-2 — a turret. Fires projectiles (death on contact) but the body itself can
@@ -39,6 +40,7 @@ export class Turret extends Phaser.Physics.Arcade.Sprite {
     } = {},
   ) {
     super(scene, x, y, TEX.TURRET);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setDepth(DEPTH.ENEMY);

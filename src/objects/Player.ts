@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { COLORS, PLAYER, SHIELD, TEX } from "../config";
 import { absorbHit as absorbShieldHit } from "./shield";
+import { TEXTURE_SCALE } from "../display";
+import { setLogicalBodySize } from "./hitbox";
 
 type Keys = {
   left: Phaser.Input.Keyboard.Key[];
@@ -35,13 +37,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.PLAYER);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     this.setCollideWorldBounds(true);
     this.setOrigin(0.5, 0.5);
     // Slightly smaller hitbox than the sprite feels fairer on tight jumps.
-    this.body.setSize(24, 38);
+    setLogicalBodySize(this, 24, 38);
 
     const kb = scene.input.keyboard!;
     this.keys = {

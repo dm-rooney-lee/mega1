@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { DEPTH, PROJECTILE, SHOOTER, TEX } from "../config";
 import type { ProjectilePool } from "./ProjectilePool";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * D-1 — a wall-mounted launcher that fires a horizontal projectile on a timer
@@ -24,6 +25,7 @@ export class Shooter extends Phaser.Physics.Arcade.Sprite {
     opts: { direction: -1 | 1; projectileSpeed?: number; intervalMs?: number },
   ) {
     super(scene, x, y, TEX.SHOOTER);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this, true);
     this.setDepth(DEPTH.HAZARD);

@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { COLORS, DEPTH, PENDULUM, TEX } from "../config";
 import { pendulumAngleRad, pendulumHead } from "../levels/motion";
+import { TEXTURE_SCALE } from "../display";
+import { setLogicalBodyCircle } from "./hitbox";
 
 /**
  * B-1 — a spiked ball swinging from a fixed pivot. The head is a physics sprite
@@ -45,13 +47,15 @@ export class Pendulum {
       .setDepth(DEPTH.HAZARD);
 
     this.head = scene.physics.add.image(pivotX, pivotY + this.length, TEX.PENDULUM_HEAD);
+    this.head.setScale(1 / TEXTURE_SCALE);
     this.head.setDepth(DEPTH.HAZARD);
     const body = this.head.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false);
     body.setImmovable(true);
     // Circular hitbox a touch smaller than the art (fairer near the edges).
-    const inset = this.head.width / 2 - PENDULUM.HEAD_RADIUS;
-    body.setCircle(PENDULUM.HEAD_RADIUS, inset, inset);
+    // displayWidth, not width: the texture is oversized and the sprite scaled down.
+    const inset = this.head.displayWidth / 2 - PENDULUM.HEAD_RADIUS;
+    setLogicalBodyCircle(this.head, PENDULUM.HEAD_RADIUS, inset, inset);
 
     this.redraw();
   }
