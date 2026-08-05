@@ -21,9 +21,9 @@ export class BootScene extends Phaser.Scene {
     this.makeGoalTexture();
 
     // New content (feature/MEGA-map).
-    this.makeRectTexture(TEX.MOVING, 32, 32, COLORS.MOVING, 0x4d8fe0);
+    this.makeLogTexture();
     // Fake floor deliberately resembles a normal platform — spotting it is a reward.
-    this.makeRectTexture(TEX.FAKE, 32, 32, COLORS.FAKE, 0x87693f);
+    this.makeFakeGroundTexture();
     this.makeSpringTexture();
     this.makeConveyorTexture();
     this.makePendulumHeadTexture();
@@ -229,22 +229,38 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, TEX.GOAL, w, h);
   }
 
-  /** Jump pad: a springy base with a bright top plate. */
+  /** 버섯 점프대: 기둥 + 둥근 갓 대신 각진 갓(2단위 격자). */
   private makeSpringTexture(): void {
     const w = 32;
     const h = 20;
     const g = this.beginTexture();
-    g.fillStyle(0x1a4d2e, 1);
-    // A couple of coil zig-zags for a springy read.
-    for (let i = 0; i < 3; i++) {
-      g.fillRect(4 + i * 9, 6, 4, h - 6);
-    }
+    g.fillStyle(0xfff1e8, 1);
+    g.fillRect(12, 8, 8, 12); // stem
     g.fillStyle(COLORS.SPRING, 1);
-    g.fillRect(0, 0, w, 7); // top plate
+    g.fillRect(0, 0, w, 8); // cap top
+    g.fillRect(4, 8, w - 8, 4); // cap rim
+    g.fillStyle(0xfff1e8, 1);
+    g.fillRect(6, 2, 4, 4); // cap spots
+    g.fillRect(22, 2, 4, 4);
     this.endTexture(g, TEX.SPRING, w, h);
   }
 
-  /** Conveyor: dark belt with chevrons hinting at the push direction (drawn →). */
+  /** 나무 통나무: 가로 나이테 띠(늘려도 왜곡 없는 균일 패턴). */
+  private makeLogTexture(): void {
+    const w = 32;
+    const h = 32;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.MOVING, 1);
+    g.fillRect(0, 0, w, h);
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(0, 0, w, 3);
+    g.fillRect(0, h - 3, w, 3);
+    g.fillStyle(0xfff1e8, 1);
+    g.fillRect(0, 14, w, 2); // core ring highlight
+    this.endTexture(g, TEX.MOVING, w, h);
+  }
+
+  /** 뿌리 벨트: 화살촉 방향 신호는 유지(기능상 필수), 배색만 자연 톤으로. */
   private makeConveyorTexture(): void {
     const w = 64;
     const h = 24;
@@ -256,6 +272,18 @@ export class BootScene extends Phaser.Scene {
       g.fillTriangle(x, 6, x, 18, x + 10, 12); // right-pointing chevron
     }
     this.endTexture(g, TEX.CONVEYOR, w, h);
+  }
+
+  /** 위장발판/낙하함정 공유 텍스처: 새 땅 무늬와 유사한 이끼 낀 흙(구분 단서는 미세한 색조 차이). */
+  private makeFakeGroundTexture(): void {
+    const w = 32;
+    const h = 32;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.FAKE, 1);
+    g.fillRect(0, 0, w, h);
+    g.fillStyle(COLORS.HILL_FAR, 1);
+    g.fillRect(0, 0, w, 4);
+    this.endTexture(g, TEX.FAKE, w, h);
   }
 
   /** 솔방울: 사각 비늘이 어긋나게 쌓인 실루엣(원형 히트박스는 Pendulum.ts가 별도 관리, 텍스처만 변경). */
