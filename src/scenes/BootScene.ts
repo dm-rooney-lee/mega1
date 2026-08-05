@@ -124,19 +124,47 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, key, w, h);
   }
 
-  /** Player: a rounded body with two little "eyes" so facing is readable. */
+  /** 고퍼: 각진 실루엣 + 검정 테두리 + 귀·코·앞니·발(14x20 아트 픽셀, 2단위 격자). */
   private makePlayerTexture(): void {
     const w = 28;
     const h = 40;
     const g = this.beginTexture();
-    g.fillStyle(COLORS.PLAYER, 1);
-    g.fillRoundedRect(0, 0, w, h, 6);
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(9, 13, 3);
-    g.fillCircle(19, 13, 3);
-    g.fillStyle(0x000000, 1);
-    g.fillCircle(10, 13, 1.5);
-    g.fillCircle(20, 13, 1.5);
+    const px = (x: number, y: number, pw: number, ph: number, color: number): void => {
+      g.fillStyle(color, 1);
+      g.fillRect(x * 2, y * 2, pw * 2, ph * 2);
+    };
+
+    // 검정 테두리(귀 2개 포함 실루엣).
+    px(1, 0, 2, 2, COLORS.OUTLINE);
+    px(11, 0, 2, 2, COLORS.OUTLINE);
+    px(2, 0, 10, 1, COLORS.OUTLINE);
+    px(1, 1, 12, 1, COLORS.OUTLINE);
+    px(0, 2, 14, 16, COLORS.OUTLINE);
+    px(1, 18, 12, 1, COLORS.OUTLINE);
+    px(2, 19, 10, 1, COLORS.OUTLINE);
+
+    // 몸통(테두리 안쪽으로 1아트픽셀 인셋).
+    px(3, 1, 8, 1, COLORS.PLAYER);
+    px(2, 2, 10, 1, COLORS.PLAYER);
+    px(1, 3, 12, 14, COLORS.PLAYER);
+    px(2, 17, 10, 1, COLORS.PLAYER);
+    px(3, 18, 8, 1, COLORS.PLAYER);
+
+    // 눈.
+    px(3, 5, 2, 2, 0xfff1e8);
+    px(9, 5, 2, 2, 0xfff1e8);
+    px(4, 6, 1, 1, COLORS.OUTLINE);
+    px(10, 6, 1, 1, COLORS.OUTLINE);
+
+    // 코 + 앞니(고퍼 정체성 단서).
+    px(6, 8, 2, 1, COLORS.OUTLINE);
+    px(5, 9, 4, 2, 0xfff1e8);
+    px(7, 9, 1, 2, COLORS.OUTLINE);
+
+    // 발.
+    px(2, 18, 3, 2, 0xffccaa);
+    px(9, 18, 3, 2, 0xffccaa);
+
     this.endTexture(g, TEX.PLAYER, w, h);
   }
 
