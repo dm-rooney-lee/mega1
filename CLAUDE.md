@@ -20,6 +20,8 @@
   - 그다음 히트박스: **동적 바디**의 명시적 크기는 스프라이트 배율에 연동되므로 `objects/hitbox.ts`의 `setLogicalBodySize`/`setLogicalBodyCircle`/`setLogicalBodyOffset`을 쓸 것(`body.setSize`/`setCircle`/`setOffset` 직접 호출 금지). **정적 바디**는 절대값이라 그대로 쓰면 되지만, 스프라이트 배율을 바꾼 뒤에는 `body.updateFromGameObject()`로 위치를 다시 읽어야 한다.
   - 크기를 `this.width`(텍스처 폭)로 넘기는 코드는 자기보정되므로 건드리지 말 것 (`Thwomp`, `MovingPlatform`).
   - 원형 바디의 `radius` 필드는 텍스처 픽셀 단위로 남는다. 충돌 판정은 `halfWidth`를 쓰므로 정상이다 — `radius` 값만 보고 히트박스가 커졌다고 오해하지 말 것.
+  - Phaser는 **2의 거듭제곱 크기 텍스처에 `REPEAT` 감싸기를 기본 적용**한다. 그러면 위쪽 가장자리를 그릴 때 아래쪽 끝 행이 배어 나온다(가시 텍스처는 바닥이 흰색이라 가시 끝에 흰 가로선이 그어졌었다). `endTexture()`가 `CLAMP_TO_EDGE`로 되돌리므로 `generateTexture`를 직접 부르지 말 것.
+- 물리는 **120Hz 고정 스텝**이다(`main.ts`의 `physics.arcade.fps`). 60Hz로 두면 화면 갱신 주기와 어긋나 어떤 프레임은 두 번, 어떤 프레임은 0번 갱신되어 캐릭터가 눈에 띄게 떨린다. 이 값을 바꾸면 **점프 높이가 미세하게 달라진다** — 스텝이 잘수록 이론값(165px)에 가까워진다. 60Hz에서 159.5px, 120Hz에서 162.3px이며, 레벨이 요구하는 최대 상승은 136px이다.
 - `physics.add.group(...)`에 스프라이트를 추가하면 그룹의 기본 속도(0,0)가 기존 속도를 조용히 덮어쓴다. `Cannon.ts`/`Cannonball.ts`의 `reapplyVelocity()` 패턴으로 우회한다.
 - 발사체 생명주기 패턴이 `ProjectilePool`(고정 크기 재사용)과 대포알(무제한 그룹 + 수동 `destroy()`) 2종류로 공존한다 — 새로 만들 때 유사한 기존 오브젝트를 참고해 판단한다.
 - `docs/superpowers/`의 옛 설계문서가 말하는 "level2"(대포·실드 스테이지)는 현재 코드의 `level6.ts`다 — 두 팀이 동시에 "level2"를 만들어 병합 시 재번호됐다.

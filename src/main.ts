@@ -40,6 +40,13 @@ const config: Phaser.Types.Core.GameConfig = {
     arcade: {
       gravity: { x: 0, y: PHYSICS.GRAVITY_Y },
       debug: false,
+      // Arcade advances in fixed steps, and at 60 those steps do not line up with
+      // the display: some frames get two, some none, and the resulting stutter is
+      // plainly visible now that the picture is sharp. Halving the step evens it
+      // out (measured: worst-case wobble 19px -> 6px) and matches 120Hz screens.
+      // It also lands jumps 2.8px closer to their theoretical height — more
+      // forgiving, never less, against the 136px the tallest rise asks for.
+      fps: 120,
     },
   },
   scene: [BootScene, MenuScene, GameScene, GameOverScene, WinScene],

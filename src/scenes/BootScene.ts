@@ -85,6 +85,25 @@ export class BootScene extends Phaser.Scene {
   ): void {
     g.generateTexture(key, width * TEXTURE_SCALE, height * TEXTURE_SCALE);
     g.destroy();
+    this.clampTextureEdges(key);
+  }
+
+  /**
+   * Stops a texture's edges from sampling the opposite side.
+   *
+   * Phaser gives any power-of-two texture `REPEAT` wrapping, so smooth filtering
+   * along an edge pixel blends in the far edge. On the spikes — empty at the top,
+   * solid white along the bottom — that drew a white hairline across the tips.
+   * Every size here is a power of two once multiplied by the texture scale, so
+   * clamp them all.
+   */
+  private clampTextureEdges(key: string): void {
+    const renderer = this.sys.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
+    const glTexture = this.textures.get(key).source[0].glTexture;
+    // The Canvas renderer has no wrap modes and no glTexture.
+    if (!renderer.gl || !glTexture) return;
+    const clamp = renderer.gl.CLAMP_TO_EDGE;
+    renderer.setTextureWrap(glTexture, clamp, clamp);
   }
 
   /** A flat-colored rectangle, optionally with a lighter top edge for depth. */
