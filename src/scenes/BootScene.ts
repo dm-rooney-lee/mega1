@@ -217,15 +217,18 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, TEX.SPIKE, s, s);
   }
 
-  /** Goal: a flag on a pole. */
+  /** 깃대는 유지, 깃발을 나뭇잎 모양(잎맥 표시)으로. */
   private makeGoalTexture(): void {
     const w = 40;
     const h = 64;
     const g = this.beginTexture();
-    g.fillStyle(0xffffff, 1);
+    g.fillStyle(0xfff1e8, 1);
     g.fillRect(4, 0, 4, h); // pole
     g.fillStyle(COLORS.GOAL, 1);
-    g.fillTriangle(8, 4, 8, 30, 36, 17); // flag
+    g.fillRect(8, 6, 24, 20); // leaf body
+    g.fillRect(32, 12, 6, 8); // leaf tip
+    g.fillStyle(COLORS.HILL_FAR, 1);
+    g.fillRect(8, 15, 26, 2); // leaf vein
     this.endTexture(g, TEX.GOAL, w, h);
   }
 
@@ -386,15 +389,15 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, TEX.CANNONBALL, d, d);
   }
 
-  /** Shield pickup: a shield shape with a white cross. */
+  /** 나뭇잎 방패: 방패 실루엣 유지, 색만 초록으로(십자 표식은 가독성 위해 유지). */
   private makeShieldTexture(): void {
     const w = 26;
     const h = 30;
     const g = this.beginTexture();
     g.fillStyle(COLORS.SHIELD, 1);
-    g.fillRoundedRect(0, 0, w, h - 8, 5);
+    g.fillRect(0, 0, w, h - 8);
     g.fillTriangle(0, h - 10, w, h - 10, w / 2, h);
-    g.fillStyle(0xffffff, 1);
+    g.fillStyle(0xfff1e8, 1);
     g.fillRect(w / 2 - 2, 6, 4, 12);
     g.fillRect(w / 2 - 6, 10, 12, 4);
     this.endTexture(g, TEX.SHIELD, w, h);
