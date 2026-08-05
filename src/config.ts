@@ -179,8 +179,6 @@ export const SHIELD = {
 export const COLORS = {
   BACKGROUND: 0x1d2b53,
   PLAYER: 0x29adff,
-  PLATFORM: 0x5f574f,
-  PLATFORM_TOP: 0x7d7460,
   ENEMY: 0xff004d,
   SPIKE: 0xab5236,
   GOAL: 0x00e436,
@@ -217,7 +215,6 @@ export const COLORS = {
 /** Keys used to look up textures generated in BootScene. */
 export const TEX = {
   PLAYER: "tex-player",
-  PLATFORM: "tex-platform",
   ENEMY: "tex-enemy",
   SPIKE: "tex-spike",
   GOAL: "tex-goal",

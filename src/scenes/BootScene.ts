@@ -15,7 +15,7 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.makePlayerTexture();
-    this.makeRectTexture(TEX.PLATFORM, 32, 32, COLORS.PLATFORM, COLORS.PLATFORM_TOP);
+    this.makeGroundTileTexture();
     this.makeRectTexture(TEX.ENEMY, 32, 28, COLORS.ENEMY);
     this.makeSpikeTexture();
     this.makeGoalTexture();
@@ -122,6 +122,23 @@ export class BootScene extends Phaser.Scene {
       g.fillRect(0, 0, w, 6);
     }
     this.endTexture(g, key, w, h);
+  }
+
+  /** 반복 배치되는 흙+풀 타일(64x44). 발판 폭에 맞춰 늘리지 않고 TileSprite로 이어붙인다. */
+  private makeGroundTileTexture(): void {
+    const w = 64;
+    const h = 44;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.GRASS_TOP, 1);
+    g.fillRect(0, 0, w, 6);
+    g.fillStyle(COLORS.DIRT, 1);
+    g.fillRect(0, 6, w, h - 6);
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(8, 16, 6, 4);
+    g.fillRect(38, 28, 8, 4);
+    g.fillRect(20, 12, 4, 4);
+    g.fillRect(50, 10, 4, 12);
+    this.endTexture(g, TEX.GROUND_TILE, w, h);
   }
 
   /** 고퍼: 각진 실루엣 + 검정 테두리 + 귀·코·앞니·발(14x20 아트 픽셀, 2단위 격자). */

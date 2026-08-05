@@ -360,14 +360,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   private makeStaticPlatform(p: PlatformDef): void {
-    const img = this.platforms.create(
+    const vis = this.add.tileSprite(
       p.x + p.width / 2,
       p.y + p.height / 2,
-      TEX.PLATFORM,
-    ) as Phaser.Physics.Arcade.Sprite;
-    img.setDisplaySize(p.width, p.height);
-    img.setDepth(DEPTH.PLATFORM);
-    img.refreshBody(); // resize the static body to match the display size
+      p.width,
+      p.height,
+      TEX.GROUND_TILE,
+    );
+    vis.setTileScale(1 / TEXTURE_SCALE, 1 / TEXTURE_SCALE);
+    vis.setDepth(DEPTH.PLATFORM);
+    this.physics.add.existing(vis, true);
+    (vis.body as Phaser.Physics.Arcade.StaticBody).updateFromGameObject();
+    this.platforms.add(vis);
   }
 
   private makeMovingPlatform(p: PlatformDef): MovingPlatform {
