@@ -16,7 +16,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.makePlayerTexture();
     this.makeGroundTileTexture();
-    this.makeRectTexture(TEX.ENEMY, 32, 28, COLORS.ENEMY);
+    this.makeEnemyTexture();
     this.makeSpikeTexture();
     this.makeGoalTexture();
 
@@ -185,17 +185,35 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, TEX.PLAYER, w, h);
   }
 
-  /** A row-friendly triangular spike tile (32x32). */
+  /** 적: 딱정벌레 — 둥근 등딱지 대신 각진 갑각 + 화난 눈. */
+  private makeEnemyTexture(): void {
+    const w = 32;
+    const h = 28;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(2, 4, 28, 20);
+    g.fillStyle(COLORS.ENEMY, 1);
+    g.fillRect(4, 6, 24, 16);
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(6, 10, 4, 4); // left eye
+    g.fillRect(22, 10, 4, 4); // right eye
+    g.fillRect(0, 8, 4, 2); // left antenna
+    g.fillRect(28, 8, 4, 2); // right antenna
+    this.endTexture(g, TEX.ENEMY, w, h);
+  }
+
+  /** 가시덤불: 기존 삼각 톱니 실루엣 유지, 갈색·진초록 배색으로 변경. */
   private makeSpikeTexture(): void {
     const s = 32;
     const g = this.beginTexture();
     g.fillStyle(COLORS.SPIKE, 1);
-    // Three teeth across the tile.
     for (let i = 0; i < 3; i++) {
       const base = (i * s) / 3;
       const step = s / 3;
       g.fillTriangle(base, s, base + step / 2, 0, base + step, s);
     }
+    g.fillStyle(COLORS.HILL_FAR, 1);
+    g.fillRect(0, s - 4, s, 4);
     this.endTexture(g, TEX.SPIKE, s, s);
   }
 
@@ -240,44 +258,32 @@ export class BootScene extends Phaser.Scene {
     this.endTexture(g, TEX.CONVEYOR, w, h);
   }
 
-  /** Pendulum head: a spiked ball. */
+  /** 솔방울: 사각 비늘이 어긋나게 쌓인 실루엣(원형 히트박스는 Pendulum.ts가 별도 관리, 텍스처만 변경). */
   private makePendulumHeadTexture(): void {
     const s = 40;
-    const c = s / 2;
     const g = this.beginTexture();
     g.fillStyle(COLORS.PENDULUM_HEAD, 1);
-    // Spikes radiating out.
-    const spikes = 8;
-    const rInner = 12;
-    const rOuter = 19;
-    for (let i = 0; i < spikes; i++) {
-      const a = (i / spikes) * Math.PI * 2;
-      const a1 = a - 0.22;
-      const a2 = a + 0.22;
-      g.fillTriangle(
-        c + Math.cos(a1) * rInner,
-        c + Math.sin(a1) * rInner,
-        c + Math.cos(a2) * rInner,
-        c + Math.sin(a2) * rInner,
-        c + Math.cos(a) * rOuter,
-        c + Math.sin(a) * rOuter,
-      );
+    g.fillRect(12, 4, 16, 32);
+    for (let row = 0; row < 4; row++) {
+      const offset = row % 2 === 0 ? 4 : 12;
+      g.fillStyle(COLORS.DIRT_DETAIL, 1);
+      g.fillRect(offset, 6 + row * 8, 8, 4);
+      g.fillRect(s - offset - 8, 6 + row * 8, 8, 4);
     }
-    g.fillCircle(c, c, rInner);
-    g.fillStyle(0x8a5a00, 1);
-    g.fillCircle(c, c, 5); // dark core
     this.endTexture(g, TEX.PENDULUM_HEAD, s, s);
   }
 
-  /** Thwomp: a chunky block with an angry face on the bottom. */
+  /** 바위 압사기: 회색 돌 + 금 간 무늬 + 화난 눈. */
   private makeThwompTexture(): void {
     const w = 60;
     const h = 60;
     const g = this.beginTexture();
     g.fillStyle(COLORS.THWOMP, 1);
     g.fillRect(0, 0, w, h);
-    g.fillStyle(0x5a1a3c, 1);
-    g.fillRect(0, 0, w, 6); // rim
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(0, 0, w, 4); // rim
+    g.fillRect(10, 30, 20, 3); // crack
+    g.fillRect(34, 40, 3, 14); // crack
     g.fillStyle(COLORS.THWOMP_FACE, 1);
     g.fillRect(14, 22, 8, 10); // left eye
     g.fillRect(38, 22, 8, 10); // right eye
