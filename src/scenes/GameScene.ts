@@ -1,6 +1,12 @@
 import Phaser from "phaser";
-import { CANNON, COLORS, DEPTH, TEX } from "../config";
-import { cameraZoom, shakeCamera, TEXTURE_SCALE } from "../display";
+import { CAMERA, CANNON, COLORS, DEPTH, TEX } from "../config";
+import {
+  cameraViewOrigin,
+  cameraZoom,
+  shakeCamera,
+  snapToDevicePixel,
+  TEXTURE_SCALE,
+} from "../display";
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
@@ -126,7 +132,7 @@ export class GameScene extends Phaser.Scene {
       this.level.playerSpawn.y,
     );
     this.player.setDepth(DEPTH.PLAYER);
-    this.followPlayer();
+    this.centreCameraOnPlayer();
 
     const goal = new Goal(this, this.level.goal.x, this.level.goal.y);
     goal.setDepth(DEPTH.HAZARD);
@@ -203,43 +209,74 @@ export class GameScene extends Phaser.Scene {
     this.drawHud();
     this.layoutHud();
 
-    // Re-anchor the HUD from inside the camera's own update, which is where the
-    // view it is measured against becomes current. Doing it from `update()` reads
-    // the previous frame's view, and since the camera keeps pace with the player
-    // that leaves the HUD a full frame of travel behind — a visible wobble.
-    this.cameras.main.on(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE, this.layoutHud, this);
-
     // The Scale Manager is global, so drop the listener when the scene ends —
     // otherwise every restart leaves another one attached.
     this.scale.on(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off(Phaser.Scale.Events.RESIZE, this.onDisplayResize, this);
-      // The camera manager tears itself down on this same event and gets there
-      // first, so `main` may already be gone — its listeners went with it.
-      this.cameras.main?.off(Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE, this.layoutHud, this);
     });
   }
 
+  /** Where the camera has to sit for the player to be centred. */
+  private cameraTarget(): { x: number; y: number } {
+    const cam = this.cameras.main;
+    return {
+      x: this.player.x - cam.width * cam.originX,
+      y: this.player.y - cam.height * cam.originY,
+    };
+  }
+
+  /** Drops the camera straight onto the player — level start, and after a resize. */
+  private centreCameraOnPlayer(): void {
+    const target = this.cameraTarget();
+    this.setCameraScroll(target.x, target.y);
+  }
+
   /**
-   * Soft follow, so the camera trails the player rather than snapping to them.
+   * Trails the camera toward the player, then lands it on the pixel grid.
    *
-   * Pixel rounding is off: it only ever applies at whole-number camera zooms
-   * anyway, so leaving it on would snap the world on some window sizes and not
-   * others. Fractional scroll is what we want now that filtering is smooth.
+   * Phaser's own `startFollow` lerps a fixed fraction per *frame*, which makes the
+   * follow speed depend on the frame rate, and it leaves the scroll on fractional
+   * pixels. Doing it here instead buys both fixes: the smoothing is expressed per
+   * second, and `setCameraScroll` snaps the result (see `display.ts` for why that
+   * stops the scene shimmering).
    */
-  private followPlayer(): void {
-    this.cameras.main.startFollow(this.player, false, 0.1, 0.1);
+  private updateCamera(delta: number): void {
+    const target = this.cameraTarget();
+    const cam = this.cameras.main;
+    const t = 1 - Math.exp(-CAMERA.SMOOTH_PER_SEC * (delta / 1000));
+    this.setCameraScroll(
+      cam.scrollX + (target.x - cam.scrollX) * t,
+      cam.scrollY + (target.y - cam.scrollY) * t,
+    );
+  }
+
+  /**
+   * The single place the camera moves. Clamps to the level, lands on the pixel
+   * grid, then re-anchors the HUD to the view that scroll produces — so the HUD
+   * is placed from the same numbers the frame is drawn with, never a frame late.
+   *
+   * Clamping here rather than leaving it to Phaser keeps the value we compute the
+   * value that gets used.
+   */
+  private setCameraScroll(x: number, y: number): void {
+    const cam = this.cameras.main;
+    cam.setScroll(
+      snapToDevicePixel(cam.clampX(x), cam.zoom),
+      snapToDevicePixel(cam.clampY(y), cam.zoom),
+    );
+    this.layoutHud();
   }
 
   /** Window resized: the buffer changed, so the camera zoom has to follow it. */
   private onDisplayResize(): void {
     const zoom = cameraZoom(this.scale.height);
     this.cameras.main.setZoom(zoom);
-    // Re-following snaps the scroll to the new zoom. Without it the camera spends
-    // half a second lerping back into place, dragging the HUD along with it.
-    if (!this.ending) this.followPlayer();
+    // The scroll that centred the player at the old zoom does not at the new one,
+    // and easing across would drag the whole scene for half a second.
+    if (!this.ending) this.centreCameraOnPlayer();
     for (const text of this.hudTexts()) text.setResolution(zoom);
-    this.layoutHud();
+    this.layoutHud();   // the camera may not have moved, e.g. during the death arc
   }
 
   update(_time: number, delta: number): void {
@@ -247,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     this.player.update(this.time.now);
     if (this.ending) return;
 
+    this.updateCamera(delta);
     this.elapsedMs += delta;
 
     for (const enemy of this.enemies) enemy.update();
@@ -553,7 +591,6 @@ export class GameScene extends Phaser.Scene {
     if (this.ending) return;
     this.ending = true;
     this.player.die();
-    this.cameras.main.stopFollow();
     shakeCamera(this.cameras.main, 200, 0.01);
     // Retry should restart the stage the player died on — including a dev-only
     // spawn-x override, so debugging a late hazard doesn't replay the run-up.
@@ -645,20 +682,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Re-anchors the HUD to the camera's current view, in logical units from its
-   * edges. A zoomed camera scales everything it draws — including objects with a
-   * zero scroll factor — so pinning to `worldView` keeps the arithmetic obvious
-   * where compensating for the zoom by hand would not.
+   * Re-anchors the HUD, in logical units in from the edges of what the camera
+   * shows. It cannot simply be pinned with a zero scroll factor: a zoomed camera
+   * scales everything it draws, that included.
    *
-   * Called from the camera's FOLLOW_UPDATE (see `create`), because `worldView` is
-   * only current inside the camera's own update. Once the camera stops following
-   * — the death and win arcs — it no longer moves, so no further calls are needed.
+   * Called from `setCameraScroll` and measured off the scroll just set, rather
+   * than off `worldView` — Phaser only refreshes that during its render pass, so
+   * reading it from `update` lags a frame, and since the camera keeps pace with
+   * the player, a frame of lag is a frame of travel: a visible wobble.
    */
   private layoutHud(): void {
-    const view = this.cameras.main.worldView;
-    this.hudHint.setPosition(view.x + 16, view.y + 14);
-    this.shieldText.setPosition(view.x + 16, view.y + 40);
-    this.stageText.setPosition(view.right - 16, view.y + 14);
-    this.levelBanner?.setPosition(view.centerX, view.y + 80);
+    // The camera is placed before the HUD exists, on the first frame of a level.
+    if (!this.hudHint) return;
+
+    const cam = this.cameras.main;
+    const left = cameraViewOrigin(cam.scrollX, cam.width, cam.zoom);
+    const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
+    const width = cam.width / cam.zoom;
+
+    this.hudHint.setPosition(left + 16, top + 14);
+    this.shieldText.setPosition(left + 16, top + 40);
+    this.stageText.setPosition(left + width - 16, top + 14);
+    this.levelBanner?.setPosition(left + width / 2, top + 80);
   }
 }

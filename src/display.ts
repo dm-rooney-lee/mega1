@@ -98,6 +98,36 @@ export const TEXTURE_SCALE = textureScale(
   typeof window === "undefined" ? 1 : window.devicePixelRatio,
 );
 
+/**
+ * Rounds a camera scroll value onto whole physical pixels.
+ *
+ * A scroll of, say, 412.37 logical units puts every static thing in the world on
+ * a fractional pixel, and a different fraction each frame. Smooth filtering then
+ * redraws every edge slightly differently frame to frame, which reads as the
+ * whole scene shimmering even though nothing has actually moved unevenly. Landing
+ * the scroll on the pixel grid keeps each edge's coverage identical between
+ * frames. The quantum is one physical pixel — about a third of a logical one — so
+ * the motion itself stays smooth.
+ */
+export const snapToDevicePixel = (value: number, zoom: number): number => {
+  const z = positive(zoom, 1);
+  return Math.round(value * z) / z;
+};
+
+/**
+ * Left (or top) edge of what a camera shows, in logical units.
+ *
+ * Phaser derives this during its own render pass, one frame behind anything read
+ * from `update`. Since the scroll is set here anyway, deriving it directly keeps
+ * screen-anchored things in step with the frame actually being drawn.
+ *
+ * `size` is the camera's width or height, which is in buffer pixels while the
+ * scroll is in logical units — that mismatch is Phaser's, and the halves below
+ * are what cancel it out.
+ */
+export const cameraViewOrigin = (scroll: number, size: number, zoom: number): number =>
+  scroll + (size / 2) * (1 - 1 / positive(zoom, 1));
+
 /** Just enough of a camera to shake it, so this module stays Phaser-free. */
 type ShakeableCamera = {
   zoom: number;

@@ -11,6 +11,15 @@
 /** Size of one tile-based hazard cell (spikes, pop-up spikes). */
 export const TILE = 32;
 
+/** How the camera trails the player. */
+export const CAMERA = {
+  /**
+   * Follow smoothing, per second. 6.32 reproduces the old per-frame lerp of 0.1
+   * at 60fps (`1 - e^(-6.32/60) = 0.1`) while staying the same at any frame rate.
+   */
+  SMOOTH_PER_SEC: 6.32,
+} as const;
+
 export const PHYSICS = {
   /** Downward acceleration (px/s^2). Higher = heavier, snappier fall. */
   GRAVITY_Y: 1400,

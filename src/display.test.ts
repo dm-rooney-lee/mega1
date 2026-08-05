@@ -8,6 +8,7 @@ import {
   LOGICAL_WIDTH_MIN,
   MAX_PIXEL_RATIO,
   shakeCamera,
+  snapToDevicePixel,
   textureScale,
 } from "./display";
 
@@ -119,6 +120,41 @@ describe("computeDisplay", () => {
       expect(d.bufferWidth).toBeGreaterThan(0);
       expect(d.bufferHeight).toBeGreaterThan(0);
       expect(d.zoom).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("snapToDevicePixel", () => {
+  it("[Happy] 스크롤을 물리 픽셀 격자에 올린다", () => {
+    const zoom = 2.8111;
+    for (const v of [412.37, 0.1, 1234.5678, -55.4]) {
+      const snapped = snapToDevicePixel(v, zoom);
+      expect(Number.isInteger(Math.round(snapped * zoom * 1e6) / 1e6)).toBe(true);
+      // 잘라낸 양은 물리 픽셀 반 칸을 넘지 않는다 — 움직임은 그대로 매끄럽다.
+      expect(Math.abs(snapped - v)).toBeLessThanOrEqual(0.5 / zoom + 1e-9);
+    }
+  });
+
+  it("[Boundary] 배율 1이면 정수로 반올림한 것과 같다", () => {
+    expect(snapToDevicePixel(10.4, 1)).toBe(10);
+    expect(snapToDevicePixel(10.6, 1)).toBe(11);
+  });
+
+  it("[Boundary] 이미 격자 위에 있으면 값이 변하지 않는다", () => {
+    const zoom = 4;
+    const onGrid = 100.25; // 100.25 × 4 = 401, 정수
+    expect(snapToDevicePixel(onGrid, zoom)).toBeCloseTo(onGrid, 10);
+  });
+
+  it("[Boundary] 0은 0으로 남는다", () => {
+    expect(snapToDevicePixel(0, 3.33)).toBe(0);
+  });
+
+  it("[Error] 배율이 0·음수·NaN이면 1로 취급해 유한한 값을 낸다", () => {
+    for (const bad of [0, -2, Number.NaN]) {
+      const out = snapToDevicePixel(10.6, bad);
+      expect(Number.isFinite(out)).toBe(true);
+      expect(out).toBe(11);
     }
   });
 });
