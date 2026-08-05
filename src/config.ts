@@ -20,6 +20,12 @@ export const CAMERA = {
   SMOOTH_PER_SEC: 6.32,
 } as const;
 
+/** 먼 배경 레이어의 시차 배율. */
+export const PARALLAX = {
+  /** 카메라 스크롤 대비 배경이 움직이는 비율(5배 느림). */
+  FAR_FACTOR: 0.2,
+} as const;
+
 export const PHYSICS = {
   /** Downward acceleration (px/s^2). Higher = heavier, snappier fall. */
   GRAVITY_Y: 1400,
@@ -176,26 +182,36 @@ export const COLORS = {
   PLATFORM: 0x5f574f,
   PLATFORM_TOP: 0x7d7460,
   ENEMY: 0xff004d,
-  SPIKE: 0xfff1e8,
+  SPIKE: 0xab5236,
   GOAL: 0x00e436,
   // New content.
-  SPRING: 0x00e436,
-  MOVING: 0x1c5fc9,
-  CONVEYOR: 0x475c7a,
-  CONVEYOR_ARROW: 0x9bb0c9,
+  SPRING: 0xff004d,
+  MOVING: 0xab5236,
+  CONVEYOR: 0x5f4636,
+  CONVEYOR_ARROW: 0xfff1e8,
   FAKE: 0x6b5136, // deliberately close to PLATFORM — spotting it is a reward
-  PENDULUM_HEAD: 0xffa300,
-  CHAIN: 0xc2c3c7,
-  THWOMP: 0x7e2553,
+  PENDULUM_HEAD: 0xab5236,
+  CHAIN: 0x008751,
+  THWOMP: 0x5f574f,
   THWOMP_FACE: 0xffccaa,
-  GEAR: 0x8f8f8f,
-  PROJECTILE: 0xffec27,
-  SHOOTER: 0x422136,
-  TURRET: 0xab5236,
+  GEAR: 0x5f574f,
+  PROJECTILE: 0xab5236,
+  SHOOTER: 0x008751,
+  TURRET: 0x596652,
   TELEGRAPH: 0xff004d,
-  CANNON: 0xc2c3c7,
-  CANNONBALL: 0xffa300,
-  SHIELD: 0xffec27,
+  CANNON: 0x596652,
+  CANNONBALL: 0x5f574f,
+  SHIELD: 0x00e436,
+  // Gopher-nature reskin (2026-08-05).
+  OUTLINE: 0x000000,
+  HILL_FAR: 0x008751,
+  SKY_DUSK_TOP: 0x7e2553,
+  SKY_DUSK_MID: 0xff77a8,
+  SKY_DUSK_BOTTOM: 0xffa300,
+  CAVE_ROCK: 0x83769c,
+  DIRT: 0xab5236,
+  DIRT_DETAIL: 0x5f574f,
+  GRASS_TOP: 0x00e436,
 } as const;
 
 /** Keys used to look up textures generated in BootScene. */
@@ -219,6 +235,10 @@ export const TEX = {
   CANNON: "tex-cannon",
   CANNONBALL: "tex-cannonball",
   SHIELD: "tex-shield",
+  GROUND_TILE: "tex-ground-tile",
+  BG_GRASSLAND: "tex-bg-grassland",
+  BG_SUNSET: "tex-bg-sunset",
+  BG_UNDERGROUND: "tex-bg-underground",
 } as const;
 
 /**
@@ -228,6 +248,7 @@ export const TEX = {
  */
 export const DEPTH = {
   BACKGROUND: -10,
+  BACKGROUND_FAR: -5,
   PLATFORM: 0,
   HAZARD: 10,
   ENEMY: 20,
