@@ -8,6 +8,10 @@ let bgm: Phaser.Sound.BaseSound | undefined;
 
 export function startBgmOnce(scene: Phaser.Scene): void {
   if (bgm?.isPlaying) return;
-  bgm = scene.sound.add("bgm", { loop: true, volume: 0.5 });
-  bgm.play();
+  try {
+    bgm = scene.sound.add("bgm", { loop: true, volume: 0.5 });
+    bgm.play();
+  } catch (e) {
+    console.warn("[audio] bgm failed to load/play; continuing without music:", e);
+  }
 }
