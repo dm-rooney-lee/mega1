@@ -280,6 +280,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.ending) this.centreCameraOnPlayer();
     for (const text of this.hudTexts()) text.setResolution(zoom);
     this.layoutHud();   // the camera may not have moved, e.g. during the death arc
+    this.layoutParallax();
   }
 
   update(_time: number, delta: number): void {
