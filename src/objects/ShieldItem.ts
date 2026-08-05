@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { DEPTH, TEX } from "../config";
 import type { Player } from "./Player";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * A pickup that grants the player a shield on overlap. Like Goal, a static,
@@ -11,6 +12,7 @@ export class ShieldItem extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, TEX.SHIELD);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.body.setAllowGravity(false);

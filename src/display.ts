@@ -41,6 +41,22 @@ export const LOGICAL_WIDTH_MAX = 1100;
 /** Past this the bigger buffer costs more than the extra sharpness is worth. */
 export const MAX_PIXEL_RATIO = 3;
 
+/**
+ * How many texture pixels to draw per logical pixel.
+ *
+ * The camera magnifies every sprite by its zoom — roughly the pixel ratio times
+ * 1.7 at a typical window — so a texture drawn at logical size arrives on screen
+ * blurred no matter how good the buffer is. Drawing it larger and shrinking the
+ * sprite back down cancels that.
+ *
+ * This follows the pixel ratio rather than the window, so it never changes while
+ * the page lives; regenerating every texture on a resize is not worth it. The
+ * overshoot is deliberately mild — far above the zoom and the minified texture
+ * starts to shimmer instead.
+ */
+export const textureScale = (pixelRatio: number): number =>
+  clamp(Math.round(positive(pixelRatio, 1)) * 2, 2, 6);
+
 export type Display = {
   /** Canvas backing buffer, in physical pixels. This is the Phaser game size. */
   bufferWidth: number;
@@ -72,6 +88,15 @@ const positive = (value: number, fallback: number): number =>
  */
 export const cameraZoom = (bufferHeight: number): number =>
   positive(bufferHeight, LOGICAL_HEIGHT) / LOGICAL_HEIGHT;
+
+/**
+ * Resolved once at load — a display's pixel ratio does not change while the page
+ * lives, and both the texture generation and every sprite that shrinks back down
+ * have to agree on one number.
+ */
+export const TEXTURE_SCALE = textureScale(
+  typeof window === "undefined" ? 1 : window.devicePixelRatio,
+);
 
 /** Just enough of a camera to shake it, so this module stays Phaser-free. */
 type ShakeableCamera = {

@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { ENEMY, TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
+import { setLogicalBodySize } from "./hitbox";
 
 /**
  * A simple patrolling enemy. It walks back and forth between an explicit left/right
@@ -23,13 +25,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     rightBound: number,
   ) {
     super(scene, x, y, TEX.ENEMY);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     this.leftBound = leftBound;
     this.rightBound = rightBound;
     this.setCollideWorldBounds(true);
-    this.body.setSize(28, 26);
+    setLogicalBodySize(this, 28, 26);
     this.setVelocityX(ENEMY.MOVE_SPEED * this.dir);
   }
 

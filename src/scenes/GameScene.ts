@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { CANNON, COLORS, DEPTH, TEX } from "../config";
-import { cameraZoom, shakeCamera } from "../display";
+import { cameraZoom, shakeCamera, TEXTURE_SCALE } from "../display";
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
@@ -351,9 +351,13 @@ export class GameScene extends Phaser.Scene {
           s.y + 16,
           TEX.SPIKE,
         ) as Phaser.Physics.Arcade.Sprite;
+        spike.setScale(1 / TEXTURE_SCALE);
         spike.setDepth(DEPTH.HAZARD);
-        // Only the pointy upper portion should hurt.
+        // The static body was built from the sprite's pre-scale size, so re-read
+        // the transform before sizing it. Static bodies take absolute sizes and
+        // offsets — unlike dynamic ones, the sprite's scale does not enter in.
         const body = spike.body as Phaser.Physics.Arcade.StaticBody;
+        body.updateFromGameObject();
         body.setSize(28, 18).setOffset(2, 14);
       }
     }

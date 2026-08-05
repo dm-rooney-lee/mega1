@@ -3,6 +3,7 @@ import { CANNON, DEPTH, TEX } from "../config";
 import type { CannonDef } from "../levels/types";
 import { shouldFire } from "./ballistics";
 import { Cannonball } from "./Cannonball";
+import { TEXTURE_SCALE } from "../display";
 
 /**
  * A cannon that periodically fires cannonballs. The body itself is harmless
@@ -18,6 +19,7 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
 
   constructor(scene: Phaser.Scene, def: CannonDef, balls: Phaser.Physics.Arcade.Group) {
     super(scene, def.x, def.y, TEX.CANNON);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.body.setAllowGravity(false);

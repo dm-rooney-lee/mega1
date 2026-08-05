@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { DEPTH, GEAR, TEX } from "../config";
 import { gearRotationRad, oscillateOffset } from "../levels/motion";
+import { TEXTURE_SCALE } from "../display";
+import { setLogicalBodyCircle } from "./hitbox";
 
 /**
  * F-1 — a gear that rides a straight rail (same math as MovingPlatform) while
@@ -34,14 +36,17 @@ export class Gear extends Phaser.Physics.Arcade.Sprite {
     } = {},
   ) {
     super(scene, x, y, TEX.GEAR);
+    this.setScale(1 / TEXTURE_SCALE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setDepth(DEPTH.HAZARD);
 
     this.body.setAllowGravity(false);
     this.body.setImmovable(true);
-    const inset = this.width / 2 - GEAR.RADIUS;
-    this.body.setCircle(GEAR.RADIUS, inset, inset);
+    // displayWidth, not width: the texture is drawn oversized and the sprite is
+    // scaled back down, so only the display size is in logical units.
+    const inset = this.displayWidth / 2 - GEAR.RADIUS;
+    setLogicalBodyCircle(this, GEAR.RADIUS, inset, inset);
 
     this.homeX = x;
     this.homeY = y;

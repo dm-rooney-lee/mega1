@@ -15,7 +15,11 @@
   - 카메라 흔들림은 `cameras.main.shake()`를 직접 부르지 말고 `shakeCamera()`(src/display.ts)를 쓸 것. Phaser가 흔들림 크기를 `intensity × 카메라폭 × 카메라배율`로 계산하는데 폭이 물리 픽셀이고 배율이 1이 아니므로, 직접 부르면 의도한 것보다 배율배(레티나에서 약 3.3배) 크게 흔들린다.
   - 씬 종료(`SHUTDOWN`) 핸들러에서 `cameras.main`은 이미 `undefined`일 수 있다 — 카메라 매니저가 같은 이벤트로 먼저 정리된다. 접근할 때 `?.`를 쓸 것(안 쓰면 예외가 게임 루프를 멈춘다).
   - 플레이 화면의 `Text`는 `setResolution(카메라 배율)`이 필요하다. 없으면 작은 텍스처가 확대되어 뭉개진다. 제목·게임오버·클리어 화면은 카메라 배율이 1이라 불필요하다(`scenes/textScreen.ts`).
-  - `BootScene`의 텍스처는 아직 논리 크기로 생성된다. 카메라가 확대하므로 도형이 약간 부드럽게 번진다. 텍스처를 크게 만들려면 스프라이트 배율을 함께 줄여야 하고, 그러면 **동적 바디의 명시적 크기(`body.setSize`/`setCircle`)가 배율에 연동되어 히트박스가 바뀐다** — 정적 바디는 절대값이라 영향이 없다.
+  - **`BootScene`의 텍스처는 논리 크기의 `TEXTURE_SCALE`배로 생성된다** (화면 배율 2에서 4배). 카메라 확대를 상쇄해 선명하게 보이기 위한 것이다. 새 텍스처를 추가할 때는 `beginTexture()`/`endTexture()`를 쓸 것 — 그리기 좌표는 논리 단위 그대로 쓰면 된다.
+  - 그 텍스처로 스프라이트를 만들면 **논리 크기로 되돌려야 한다**. `setDisplaySize(논리폭, 논리높이)`를 이미 부르고 있으면 그대로 두면 되고, 아니면 `setScale(1 / TEXTURE_SCALE)`을 추가한다. 빠뜨리면 그림이 4배로 커진다.
+  - 그다음 히트박스: **동적 바디**의 명시적 크기는 스프라이트 배율에 연동되므로 `objects/hitbox.ts`의 `setLogicalBodySize`/`setLogicalBodyCircle`/`setLogicalBodyOffset`을 쓸 것(`body.setSize`/`setCircle`/`setOffset` 직접 호출 금지). **정적 바디**는 절대값이라 그대로 쓰면 되지만, 스프라이트 배율을 바꾼 뒤에는 `body.updateFromGameObject()`로 위치를 다시 읽어야 한다.
+  - 크기를 `this.width`(텍스처 폭)로 넘기는 코드는 자기보정되므로 건드리지 말 것 (`Thwomp`, `MovingPlatform`).
+  - 원형 바디의 `radius` 필드는 텍스처 픽셀 단위로 남는다. 충돌 판정은 `halfWidth`를 쓰므로 정상이다 — `radius` 값만 보고 히트박스가 커졌다고 오해하지 말 것.
 - `physics.add.group(...)`에 스프라이트를 추가하면 그룹의 기본 속도(0,0)가 기존 속도를 조용히 덮어쓴다. `Cannon.ts`/`Cannonball.ts`의 `reapplyVelocity()` 패턴으로 우회한다.
 - 발사체 생명주기 패턴이 `ProjectilePool`(고정 크기 재사용)과 대포알(무제한 그룹 + 수동 `destroy()`) 2종류로 공존한다 — 새로 만들 때 유사한 기존 오브젝트를 참고해 판단한다.
 - `docs/superpowers/`의 옛 설계문서가 말하는 "level2"(대포·실드 스테이지)는 현재 코드의 `level6.ts`다 — 두 팀이 동시에 "level2"를 만들어 병합 시 재번호됐다.

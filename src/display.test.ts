@@ -8,6 +8,7 @@ import {
   LOGICAL_WIDTH_MIN,
   MAX_PIXEL_RATIO,
   shakeCamera,
+  textureScale,
 } from "./display";
 
 describe("computeDisplay", () => {
@@ -118,6 +119,44 @@ describe("computeDisplay", () => {
       expect(d.bufferWidth).toBeGreaterThan(0);
       expect(d.bufferHeight).toBeGreaterThan(0);
       expect(d.zoom).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("textureScale", () => {
+  it("[Happy] 화면 배율을 따라 커진다 — 카메라 확대를 상쇄할 만큼", () => {
+    expect(textureScale(1)).toBe(2);
+    expect(textureScale(2)).toBe(4);
+    expect(textureScale(3)).toBe(6);
+  });
+
+  it("[Happy] 일반적인 창에서 카메라 배율보다 크거나 같다", () => {
+    // 카메라 배율 = 창 CSS 세로 × 화면 배율 / 540. 텍스처가 이보다 작으면
+    // 확대가 남아 흐려지므로, 흔한 창 크기에서는 항상 충분해야 한다.
+    for (const [cssHeight, dpr] of [
+      [720, 1],
+      [900, 1],
+      [800, 2],
+      [900, 2],
+      [1080, 2],
+    ] as const) {
+      const zoom = computeDisplay((cssHeight * 16) / 9, cssHeight, dpr).zoom;
+      expect(textureScale(dpr)).toBeGreaterThanOrEqual(zoom);
+    }
+  });
+
+  it("[Boundary] 소수 배율은 반올림해서 쓴다", () => {
+    expect(textureScale(1.5)).toBe(4);
+    expect(textureScale(2.4)).toBe(4);
+  });
+
+  it("[Boundary] 아주 큰 배율에서도 상한 6을 넘지 않는다", () => {
+    expect(textureScale(10)).toBe(6);
+  });
+
+  it("[Error] 잘못된 값이면 최소 배율로 되돌린다", () => {
+    for (const bad of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(textureScale(bad)).toBe(2);
     }
   });
 });
