@@ -187,7 +187,7 @@ export const COLORS = {
   MOVING: 0xab5236,
   CONVEYOR: 0x5f4636,
   CONVEYOR_ARROW: 0xfff1e8,
-  FAKE: 0x6b5136, // deliberately close to PLATFORM — spotting it is a reward
+  FAKE: 0x9c4a30, // deliberately close to the real ground tile's colors — spotting it is a reward
   PENDULUM_HEAD: 0xab5236,
   CHAIN: 0x008751,
   THWOMP: 0x5f574f,

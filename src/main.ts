@@ -28,9 +28,11 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.NONE,
     zoom: 1 / initial.pixelRatio,
   },
-  // The art is drawn as circles, rounded rects and triangles rather than pixel
-  // art, so nearest-neighbour scaling (what `pixelArt: true` forces) turns every
-  // curve into a staircase. Smooth filtering at native density is the right call.
+  // Textures are drawn at TEXTURE_SCALE times their logical size and shrunk back
+  // down on screen (see display.ts), so nearest-neighbour scaling (what
+  // `pixelArt: true` forces) would show visible row-dropping artifacts on the
+  // downscale. Smooth filtering is needed regardless of whether the art itself
+  // uses curves or blocky pixel-grid shapes.
   render: {
     antialias: true,
     roundPixels: false,

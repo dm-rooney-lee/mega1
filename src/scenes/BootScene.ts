@@ -3,10 +3,11 @@ import { COLORS, TEX } from "../config";
 import { TEXTURE_SCALE } from "../display";
 
 /**
- * Generates all placeholder textures procedurally (no image files needed), then
- * hands off to the menu. In Milestone 4 this is where you'd `this.load.image(...)`
- * real Kenney sprites instead — the rest of the game references textures by the
- * TEX.* keys, so swapping art is a localized change.
+ * Generates all placeholder textures procedurally (no image files needed) and
+ * preloads the background music track, then hands off to the menu. In
+ * Milestone 4 this is where you'd `this.load.image(...)` real Kenney sprites
+ * instead — the rest of the game references textures by the TEX.* keys, so
+ * swapping art is a localized change.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -26,7 +27,7 @@ export class BootScene extends Phaser.Scene {
 
     // New content (feature/MEGA-map).
     this.makeLogTexture();
-    // Fake floor deliberately resembles a normal platform — spotting it is a reward.
+    // Fake floor deliberately resembles the real ground tile — spotting it is a reward.
     this.makeFakeGroundTexture();
     this.makeSpringTexture();
     this.makeConveyorTexture();
@@ -289,10 +290,13 @@ export class BootScene extends Phaser.Scene {
     const w = 32;
     const h = 32;
     const g = this.beginTexture();
+    g.fillStyle(0x00c730, 1); // slightly duller green than GRASS_TOP — close but distinguishable
+    g.fillRect(0, 0, w, 6);
     g.fillStyle(COLORS.FAKE, 1);
-    g.fillRect(0, 0, w, h);
-    g.fillStyle(COLORS.HILL_FAR, 1);
-    g.fillRect(0, 0, w, 4);
+    g.fillRect(0, 6, w, h - 6);
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(4, 14, 5, 3);
+    g.fillRect(18, 20, 5, 3);
     this.endTexture(g, TEX.FAKE, w, h);
   }
 
@@ -418,60 +422,75 @@ export class BootScene extends Phaser.Scene {
   }
 
   private makeGrasslandBg(): void {
-    const w = 480;
-    const h = 468;
+    const w = 1200;
+    const h = 540;
     const g = this.beginTexture();
-    g.fillStyle(COLORS.PLAYER, 1); // sky blue (same hue as the player — outline solves the readability risk)
+    g.fillStyle(COLORS.PLAYER, 1);
     g.fillRect(0, 0, w, h);
     g.fillStyle(0xfff1e8, 1);
-    g.fillRect(40, 40, 60, 12); // cloud
-    g.fillRect(60, 28, 40, 12);
-    g.fillRect(300, 60, 70, 12);
+    g.fillRect(60, 50, 70, 14);
+    g.fillRect(90, 36, 46, 14);
+    g.fillRect(420, 80, 80, 14);
+    g.fillRect(760, 46, 60, 14);
+    g.fillRect(790, 32, 40, 14);
+    g.fillRect(1020, 90, 70, 14);
     g.fillStyle(COLORS.HILL_FAR, 1);
-    g.fillRect(0, h - 120, 160, 120);
-    g.fillRect(180, h - 90, 140, 90);
-    g.fillRect(340, h - 130, 140, 130);
+    g.fillRect(0, h - 140, 220, 140);
+    g.fillRect(240, h - 100, 200, 100);
+    g.fillRect(470, h - 160, 220, 160);
+    g.fillRect(710, h - 110, 200, 110);
+    g.fillRect(930, h - 150, 270, 150);
     this.endTexture(g, TEX.BG_GRASSLAND, w, h);
   }
 
   private makeSunsetBg(): void {
-    const w = 480;
-    const h = 468;
+    const w = 1200;
+    const h = 540;
     const g = this.beginTexture();
     g.fillStyle(COLORS.SKY_DUSK_TOP, 1);
     g.fillRect(0, 0, w, h * 0.3);
     g.fillStyle(COLORS.SKY_DUSK_MID, 1);
     g.fillRect(0, h * 0.3, w, h * 0.25);
     g.fillStyle(COLORS.SKY_DUSK_BOTTOM, 1);
-    g.fillRect(0, h * 0.55, w, h * 0.45);
+    g.fillRect(0, h * 0.55, w, h - h * 0.55);
     g.fillStyle(0xffec27, 1);
-    g.fillRect(w / 2 - 30, h * 0.4, 60, 40); // low sun
+    g.fillRect(w / 2 - 30, h * 0.38, 60, 40);
     g.fillStyle(COLORS.OUTLINE, 1);
-    g.fillRect(30, h - 140, 12, 140); // tree trunk
-    g.fillRect(10, h - 200, 50, 70); // tree canopy
-    g.fillRect(380, h - 160, 12, 160);
-    g.fillRect(355, h - 220, 60, 80);
+    g.fillRect(80, h - 190, 14, 190);
+    g.fillRect(55, h - 250, 64, 80);
+    g.fillRect(300, h - 160, 12, 160);
+    g.fillRect(276, h - 210, 60, 70);
+    g.fillRect(900, h - 210, 14, 210);
+    g.fillRect(875, h - 270, 64, 80);
+    g.fillRect(1080, h - 150, 12, 150);
+    g.fillRect(1056, h - 195, 60, 65);
     this.endTexture(g, TEX.BG_SUNSET, w, h);
   }
 
   private makeUndergroundBg(): void {
-    const w = 480;
-    const h = 468;
+    const w = 1200;
+    const h = 540;
     const g = this.beginTexture();
     g.fillStyle(COLORS.BACKGROUND, 1);
     g.fillRect(0, 0, w, h);
     g.fillStyle(COLORS.DIRT_DETAIL, 1);
     g.fillRect(0, 0, w, 40);
     g.fillStyle(COLORS.DIRT, 1);
-    g.fillRect(60, 40, 10, 50); // root
-    g.fillRect(220, 40, 8, 70);
-    g.fillRect(380, 40, 10, 40);
+    g.fillRect(100, 40, 10, 60);
+    g.fillRect(340, 40, 8, 80);
+    g.fillRect(620, 40, 10, 50);
+    g.fillRect(880, 40, 8, 90);
+    g.fillRect(1100, 40, 10, 45);
     g.fillStyle(COLORS.CAVE_ROCK, 1);
-    g.fillRect(120, 40, 16, 60); // stalactite
-    g.fillRect(300, 40, 20, 80);
+    g.fillRect(200, 40, 18, 70);
+    g.fillRect(480, 40, 16, 60);
+    g.fillRect(760, 40, 20, 90);
+    g.fillRect(1000, 40, 16, 65);
     g.fillStyle(0xff77a8, 1);
-    g.fillRect(150, h - 120, 8, 8); // glowing mushroom accent
-    g.fillRect(340, h - 100, 8, 8);
+    g.fillRect(250, 200, 8, 8);
+    g.fillRect(560, 260, 8, 8);
+    g.fillRect(830, 180, 8, 8);
+    g.fillRect(1060, 240, 8, 8);
     this.endTexture(g, TEX.BG_UNDERGROUND, w, h);
   }
 }

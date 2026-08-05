@@ -709,7 +709,8 @@ export class GameScene extends Phaser.Scene {
     const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
     this.farBg.setPosition(left, top);
     this.farBg.setSize(cam.width / cam.zoom, cam.height / cam.zoom);
-    this.farBg.tilePositionX = snapToDevicePixel(cam.scrollX * PARALLAX.FAR_FACTOR, cam.zoom);
+    this.farBg.tilePositionX =
+      snapToDevicePixel(cam.scrollX * PARALLAX.FAR_FACTOR, cam.zoom) * TEXTURE_SCALE;
   }
 
   /**
