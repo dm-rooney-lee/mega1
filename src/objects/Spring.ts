@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { DEPTH, SPRING, TEX } from "../config";
 import type { Player } from "./Player";
+import { playSpringBounce } from "../audio";
 
 /**
  * A-1 — a jump pad. Landing on top launches the player far higher than a normal
@@ -40,6 +41,7 @@ export class Spring extends Phaser.Physics.Arcade.Sprite {
   tryLaunch(player: Player): void {
     if (!this.body.touching.up) return;
     player.launch(this.power);
+    playSpringBounce(this.scene);
     this.squash();
   }
 
