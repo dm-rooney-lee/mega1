@@ -35,7 +35,7 @@ function webAudioTarget(
 }
 
 /** 사인파를 freqStart→freqEnd로 스윕하며 짧게 재생(점프/발사/사망 등 순음 계열). */
-export function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): void {
+function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): void {
   const target = webAudioTarget(scene);
   if (!target) return;
   try {
@@ -49,7 +49,8 @@ export function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): v
     osc.frequency.exponentialRampToValueAtTime(Math.max(opts.freqEnd, 1), now + durationSec);
 
     const gain = context.createGain();
-    gain.gain.setValueAtTime(volume, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     osc.connect(gain);
@@ -62,7 +63,7 @@ export function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): v
 }
 
 /** 필터링된 화이트 노이즈를 짧게 재생(대포/바위/철퇴 등 타격·마찰 계열). */
-export function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: number): void {
+function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: number): void {
   const target = webAudioTarget(scene);
   if (!target) return;
   try {
@@ -70,7 +71,11 @@ export function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: num
     const now = context.currentTime;
     const durationSec = opts.durationMs / 1000;
 
-    const buffer = context.createBuffer(1, context.sampleRate * durationSec, context.sampleRate);
+    const buffer = context.createBuffer(
+      1,
+      Math.round(context.sampleRate * durationSec),
+      context.sampleRate,
+    );
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
 
@@ -82,7 +87,8 @@ export function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: num
     filter.frequency.setValueAtTime(opts.filterFreq, now);
 
     const gain = context.createGain();
-    gain.gain.setValueAtTime(volume, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     noise.connect(filter);
@@ -96,7 +102,7 @@ export function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: num
 }
 
 /** 짧은 상승 아르페지오(승리/스테이지 클리어 전용) — 음을 순서대로 재생. */
-export function playWinJingle(scene: Phaser.Scene, opts: JingleOpts, volume: number): void {
+function playWinJingle(scene: Phaser.Scene, opts: JingleOpts, volume: number): void {
   opts.notes.forEach((freq, i) => {
     scene.time.delayedCall(i * opts.noteDurationMs, () => {
       playTone(scene, { freqStart: freq, freqEnd: freq, durationMs: opts.noteDurationMs }, volume);
