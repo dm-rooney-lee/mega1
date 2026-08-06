@@ -68,6 +68,10 @@ describe("pendulumCrossedBottom", () => {
   it("[Boundary] guards a non-positive period", () => {
     expect(pendulumCrossedBottom(900, 1100, 0)).toBe(false);
   });
+
+  it("[Boundary] fires exactly once even when a large delta spans multiple half-periods (e.g. tab refocus)", () => {
+    expect(pendulumCrossedBottom(100, 5000, 2000)).toBe(true);
+  });
 });
 
 describe("oscillateOffset", () => {
