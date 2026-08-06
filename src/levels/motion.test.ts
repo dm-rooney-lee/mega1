@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   oscillateOffset,
   pendulumAngleRad,
+  pendulumCrossedBottom,
   pendulumHead,
   popupSpikePhase,
   gearRotationRad,
@@ -41,6 +42,31 @@ describe("pendulumHead", () => {
     const head = pendulumHead(100, 50, 150, Math.PI / 2);
     expect(head.x).toBeCloseTo(250);
     expect(head.y).toBeCloseTo(50);
+  });
+});
+
+describe("pendulumCrossedBottom", () => {
+  // period 2000ms -> bottom (angle=0) crossings at t=0, 1000, 2000, ... (every half period).
+  it("[Happy] detects a crossing when the boundary falls inside the frame", () => {
+    expect(pendulumCrossedBottom(900, 1100, 2000)).toBe(true);
+  });
+
+  it("[Happy] does not fire when both times land in the same half-period", () => {
+    expect(pendulumCrossedBottom(100, 400, 2000)).toBe(false);
+  });
+
+  it("[Boundary] does not fire on the very first frame (prev and current both near t=0)", () => {
+    expect(pendulumCrossedBottom(0, 16, 2000)).toBe(false);
+  });
+
+  it("[Boundary] shifts the crossing point with a phase offset", () => {
+    // phase 0.25 of a 2000ms period shifts crossings to t=500, 1500, 2500...
+    expect(pendulumCrossedBottom(400, 600, 2000, 0.25)).toBe(true);
+    expect(pendulumCrossedBottom(900, 1100, 2000, 0.25)).toBe(false);
+  });
+
+  it("[Boundary] guards a non-positive period", () => {
+    expect(pendulumCrossedBottom(900, 1100, 0)).toBe(false);
   });
 });
 

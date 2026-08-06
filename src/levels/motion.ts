@@ -39,6 +39,23 @@ export function pendulumHead(
 }
 
 /**
+ * `[prevElapsedMs, elapsedMs)` 구간 안에서 진자가 호의 최저점(반주기 경계, 가장
+ * 빠르게 지나가는 지점)을 지났는지. `pendulumAngleRad`가 이미 `sin` 함수이므로,
+ * "최저점을 지났다"는 반주기 경계(0.5 배수)를 넘었는지로 판정할 수 있다.
+ */
+export function pendulumCrossedBottom(
+  prevElapsedMs: number,
+  elapsedMs: number,
+  periodMs: number,
+  phase01 = 0,
+): boolean {
+  if (periodMs <= 0) return false;
+  const prevHalf = Math.floor(2 * (prevElapsedMs / periodMs + phase01));
+  const half = Math.floor(2 * (elapsedMs / periodMs + phase01));
+  return half !== prevHalf;
+}
+
+/**
  * Offset (0..range) of a moving platform along its path — a triangle wave that
  * dwells `waitMs` at each endpoint. `phase01` shifts the start along the full
  * cycle. Returns 0 for degenerate inputs so a mis-authored platform just sits still.
