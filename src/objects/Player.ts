@@ -3,6 +3,7 @@ import { COLORS, PLAYER, SHIELD, TEX } from "../config";
 import { absorbHit as absorbShieldHit } from "./shield";
 import { TEXTURE_SCALE } from "../display";
 import { setLogicalBodySize } from "./hitbox";
+import { playDeath, playJump } from "../audio";
 
 type Keys = {
   left: Phaser.Input.Keyboard.Key[];
@@ -125,6 +126,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   private jump(): void {
     this.setVelocityY(PLAYER.JUMP_VELOCITY);
+    playJump(this.scene);
   }
 
   /** Bounce after stomping an enemy. */
@@ -176,6 +178,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   die(): void {
     if (this.isDead) return;
     this.isDead = true;
+    playDeath(this.scene);
     if (this.shieldRing) {
       this.shieldRing.destroy();
       this.shieldRing = undefined;
