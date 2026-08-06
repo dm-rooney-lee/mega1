@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { DEPTH, TEX } from "../config";
 import type { Player } from "./Player";
 import { TEXTURE_SCALE } from "../display";
+import { playShieldPickup } from "../audio";
 
 /**
  * A pickup that grants the player a shield on overlap. Like Goal, a static,
@@ -34,6 +35,7 @@ export class ShieldItem extends Phaser.Physics.Arcade.Sprite {
   /** Grants the player a shield and removes the pickup. */
   collect(player: Player): void {
     player.giveShield();
+    playShieldPickup(this.scene);
     this.destroy();
   }
 }
