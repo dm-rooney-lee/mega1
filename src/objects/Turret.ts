@@ -3,6 +3,7 @@ import { COLORS, DEPTH, PROJECTILE, TURRET, TEX } from "../config";
 import type { Player } from "./Player";
 import type { ProjectilePool } from "./ProjectilePool";
 import { TEXTURE_SCALE } from "../display";
+import { playEnemyKill } from "../audio";
 
 /**
  * D-2 — a turret. Fires projectiles (death on contact) but the body itself can
@@ -99,6 +100,7 @@ export class Turret extends Phaser.Physics.Arcade.Sprite {
   kill(): void {
     if (this.isDead) return;
     this.isDead = true;
+    playEnemyKill(this.scene);
     this.aimLine.clear();
     this.body.enable = false;
     this.scene.tweens.add({

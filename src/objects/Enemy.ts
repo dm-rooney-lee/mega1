@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { ENEMY, TEX } from "../config";
 import { TEXTURE_SCALE } from "../display";
 import { setLogicalBodySize } from "./hitbox";
+import { playEnemyKill } from "../audio";
 
 /**
  * A simple patrolling enemy. It walks back and forth between an explicit left/right
@@ -59,6 +60,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   squash(): void {
     if (this.isDead) return;
     this.isDead = true;
+    playEnemyKill(this.scene);
     this.body.stop();
     this.body.enable = false;
     this.scene.tweens.add({
