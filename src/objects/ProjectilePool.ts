@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { PROJECTILE } from "../config";
 import { Projectile } from "./Projectile";
+import { playFire } from "../audio";
 
 /**
  * D — shared projectile pool. A fixed-size group of reusable Projectiles that
@@ -10,8 +11,10 @@ import { Projectile } from "./Projectile";
  */
 export class ProjectilePool {
   readonly group: Phaser.Physics.Arcade.Group;
+  private readonly scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
+    this.scene = scene;
     this.group = scene.physics.add.group({
       classType: Projectile,
       maxSize: PROJECTILE.POOL_SIZE,
@@ -25,6 +28,7 @@ export class ProjectilePool {
     const p = this.group.get(x, y) as Projectile | null;
     if (!p) return; // pool exhausted — drop the shot rather than grow unbounded
     p.fire(x, y, vx, vy, range);
+    playFire(this.scene);
   }
 
   /** Terrain hit: block the projectile (call from the platform collider). */
