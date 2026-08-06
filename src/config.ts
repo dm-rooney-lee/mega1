@@ -254,3 +254,24 @@ export const DEPTH = {
   EFFECT: 50,
   HUD: 1000,
 } as const;
+
+/**
+ * SFX 합성 튜닝 — Web Audio로 즉석 합성(외부 오디오 파일 없음, src/audio.ts).
+ * freqStart/freqEnd는 Hz, durationMs는 ms. 정확한 "소리 느낌"은 플레이테스트로
+ * 이 값들만 조정해 반복 튜닝한다(코드 변경 불필요).
+ */
+export const SFX = {
+  /** 모든 효과음에 곱해지는 전체 볼륨(0..1). */
+  MASTER_VOLUME: 0.4,
+  JUMP: { freqStart: 500, freqEnd: 900, durationMs: 90 },
+  ENEMY_KILL: { freqStart: 600, freqEnd: 150, durationMs: 140 },
+  FIRE: { freqStart: 900, freqEnd: 500, durationMs: 70 },
+  CANNON: { durationMs: 180, filterFreq: 300 },
+  SHIELD_BLOCK: { freqStart: 700, freqEnd: 700, durationMs: 90 },
+  ROCK_DROP: { durationMs: 220, filterFreq: 150 },
+  DEATH: { freqStart: 500, freqEnd: 80, durationMs: 400 },
+  PENDULUM_SWING: { durationMs: 100, filterFreq: 800 },
+  WIN: { notes: [523, 659, 784], noteDurationMs: 120 },
+  SHIELD_PICKUP: { freqStart: 400, freqEnd: 1000, durationMs: 150 },
+  SPRING_BOUNCE: { freqStart: 300, freqEnd: 1100, durationMs: 160 },
+} as const;
