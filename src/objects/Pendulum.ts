@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import { COLORS, DEPTH, PENDULUM, TEX } from "../config";
-import { pendulumAngleRad, pendulumHead } from "../levels/motion";
+import { pendulumAngleRad, pendulumCrossedBottom, pendulumHead } from "../levels/motion";
 import { TEXTURE_SCALE } from "../display";
 import { setLogicalBodyCircle } from "./hitbox";
+import { playPendulumSwing } from "../audio";
 
 /**
  * B-1 — a spiked ball swinging from a fixed pivot. The head is a physics sprite
@@ -13,6 +14,7 @@ import { setLogicalBodyCircle } from "./hitbox";
 export class Pendulum {
   readonly head: Phaser.Physics.Arcade.Image;
 
+  private readonly scene: Phaser.Scene;
   private readonly pivotX: number;
   private readonly pivotY: number;
   private readonly length: number;
@@ -20,6 +22,7 @@ export class Pendulum {
   private readonly periodMs: number;
   private readonly phase01: number;
   private readonly chain: Phaser.GameObjects.Graphics;
+  private lastElapsedMs = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -32,6 +35,7 @@ export class Pendulum {
       phase?: number;
     } = {},
   ) {
+    this.scene = scene;
     this.pivotX = pivotX;
     this.pivotY = pivotY;
     this.length = opts.length ?? PENDULUM.LENGTH;
@@ -62,6 +66,11 @@ export class Pendulum {
 
   /** `elapsedMs` is scene time since create() — keeps every pendulum in phase. */
   update(elapsedMs: number): void {
+    if (pendulumCrossedBottom(this.lastElapsedMs, elapsedMs, this.periodMs, this.phase01)) {
+      playPendulumSwing(this.scene);
+    }
+    this.lastElapsedMs = elapsedMs;
+
     const angle = pendulumAngleRad(elapsedMs, this.periodMs, this.amplitudeRad, this.phase01);
     const p = pendulumHead(this.pivotX, this.pivotY, this.length, angle);
     // Move the physics body via its reset so the body tracks the sprite exactly.
