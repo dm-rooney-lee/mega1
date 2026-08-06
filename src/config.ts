@@ -271,6 +271,7 @@ export const SFX = {
   ROCK_DROP: { durationMs: 220, filterFreq: 150 },
   DEATH: { freqStart: 500, freqEnd: 80, durationMs: 400 },
   PENDULUM_SWING: { durationMs: 100, filterFreq: 800 },
+  /** notes scheduled via scene timers, destroyed 500ms after playWin() fires (GameScene.handleWin) — keep noteDurationMs * (notes.length - 1) well under 500 or the last note(s) silently never play. */
   WIN: { notes: [523, 659, 784], noteDurationMs: 120 },
   SHIELD_PICKUP: { freqStart: 400, freqEnd: 1000, durationMs: 150 },
   SPRING_BOUNCE: { freqStart: 300, freqEnd: 1100, durationMs: 160 },
