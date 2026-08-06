@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
+import { playShieldBlock, playWin } from "../audio";
 import {
   cameraViewOrigin,
   cameraZoom,
@@ -571,6 +572,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.player.shieldCharges > 0) {
       this.player.absorbHit();
+      playShieldBlock(this);
       this.cameras.main.flash(120, 41, 173, 255);
     } else {
       this.handleDeath();
@@ -581,6 +583,7 @@ export class GameScene extends Phaser.Scene {
     if (this.ending) return;
     this.ending = true;
     this.player.body.stop();
+    playWin(this);
     this.cameras.main.flash(200, 255, 255, 255);
 
     const next = this.levelIndex + 1;
