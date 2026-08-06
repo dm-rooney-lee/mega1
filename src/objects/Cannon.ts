@@ -4,6 +4,7 @@ import type { CannonDef } from "../levels/types";
 import { shouldFire } from "./ballistics";
 import { Cannonball } from "./Cannonball";
 import { TEXTURE_SCALE } from "../display";
+import { playCannonFire } from "../audio";
 
 /**
  * A cannon that periodically fires cannonballs. The body itself is harmless
@@ -42,5 +43,6 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
     // to 0) to every member, even one that already has a body — this silently
     // zeroes the velocity set in the Cannonball constructor above. Re-apply it.
     ball.reapplyVelocity();
+    playCannonFire(this.scene);
   }
 }
