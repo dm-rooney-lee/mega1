@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { SFX } from "./config";
 
 /**
  * 게임 인스턴스 전역에 하나뿐인 Phaser 사운드 매니저를 재사용해, 씬을 오가도
@@ -101,4 +102,48 @@ export function playWinJingle(scene: Phaser.Scene, opts: JingleOpts, volume: num
       playTone(scene, { freqStart: freq, freqEnd: freq, durationMs: opts.noteDurationMs }, volume);
     });
   });
+}
+
+export function playJump(scene: Phaser.Scene): void {
+  playTone(scene, SFX.JUMP, SFX.MASTER_VOLUME);
+}
+
+export function playEnemyKill(scene: Phaser.Scene): void {
+  playTone(scene, SFX.ENEMY_KILL, SFX.MASTER_VOLUME);
+}
+
+export function playFire(scene: Phaser.Scene): void {
+  playTone(scene, SFX.FIRE, SFX.MASTER_VOLUME);
+}
+
+export function playCannonFire(scene: Phaser.Scene): void {
+  playNoiseBurst(scene, SFX.CANNON, SFX.MASTER_VOLUME);
+}
+
+export function playShieldBlock(scene: Phaser.Scene): void {
+  playTone(scene, SFX.SHIELD_BLOCK, SFX.MASTER_VOLUME);
+}
+
+export function playRockDrop(scene: Phaser.Scene): void {
+  playNoiseBurst(scene, SFX.ROCK_DROP, SFX.MASTER_VOLUME);
+}
+
+export function playDeath(scene: Phaser.Scene): void {
+  playTone(scene, SFX.DEATH, SFX.MASTER_VOLUME);
+}
+
+export function playPendulumSwing(scene: Phaser.Scene): void {
+  playNoiseBurst(scene, SFX.PENDULUM_SWING, SFX.MASTER_VOLUME);
+}
+
+export function playWin(scene: Phaser.Scene): void {
+  playWinJingle(scene, SFX.WIN, SFX.MASTER_VOLUME);
+}
+
+export function playShieldPickup(scene: Phaser.Scene): void {
+  playTone(scene, SFX.SHIELD_PICKUP, SFX.MASTER_VOLUME);
+}
+
+export function playSpringBounce(scene: Phaser.Scene): void {
+  playTone(scene, SFX.SPRING_BOUNCE, SFX.MASTER_VOLUME);
 }
