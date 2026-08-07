@@ -2,19 +2,33 @@ import Phaser from "phaser";
 import { SFX } from "./config";
 
 /**
- * 게임 인스턴스 전역에 하나뿐인 Phaser 사운드 매니저를 재사용해, 씬을 오가도
- * 배경음악이 다시 시작되지 않게 한다(scene.sound와 game.sound는 같은 인스턴스).
+ * 게임 인스턴스 전역에 하나뿐인 Phaser 사운드 매니저가 이 음악을 보관하므로, 씬이
+ * 끝나도 음악 객체는 살아남는다(scene.sound와 game.sound는 같은 인스턴스).
+ *
+ * 배경음악은 타이틀·게임오버·승리 화면에서만 흐르고 플레이 중에는 꺼진다. 켜고 끄는
+ * 지점은 각 씬의 create()에 있다.
  */
 let bgm: Phaser.Sound.BaseSound | undefined;
 
-export function startBgmOnce(scene: Phaser.Scene): void {
+/**
+ * 이미 재생 중이면 그대로 둔다 — 게임오버 화면에서 ESC로 타이틀에 갈 때처럼 음악이
+ * 필요한 화면끼리 이동할 때 곡이 처음부터 다시 시작되지 않게 하기 위한 것이다.
+ */
+export function playBgm(scene: Phaser.Scene): void {
   if (bgm?.isPlaying) return;
   try {
-    bgm = scene.sound.add("bgm", { loop: true, volume: 0.5 });
+    // 한 번 만든 음악을 계속 재사용한다. 켤 때마다 새로 만들면 죽고 재시도할 때마다
+    // 사운드 매니저에 쓰지 않는 음악이 쌓인다.
+    bgm ??= scene.sound.add("bgm", { loop: true, volume: 0.5 });
     bgm.play();
   } catch (e) {
     console.warn("[audio] bgm failed to load/play; continuing without music:", e);
   }
+}
+
+/** 다음 재생은 곡 처음부터 시작된다 — Phaser가 멈출 때 재생 위치를 0으로 되돌린다. */
+export function stopBgm(): void {
+  bgm?.stop();
 }
 
 type ToneOpts = { freqStart: number; freqEnd: number; durationMs: number };
