@@ -33,12 +33,15 @@ export class MenuScene extends Phaser.Scene {
               `[dev] ?x=${askedX} is outside stage ${requested + 1} (0-${worldWidth}); using its normal spawn point.`,
             );
           }
-          playBgm(this);
           this.scene.start("GameScene", { level: requested, spawnX: spawnX ?? undefined });
           return;
         }
       }
     }
+
+    // 타이틀·게임오버·승리 화면에서만 음악이 흐른다. 위의 개발용 분기로 타이틀을
+    // 건너뛸 때는 여기 닿지 않으므로 음악도 켜지지 않는다.
+    playBgm(this);
 
     const screen = centredTextScreen(this);
     screen.add(180, 56, "PLATFORMER POC", "#29adff", true);
@@ -54,10 +57,7 @@ export class MenuScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    const start = () => {
-      playBgm(this);
-      this.scene.start("GameScene", { level: 0 });
-    };
+    const start = () => this.scene.start("GameScene", { level: 0 });
     this.input.keyboard!.once("keydown", start);
     this.input.once("pointerdown", start);
   }

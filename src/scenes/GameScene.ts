@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
-import { playShieldBlock, playWin } from "../audio";
+import { playShieldBlock, playWin, stopBgm } from "../audio";
 import {
   cameraViewOrigin,
   cameraZoom,
@@ -92,6 +92,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 플레이 중에는 효과음만 남긴다 — 음악은 타이틀·게임오버·승리 화면 전용이다.
+    stopBgm();
+
     this.level = levelAt(this.levelIndex);
 
     // Reset all per-run state (G6 — a restart always starts from a clean slate).
