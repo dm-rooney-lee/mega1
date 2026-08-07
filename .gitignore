@@ -4,5 +4,6 @@ dist
 .DS_Store
 .vite
 .idea/
-.superpowers/
 .worktrees/
+docs/demiurge/
+.claude/worktrees/
