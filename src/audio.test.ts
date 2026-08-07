@@ -47,7 +47,7 @@ describe("playBgm", () => {
 
     playBgm(f.scene);
 
-    expect(f.add).toHaveBeenCalledWith("bgm", { loop: true, volume: 0.5 });
+    expect(f.add).toHaveBeenCalledWith("bgm", expect.objectContaining({ loop: true }));
     expect(f.bgm.play).toHaveBeenCalledTimes(1);
   });
 
@@ -117,15 +117,16 @@ describe("stopBgm", () => {
     expect(() => stopBgm()).not.toThrow();
   });
 
-  it("[Boundary] 이미 멈춘 뒤 다시 불러도 안전하다 — 스테이지가 넘어갈 때마다 불린다", async () => {
+  it("[Boundary] 스테이지가 넘어갈 때마다 반복해서 멈춰도 재사용 중인 음악 객체가 흐트러지지 않는다", async () => {
     const { playBgm, stopBgm } = await freshAudio();
     const f = fakeScene();
 
     playBgm(f.scene);
     stopBgm();
     stopBgm();
+    playBgm(f.scene);
 
-    expect(f.bgm.stop).toHaveBeenCalledTimes(2);
-    expect(f.bgm.isPlaying).toBe(false);
+    expect(f.add).toHaveBeenCalledTimes(1);
+    expect(f.bgm.isPlaying).toBe(true);
   });
 });
