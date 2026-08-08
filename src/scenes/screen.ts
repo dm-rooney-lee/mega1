@@ -3,16 +3,17 @@ import { cameraZoom } from "../display";
 
 /**
  * The title, death and win screens are all the same shape: a stack of centred
- * rows — text and pictures — authored in the same 540-tall logical space as the
- * levels.
+ * rows — colour bands, pictures and text — authored in the same 540-tall
+ * logical space as the levels.
  *
  * The canvas buffer is sized in physical pixels (see display.ts), so those
  * logical units get scaled up here. For text that also rasterises the glyphs at
  * the screen's real density rather than magnifying a small texture, which is
  * what made this text mushy before.
  *
- * Rows are drawn in the order they are added, so a screen adds its picture
- * before the text that sits on top of it.
+ * Rows are drawn in the order they are added, so a screen adds its full-width
+ * colour bands first, then its picture, then the text that sits on top of
+ * both.
  */
 
 /**
