@@ -219,8 +219,10 @@ export const COLORS = {
  * CSS strings, not the numeric `COLORS` above, because everything on these
  * screens is either a Text colour or a camera background and both take CSS.
  *
- * The picture files in `public/ui/` repeat the character colours (gopher blue,
- * enemy red, grass green). Change one, check the other.
+ * The picture files in `public/ui/` use their own tones sampled from the design
+ * mockup — close to the in-game gopher blue / enemy red / grass green, but
+ * deliberately not identical. The two palettes are not meant to be kept in
+ * sync; changing a colour here has no bearing on the SVGs, and vice versa.
  */
 export const SCREEN_COLORS = {
   TITLE_SKY: "#184f88",
