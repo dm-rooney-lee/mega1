@@ -52,19 +52,9 @@ export function centredScreen(scene: Phaser.Scene) {
 
   return {
     /** `y` and `size` are logical units. Position is applied by `start`. */
-    add(
-      y: number,
-      size: number,
-      content: string,
-      color: string,
-      bold = false,
-    ): Phaser.GameObjects.Text {
+    add(y: number, size: number, content: string, color: string): Phaser.GameObjects.Text {
       const text = scene.add
-        .text(0, 0, content, {
-          fontFamily: SCREEN_FONT,
-          color,
-          ...(bold ? { fontStyle: "bold" } : {}),
-        })
+        .text(0, 0, content, { fontFamily: SCREEN_FONT, color })
         .setOrigin(0.5);
       rows.push({ kind: "text", text, y, size, edge: 0 });
       return text;

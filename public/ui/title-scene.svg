@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="180" viewBox="0 0 1100 180">
   <!--
     타이틀 화면의 지형과 캐릭터. 배경(하늘)은 여기 없다 — MenuScene이 칠한다.
-    색은 src/config.ts의 SCREEN_COLORS 주석과 짝을 이룬다. 한쪽만 고치지 말 것.
+    색은 디자인 목업에서 샘플링한 것으로, COLORS의 게임 내 팔레트와는 무관하다.
+    자세한 설명은 src/config.ts의 SCREEN_COLORS 주석 참고.
       잔디 #5ADF62 · 발판 #088B4A · 흙 #A05639 · 흙무늬 #5F574F
       고퍼 #53A8F0 · 적 #E12E4C · 테두리 #000000 · 흰색 #FFF1E8
 
@@ -57,7 +58,7 @@
     <rect x="455" y="93" width="2" height="6" fill="#000000"/>
   </g>
 
-  <!-- 빨간 적 (x 700~732, 오른쪽 발판 윗면 y=60에 닿는다) -->
+  <!-- 빨간 적 (x 694~738, 오른쪽 발판 윗면 y=60에 닿는다) -->
   <g>
     <rect x="700" y="34" width="32" height="26" fill="#000000"/>
     <rect x="702" y="36" width="28" height="22" fill="#E12E4C"/>
