@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, TEX } from "../config";
+import { CANNON, COLORS, PROJECTILE, SHOOTER, TEX, TURRET } from "../config";
 import { TEXTURE_SCALE } from "../display";
 
 /**
@@ -38,7 +38,7 @@ export class BootScene extends Phaser.Scene {
     this.makeTurretTexture();
 
     // Cannon + shield (ported from the level2 branch).
-    this.makeRectTexture(TEX.CANNON, 40, 30, COLORS.CANNON, 0xffffff);
+    this.makeRectTexture(TEX.CANNON, CANNON.WIDTH, CANNON.HEIGHT, COLORS.CANNON, 0xffffff);
     this.makeCannonballTexture();
     this.makeShieldTexture();
 
@@ -356,8 +356,8 @@ export class BootScene extends Phaser.Scene {
 
   /** Projectile: a small dart pointing right (flipped when fired left). */
   private makeProjectileTexture(): void {
-    const w = 22;
-    const h = 10;
+    const w = PROJECTILE.WIDTH;
+    const h = PROJECTILE.HEIGHT;
     const g = this.beginTexture();
     g.fillStyle(COLORS.PROJECTILE, 1);
     g.fillRect(0, h / 2 - 2, w - 8, 4); // shaft
@@ -367,8 +367,8 @@ export class BootScene extends Phaser.Scene {
 
   /** Wall-mounted arrow launcher. */
   private makeShooterTexture(): void {
-    const w = 26;
-    const h = 34;
+    const w = SHOOTER.WIDTH;
+    const h = SHOOTER.HEIGHT;
     const g = this.beginTexture();
     g.fillStyle(COLORS.SHOOTER, 1);
     g.fillRect(0, 0, w, h);
@@ -379,8 +379,8 @@ export class BootScene extends Phaser.Scene {
 
   /** Turret: a squat body with a barrel; stompable from above. */
   private makeTurretTexture(): void {
-    const w = 34;
-    const h = 30;
+    const w = TURRET.WIDTH;
+    const h = TURRET.HEIGHT;
     const g = this.beginTexture();
     g.fillStyle(COLORS.TURRET, 1);
     g.fillRoundedRect(0, 6, w, h - 6, 4);
@@ -393,7 +393,7 @@ export class BootScene extends Phaser.Scene {
 
   /** Cannonball: a small circle. */
   private makeCannonballTexture(): void {
-    const d = 16;
+    const d = CANNON.BALL_DIAMETER;
     const g = this.beginTexture();
     g.fillStyle(COLORS.CANNONBALL, 1);
     g.fillCircle(d / 2, d / 2, d / 2);

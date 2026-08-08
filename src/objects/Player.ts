@@ -45,7 +45,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setOrigin(0.5, 0.5);
     // Slightly smaller hitbox than the sprite feels fairer on tight jumps.
-    setLogicalBodySize(this, 24, 38);
+    setLogicalBodySize(this, PLAYER.BODY_WIDTH, PLAYER.BODY_HEIGHT);
 
     const kb = scene.input.keyboard!;
     this.keys = {

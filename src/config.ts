@@ -11,6 +11,18 @@
 /** Size of one tile-based hazard cell (spikes, pop-up spikes). */
 export const TILE = 32;
 
+/**
+ * Spike hitbox, shared by the fixed spikes and the pop-up ones. Only part of the
+ * `TILE`-sized art is solid, so the offsets are measured from the sprite's top
+ * left. `src/levels/threat.ts` reads these to work out how high a spike reaches.
+ */
+export const SPIKE = {
+  BODY_WIDTH: 28,
+  BODY_HEIGHT: 18,
+  BODY_OFFSET_X: 2,
+  BODY_OFFSET_Y: 14,
+} as const;
+
 /** How the camera trails the player. */
 export const CAMERA = {
   /**
@@ -50,6 +62,13 @@ export const PLAYER = {
    * fraction — enabling short hops (tap) vs full jumps (hold).
    */
   JUMP_CUT_MULTIPLIER: 0.4,
+  /**
+   * Hitbox size, a little smaller than the 28x40 art so tight jumps feel fair.
+   * `BODY_HEIGHT` also fixes how tall a standing player is, which is what every
+   * hazard has to reach to be a threat at all — see `src/levels/threat.ts`.
+   */
+  BODY_WIDTH: 24,
+  BODY_HEIGHT: 38,
 } as const;
 
 export const ENEMY = {
@@ -136,6 +155,9 @@ export const TRAP_FLOOR = {
 
 /** D Projectiles (shared by arrow shooters and turrets). */
 export const PROJECTILE = {
+  /** Art size, which is also the hitbox — half the height is how far a shot reaches above and below its line. */
+  WIDTH: 22,
+  HEIGHT: 10,
   SPEED: 300,
   /** Pool size — max simultaneous projectiles across all sources. */
   POOL_SIZE: 32,
@@ -145,11 +167,17 @@ export const PROJECTILE = {
 
 /** D-1 Arrow / dart shooter. */
 export const SHOOTER = {
+  /** Art size. Standing on a surface puts the muzzle half this height above it. */
+  WIDTH: 26,
+  HEIGHT: 34,
   INTERVAL_MS: 1600,
 } as const;
 
 /** D-2 Turret. */
 export const TURRET = {
+  /** Art size. The barrel sits on the top edge, so a mounted turret fires from `surface - HEIGHT`. */
+  WIDTH: 34,
+  HEIGHT: 30,
   INTERVAL_MS: 2200,
   /**
    * Aim-line telegraph before an aimed shot. The aim is locked at the start of
@@ -161,6 +189,11 @@ export const TURRET = {
 
 /** E-1 Cannon (ported from the level2 branch's cannon+shield stage). */
 export const CANNON = {
+  /** Art size. Balls leave from the sprite's centre, i.e. half this height above the surface. */
+  WIDTH: 40,
+  HEIGHT: 30,
+  /** Cannonball art size, which is also its hitbox. */
+  BALL_DIAMETER: 16,
   /** Fire interval (ms). */
   FIRE_INTERVAL_MS: 1500,
   /** Cannonball horizontal speed (px/s). */
