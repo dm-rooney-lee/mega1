@@ -4,6 +4,7 @@ import type { CannonDef } from "../levels/types";
 import { shouldFire } from "./ballistics";
 import { Cannonball } from "./Cannonball";
 import { TEXTURE_SCALE } from "../display";
+import { standOnSurface } from "./mount";
 import { playCannonFire } from "../audio";
 
 /**
@@ -28,6 +29,9 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5);
     this.setFlipX(def.direction === "left");
     this.setDepth(DEPTH.HAZARD);
+    // (x, y) is the surface it stands on, so its balls leave half a body height
+    // above that — chest height for anyone standing on the same surface.
+    standOnSurface(this, def.x, def.y);
 
     this.direction = def.direction;
     this.intervalMs = def.intervalMs ?? CANNON.FIRE_INTERVAL_MS;

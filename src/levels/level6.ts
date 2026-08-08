@@ -17,6 +17,10 @@ export const level6: LevelDef = {
     { x: 0, y: 496, width: 680, height: 44 },
     { x: 800, y: 496, width: 1080, height: 44 },
     { x: 1980, y: 496, width: 620, height: 44 },
+    // Bullet-stop pillar: keeps the final cannon's lane to ~300px. Without it the
+    // chest-height shots reach back across the whole stage and arrive in areas the
+    // player has not seen yet.
+    { x: 2040, y: 452, width: 24, height: 44 },
     // Narrow floating platforms (90-120px).
     { x: 340, y: 380, width: 110, height: 24 },
     { x: 620, y: 330, width: 90, height: 24 },
@@ -37,9 +41,11 @@ export const level6: LevelDef = {
     { x: 1500, y: 472, tiles: 2 },
   ],
   hazards: [
-    { kind: "cannon", x: 1270, y: 205, direction: "left" }, // crest cannon
-    { kind: "cannon", x: 2360, y: 452, direction: "left" }, // final ground run
+    // Crest cannon, parked at the crest's right end so its leftward lane sweeps
+    // the crest itself — the shield picked up just below is what buys a mistake.
+    { kind: "cannon", x: 1340, y: 220, direction: "left" },
+    { kind: "cannon", x: 2360, y: 496, direction: "left" }, // final ground run
   ],
   shieldPickups: [{ x: 1120, y: 250 }], // on the x=1080 platform, just before the crest
-  goal: { x: 2540, y: 432 },
+  goal: { x: 2540, y: 496 },
 };

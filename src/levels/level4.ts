@@ -38,7 +38,9 @@ export const level4: LevelDef = {
     },
 
     // Arrow shooter firing left across the gauntlet — wait behind the pillar.
-    { kind: "arrowShooter", x: 1770, y: 452, direction: -1, intervalMs: 1700 },
+    // Stands on the ground, which puts its arrows at chest height: cover is the
+    // answer because standing in the open is not survivable.
+    { kind: "arrowShooter", x: 1770, y: 496, direction: -1, intervalMs: 1700 },
   ],
-  goal: { x: 2280, y: 432 },
+  goal: { x: 2280, y: 496 },
 };

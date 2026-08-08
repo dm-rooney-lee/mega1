@@ -35,7 +35,9 @@ export const level5: LevelDef = {
   spikes: [],
   hazards: [
     // Fixed turret: fires straight left toward the approaching player; stompable.
-    { kind: "turret", x: 600, y: 400, aimMode: "fixed", direction: -1 },
+    // On the ground rather than the ledge, so its shot crosses the route everyone
+    // takes — the ledge above is now purely the platform you drop onto it from.
+    { kind: "turret", x: 600, y: 496, aimMode: "fixed", direction: -1 },
 
     // Aiming turret behind the pillar: slower shot + long locked telegraph.
     {
@@ -51,5 +53,5 @@ export const level5: LevelDef = {
       aimMode: "aim", projectileSpeed: 250, intervalMs: 2200,
     },
   ],
-  goal: { x: 2400, y: 432 },
+  goal: { x: 2400, y: 496 },
 };

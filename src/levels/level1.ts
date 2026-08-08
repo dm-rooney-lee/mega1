@@ -36,5 +36,5 @@ export const level1: LevelDef = {
   spikes: [
     { x: 1120, y: 472, tiles: 3 }, // spikes on the long ground segment
   ],
-  goal: { x: 2260, y: 432 },
+  goal: { x: 2260, y: 496 },
 };

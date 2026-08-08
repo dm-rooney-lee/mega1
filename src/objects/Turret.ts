@@ -3,6 +3,7 @@ import { COLORS, DEPTH, PROJECTILE, TURRET, TEX } from "../config";
 import type { Player } from "./Player";
 import type { ProjectilePool } from "./ProjectilePool";
 import { TEXTURE_SCALE } from "../display";
+import { standOnSurface } from "./mount";
 import { playEnemyKill } from "../audio";
 
 /**
@@ -54,9 +55,9 @@ export class Turret extends Phaser.Physics.Arcade.Sprite {
 
     this.body.setAllowGravity(false);
     this.body.setImmovable(true);
-    // Input (x, y) is the surface it stands on; center the sprite above it so the
-    // body stays aligned (changing origin after body creation would offset it).
-    this.setPosition(x, y - this.height / 2);
+    // Input (x, y) is the surface it stands on; centring the sprite above it keeps
+    // the body aligned (changing origin after body creation would offset it).
+    standOnSurface(this, x, y);
     this.aimLine = scene.add.graphics().setDepth(DEPTH.HAZARD);
   }
 

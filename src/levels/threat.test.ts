@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { levels } from "./index";
 import {
   bandsOverlap,
   hazardThreat,
@@ -248,5 +249,38 @@ describe("threatensStandingPlayer", () => {
   it("[Boundary] 조준형 터렛은 언제나 통과한다", () => {
     const level = levelWith([{ kind: "turret", x: 1520, y: GROUND, aimMode: "aim" }]);
     expect(threatensStandingPlayer(level, level.hazards![0])).toBe(true);
+  });
+});
+
+/**
+ * The stage sweep. Everything above proves the geometry; this applies it to the
+ * real levels, so a hazard that cannot reach anyone fails here rather than going
+ * unnoticed in play — a shot that misses by a pixel just reads as "it missed".
+ *
+ * It walks the `levels` registry, so a new stage is covered the moment it is
+ * added to that array.
+ */
+describe("모든 스테이지", () => {
+  levels.forEach((level, index) => {
+    const stage = `${index + 1}스테이지`;
+
+    it(`[Happy] ${stage} 깃발이 지면에 꽂혀 있다`, () => {
+      expect(mountedOn(level.platforms, level.goal.x, level.goal.y)).toBe(true);
+    });
+
+    (level.hazards ?? []).forEach((hazard) => {
+      const where = `${hazard.kind}@${hazard.x}`;
+
+      const surface = mountSurfaceOf(hazard);
+      if (surface !== null) {
+        it(`[Happy] ${stage} ${where}가 발판 위에 서 있다`, () => {
+          expect(mountedOn(level.platforms, hazard.x, surface)).toBe(true);
+        });
+      }
+
+      it(`[Happy] ${stage} ${where}가 서 있는 주인공을 맞힐 수 있다`, () => {
+        expect(threatensStandingPlayer(level, hazard)).toBe(true);
+      });
+    });
   });
 });
