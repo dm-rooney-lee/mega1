@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, SPIKE, TEX, THWOMP } from "../config";
+import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, SHIELD, SPIKE, TEX, THWOMP } from "../config";
 import { playBgm, playShieldBlock, playWin } from "../audio";
 import {
   cameraViewOrigin,
@@ -82,7 +82,8 @@ export class GameScene extends Phaser.Scene {
 
   // HUD. Held so `layoutHud` can re-anchor them to the camera's view; see there
   // for why they are not simply pinned with a zero scroll factor.
-  private shieldText!: Phaser.GameObjects.Text;
+  /** One icon per max shield charge; `updateShieldIcons` shows/hides them by current charge count. */
+  private shieldIcons: Phaser.GameObjects.Image[] = [];
   private stageText!: Phaser.GameObjects.Text;
   private levelBanner?: Phaser.GameObjects.Text;
   private debugCoordText?: Phaser.GameObjects.Text;
@@ -379,7 +380,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    this.shieldText.setText(this.shieldLabel());
+    this.updateShieldIcons();
 
     this.applyCarries(delta);
     this.applyConveyors();
@@ -815,12 +816,6 @@ export class GameScene extends Phaser.Scene {
     this.farBg.setTileScale(1 / TEXTURE_SCALE, 1 / TEXTURE_SCALE);
   }
 
-  /** "Shield: ●●●" while charges remain, "Shield: --" once depleted (or never picked up). */
-  private shieldLabel(): string {
-    const n = this.player.shieldCharges;
-    return n > 0 ? `Shield: ${"●".repeat(n)}` : "Shield: --";
-  }
-
   /**
    * Builds the HUD. Positions are placeholders — `layoutHud` owns them.
    *
@@ -833,15 +828,17 @@ export class GameScene extends Phaser.Scene {
     const zoom = cameraZoom(this.scale.height);
     this.levelBanner = undefined;
 
-    // Shield charge counter, top-left — always on, like the stage indicator.
-    this.shieldText = this.add
-      .text(0, 0, this.shieldLabel(), {
-        fontFamily: SCREEN_FONT,
-        fontSize: "18px",
-        color: "#29adff",
-      })
-      .setDepth(DEPTH.HUD);
-    this.shieldText.setStroke("#1d2b53", 4);
+    // Shield charge icons, top-left — one per max charge, shown/hidden by current count.
+    this.shieldIcons = [];
+    for (let i = 0; i < SHIELD.MAX_CHARGES; i++) {
+      const icon = this.add
+        .image(0, 0, TEX.SHIELD)
+        .setOrigin(0, 0)
+        .setScale(1 / TEXTURE_SCALE)
+        .setDepth(DEPTH.HUD);
+      this.shieldIcons.push(icon);
+    }
+    this.updateShieldIcons();
 
     // Stage indicator, top-right — always on, so progress is readable mid-play.
     this.stageText = this.add
@@ -882,10 +879,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   private hudTexts(): Phaser.GameObjects.Text[] {
-    const texts = [this.shieldText, this.stageText];
+    const texts = [this.stageText];
     if (this.levelBanner) texts.push(this.levelBanner);
     if (this.debugCoordText) texts.push(this.debugCoordText);
     return texts;
+  }
+
+  /** Shows exactly `shieldCharges` icons (0..SHIELD.MAX_CHARGES), left to right. */
+  private updateShieldIcons(): void {
+    const charges = this.player.shieldCharges;
+    this.shieldIcons.forEach((icon, i) => icon.setVisible(i < charges));
   }
 
   /**
@@ -916,16 +919,16 @@ export class GameScene extends Phaser.Scene {
    */
   private layoutHud(): void {
     // The camera is placed before the HUD exists, on the first frame of a level.
-    if (!this.shieldText) return;
+    if (!this.stageText) return;
 
     const cam = this.cameras.main;
     const left = cameraViewOrigin(cam.scrollX, cam.width, cam.zoom);
     const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
     const width = cam.width / cam.zoom;
 
-    this.shieldText.setPosition(left + 16, top + 40);
+    this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, top + 40));
     this.stageText.setPosition(left + width - 16, top + 14);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
-    this.debugCoordText?.setPosition(left + 16, top + 66);
+    this.debugCoordText?.setPosition(left + 16, top + 76);
   }
 }
