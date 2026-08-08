@@ -89,21 +89,30 @@ export const level7: LevelDef = {
     { kind: "popupSpike", x: 960, y: 496, tiles: 2, phase: 0.5 },
 
     // §2 — two pendulums, offset by half a period, sweeping overlapping arcs.
-    { kind: "pendulum", x: 1520, y: 250, length: 180, amplitudeDeg: 60, periodMs: 2000 },
+    // Both anchors sit low enough for the heads to reach a standing player, and
+    // both moved left so their arcs stay over the walkway: at x=1700 the lowered
+    // second head swung out past the walkway's edge and into the jump across the
+    // pit. Their low sweeps stay 27px apart, leaving somewhere to stand between
+    // the two timed dashes.
+    { kind: "pendulum", x: 1500, y: 270, length: 180, amplitudeDeg: 60, periodMs: 2000 },
     {
       kind: "pendulum",
-      x: 1700, y: 260,
+      x: 1660, y: 300,
       length: 150, amplitudeDeg: 50, periodMs: 1700, phase: 0.5,
     },
 
     // §3 — two crushers to pass under, then a shooter to wait out behind cover.
     { kind: "thwomp", x: 2060, y: 110, width: 70, height: 70, dropDistance: 300, detectWidth: 90 },
     { kind: "thwomp", x: 2280, y: 110, width: 70, height: 70, dropDistance: 300, detectWidth: 90 },
-    { kind: "arrowShooter", x: 3070, y: 452, direction: -1, intervalMs: 1500 },
+    { kind: "arrowShooter", x: 3070, y: 496, direction: -1, intervalMs: 1500 },
 
     // §4 — cannon sweeping the moving-platform crossing; its lane ends on the
     // x=3620 pillar, so the shots stay inside this section.
-    { kind: "cannon", x: 4380, y: 452, direction: "left", intervalMs: 1800 },
+    // Stands on the ground rather than at the moving platform's ride height: an
+    // emplacement up there put its muzzle inside anyone who climbed onto it and
+    // cut the guard enemy's patrol in half. On the ground it sweeps the run-up
+    // instead, and the crossing is still gated by the pit and the platform timing.
+    { kind: "cannon", x: 4380, y: 496, direction: "left", intervalMs: 1800 },
 
     // §5 — aiming turret guarding the spring (stompable, or dodge from cover).
     {
@@ -113,8 +122,8 @@ export const level7: LevelDef = {
     },
     // Final callback to stage 6: a cannon sweeping the goal run. Its lane ends
     // on the wall you just sprang over.
-    { kind: "cannon", x: 5180, y: 452, direction: "left", intervalMs: 1600 },
+    { kind: "cannon", x: 5180, y: 496, direction: "left", intervalMs: 1600 },
   ],
   shieldPickups: [{ x: 3380, y: 350 }], // on the x=3320 perch, right before §4
-  goal: { x: 5100, y: 432 },
+  goal: { x: 5100, y: 496 },
 };

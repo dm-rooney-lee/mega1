@@ -68,15 +68,21 @@ export const level8: LevelDef = {
     { x: 3260, y: 472, tiles: 1 }, // zone 3, on a "safe" island
   ],
   hazards: [
-    { kind: "cannon", x: 1060, y: 245, direction: "left" }, // zone 1 crest cannon
+    // Zone 1 crest cannon, at the crest's right end so its leftward lane sweeps
+    // the crest the player has to cross.
+    { kind: "cannon", x: 1140, y: 260, direction: "left" },
+    // Zone 2, riding the rail between the x=1760 and x=1960 platforms. It starts
+    // far enough left to sweep the whole shield platform: from x=1860 it only
+    // reached that platform's last few pixels, so standing on it was safe and the
+    // shield was free.
     {
       kind: "gear",
-      x: 1860,
+      x: 1790,
       y: 300,
       axis: "horizontal",
-      range: 100,
+      range: 170,
       speed: 90,
-    }, // zone 2, between the x=1760 and x=1960 platforms
+    },
     {
       kind: "gear",
       x: 2335,
@@ -93,8 +99,8 @@ export const level8: LevelDef = {
       range: 150,
       speed: 100,
     }, // zone 4, between the x=4700 and x=4900 platforms
-    { kind: "cannon", x: 4960, y: 452, direction: "left" }, // zone 4 final ground run
+    { kind: "cannon", x: 4960, y: 496, direction: "left" }, // zone 4 final ground run
   ],
   shieldPickups: [{ x: 1810, y: 295 }], // on the x=1760 platform, zone 2
-  goal: { x: 5140, y: 432 },
+  goal: { x: 5140, y: 496 },
 };

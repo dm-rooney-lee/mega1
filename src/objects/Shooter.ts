@@ -2,9 +2,10 @@ import Phaser from "phaser";
 import { DEPTH, PROJECTILE, SHOOTER, TEX } from "../config";
 import type { ProjectilePool } from "./ProjectilePool";
 import { TEXTURE_SCALE } from "../display";
+import { standOnSurface } from "./mount";
 
 /**
- * D-1 — a wall-mounted launcher that fires a horizontal projectile on a timer
+ * D-1 — a launcher that stands on a surface and fires a horizontal projectile on a timer
  * (the rhythmic variant; a trip-wire variant could reuse the same fire()). The
  * body itself is solid and indestructible.
  */
@@ -26,6 +27,9 @@ export class Shooter extends Phaser.Physics.Arcade.Sprite {
   ) {
     super(scene, x, y, TEX.SHOOTER);
     this.setScale(1 / TEXTURE_SCALE);
+    // (x, y) is the surface it stands on. Placing it before the static body is
+    // built matters: a static body does not follow the sprite afterwards.
+    standOnSurface(this, x, y);
     scene.add.existing(this);
     scene.physics.add.existing(this, true);
     this.setDepth(DEPTH.HAZARD);
@@ -44,7 +48,7 @@ export class Shooter extends Phaser.Physics.Arcade.Sprite {
     if (this.sinceFireMs < this.intervalMs) return;
     this.sinceFireMs = 0;
 
-    const muzzleX = this.x + this.direction * (this.displayWidth / 2 + 6);
+    const muzzleX = this.x + this.direction * (this.displayWidth / 2 + SHOOTER.MUZZLE_GAP);
     this.pool.fire(muzzleX, this.y, this.direction * this.projectileSpeed, 0);
   }
 }

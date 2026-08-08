@@ -4,6 +4,7 @@ import type { CannonDef } from "../levels/types";
 import { shouldFire } from "./ballistics";
 import { Cannonball } from "./Cannonball";
 import { TEXTURE_SCALE } from "../display";
+import { standOnSurface } from "./mount";
 import { playCannonFire } from "../audio";
 
 /**
@@ -28,6 +29,9 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5);
     this.setFlipX(def.direction === "left");
     this.setDepth(DEPTH.HAZARD);
+    // (x, y) is the surface it stands on, so its balls leave half a body height
+    // above that — chest height for anyone standing on the same surface.
+    standOnSurface(this, def.x, def.y);
 
     this.direction = def.direction;
     this.intervalMs = def.intervalMs ?? CANNON.FIRE_INTERVAL_MS;
@@ -37,7 +41,13 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
   update(time: number): void {
     if (!shouldFire(time, this.lastFiredAt, this.intervalMs)) return;
     this.lastFiredAt = time;
-    const ball = new Cannonball(this.scene, this.x, this.y, this.direction);
+    // Clear of the barrel, so a ball never materialises inside someone standing
+    // on the cannon itself.
+    const muzzleX =
+      this.x +
+      (this.direction === "left" ? -1 : 1) *
+        (this.displayWidth / 2 + CANNON.BALL_DIAMETER / 2 + CANNON.MUZZLE_GAP);
+    const ball = new Cannonball(this.scene, muzzleX, this.y, this.direction);
     this.balls.add(ball);
     // Group#add re-applies the group's physics defaults (velocityX/Y default
     // to 0) to every member, even one that already has a body — this silently

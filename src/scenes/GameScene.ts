@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
+import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, SPIKE, TEX, THWOMP } from "../config";
 import { playBgm, playShieldBlock, playWin } from "../audio";
 import {
   cameraViewOrigin,
@@ -409,7 +409,9 @@ export class GameScene extends Phaser.Scene {
         // offsets — unlike dynamic ones, the sprite's scale does not enter in.
         const body = spike.body as Phaser.Physics.Arcade.StaticBody;
         body.updateFromGameObject();
-        body.setSize(28, 18).setOffset(2, 14);
+        body
+          .setSize(SPIKE.BODY_WIDTH, SPIKE.BODY_HEIGHT)
+          .setOffset(SPIKE.BODY_OFFSET_X, SPIKE.BODY_OFFSET_Y);
       }
     }
     return spikes;
@@ -455,7 +457,7 @@ export class GameScene extends Phaser.Scene {
         break;
       case "thwomp":
         this.thwomps.push(
-          new Thwomp(this, h.x, h.y, h.width ?? 60, h.height ?? 60, {
+          new Thwomp(this, h.x, h.y, h.width ?? THWOMP.WIDTH, h.height ?? THWOMP.HEIGHT, {
             dropDistance: h.dropDistance,
             detectWidth: h.detectWidth,
             dropSpeed: h.dropSpeed,

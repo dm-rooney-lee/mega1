@@ -133,10 +133,11 @@ export interface ThwompDef {
   bottomWaitMs?: number;
 }
 
-/** D-1 — wall-mounted launcher firing horizontal projectiles on a timer. */
+/** D-1 — launcher firing horizontal projectiles on a timer. */
 export interface ShooterDef {
   kind: "arrowShooter";
   x: number;
+  /** The surface it stands on, so its arrows cross a standing player's chest. */
   y: number;
   /** Fire direction: -1 = left, 1 = right. */
   direction: -1 | 1;
@@ -148,6 +149,7 @@ export interface ShooterDef {
 export interface TurretDef {
   kind: "turret";
   x: number;
+  /** The surface it stands on. */
   y: number;
   /** "fixed" fires along `direction`; "aim" leads toward the player. */
   aimMode?: "fixed" | "aim";
@@ -159,8 +161,8 @@ export interface TurretDef {
 /** E-1 — cannon: fires cannonballs on a timer along a fixed left/right line. */
 export interface CannonDef {
   kind: "cannon";
-  /** Firing origin — also the cannonball's spawn height. */
   x: number;
+  /** The surface it stands on; balls leave half a body height above it. */
   y: number;
   direction: "left" | "right";
   /** Defaults to config's CANNON.FIRE_INTERVAL_MS when omitted. */
@@ -207,5 +209,6 @@ export interface LevelDef {
   hazards?: HazardDef[];
   /** Shield pickup spawn points — collecting one grants absorbing charges. */
   shieldPickups?: Vec2[];
+  /** The flag. `y` is the surface it is planted on, so walking into it wins. */
   goal: Vec2;
 }

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { COLORS, DEPTH, POPUP_SPIKE, TILE, TEX } from "../config";
+import { COLORS, DEPTH, POPUP_SPIKE, SPIKE, TILE, TEX } from "../config";
 import { popupSpikePhase } from "../levels/motion";
 import { TEXTURE_SCALE } from "../display";
 import { setLogicalBodySize, setLogicalBodyOffset } from "./hitbox";
@@ -55,8 +55,8 @@ export class PopupSpike {
       body.setAllowGravity(false);
       body.setImmovable(true);
       // Only the pointy upper portion hurts (matches the static spikes).
-      setLogicalBodySize(t, 28, 18);
-      setLogicalBodyOffset(t, 2, 14);
+      setLogicalBodySize(t, SPIKE.BODY_WIDTH, SPIKE.BODY_HEIGHT);
+      setLogicalBodyOffset(t, SPIKE.BODY_OFFSET_X, SPIKE.BODY_OFFSET_Y);
       body.enable = false;
       t.setVisible(false);
       group.add(t);

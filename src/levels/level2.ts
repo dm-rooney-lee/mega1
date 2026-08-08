@@ -38,5 +38,5 @@ export const level2: LevelDef = {
     { x: 1150, y: 472, tiles: 3 }, // on the mid ground segment
     { x: 2150, y: 472, tiles: 3 }, // on the long final segment
   ],
-  goal: { x: 2860, y: 432 },
+  goal: { x: 2860, y: 496 },
 };

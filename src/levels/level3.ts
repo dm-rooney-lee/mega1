@@ -45,11 +45,15 @@ export const level3: LevelDef = {
     { x: 1180, y: 472, tiles: 3 }, // under the pendulum — don't dawdle
   ],
   hazards: [
+    // Hung low enough that its head dips into a standing player: from the old
+    // anchor the ball bottomed out 22px above their head, so waiting underneath
+    // was free. Lowering the anchor rather than lengthening the chain keeps the
+    // authored swing width and timing — a longer chain would widen the arc too.
     {
       kind: "pendulum",
-      x: 1260, y: 250,
+      x: 1260, y: 280,
       length: 170, amplitudeDeg: 58, periodMs: 2100,
     },
   ],
-  goal: { x: 2680, y: 432 },
+  goal: { x: 2680, y: 496 },
 };

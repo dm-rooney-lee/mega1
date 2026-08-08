@@ -2,8 +2,8 @@ import type { LevelDef } from "./types";
 
 /**
  * Level 5 — "Snipers": the projectile enemies (group D), eased in, then a finale
- * that combines them with a moving platform. FIXED turret on a ledge (learn to
- * stomp / dodge a straight shot) → AIMING turret behind a cover pillar → a pit
+ * that combines them with a moving platform. FIXED turret on the approach (learn
+ * to stomp / dodge a straight shot) → AIMING turret behind a cover pillar → a pit
  * you cross on a moving platform while a second aiming turret fires (time the
  * crossing off its telegraph). Aim locks at the telegraph, so it's "step out of
  * the line", not a homing lock-on. Coordinates are world pixels; tune in play.
@@ -14,9 +14,9 @@ export const level5: LevelDef = {
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },
   platforms: [
-    // Approach + a low ledge holding the fixed turret (stomp it from above).
+    // Approach, then a low ledge to read the turret's rhythm from.
     { x: 0, y: 496, width: 900, height: 44 },
-    { x: 520, y: 400, width: 160, height: 24 }, // turret ledge
+    { x: 520, y: 400, width: 160, height: 24 }, // vantage ledge
 
     // Pit 900..1040, then the aiming-turret gauntlet with cover.
     { x: 1040, y: 496, width: 560, height: 44 },
@@ -35,7 +35,10 @@ export const level5: LevelDef = {
   spikes: [],
   hazards: [
     // Fixed turret: fires straight left toward the approaching player; stompable.
-    { kind: "turret", x: 600, y: 400, aimMode: "fixed", direction: -1 },
+    // On the ground so its shot crosses the route everyone takes, and clear of the
+    // x=520..680 ledge — under that roof the jump tops out one pixel inside the
+    // shot band, which would make the dodge this beat teaches impossible.
+    { kind: "turret", x: 760, y: 496, aimMode: "fixed", direction: -1 },
 
     // Aiming turret behind the pillar: slower shot + long locked telegraph.
     {
@@ -51,5 +54,5 @@ export const level5: LevelDef = {
       aimMode: "aim", projectileSpeed: 250, intervalMs: 2200,
     },
   ],
-  goal: { x: 2400, y: 432 },
+  goal: { x: 2400, y: 496 },
 };
