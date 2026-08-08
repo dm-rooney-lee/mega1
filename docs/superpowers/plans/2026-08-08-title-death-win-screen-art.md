@@ -64,7 +64,7 @@
 
 ---
 
-## 작업 1: 스테이지 표기 문구를 테스트 가능한 함수로 분리
+## Task 1 — 스테이지 표기 문구를 테스트 가능한 함수로 분리
 
 플레이 중 화면 우측 위에 `STAGE 7/8`이 이미 뜨는데, 그 문구가 `GameScene` 안에 직접 박혀 있다. 죽음 화면에도 같은 문구가 필요하므로 순수 함수로 빼내 양쪽이 함께 쓴다. 두 벌로 복사하면 나중에 표기를 바꿀 때 한쪽만 바뀐다.
 
@@ -195,7 +195,7 @@ would drift the moment either side changes."
 
 ---
 
-## 작업 2: 화면 도우미가 그림도 다루게 확장
+## Task 2 — 화면 도우미가 그림도 다루게 확장
 
 지금 `textScreen.ts`는 글자 줄만 논리 좌표로 등록해두고, 창 크기가 바뀌면 배율을 곱해 다시 배치한다. 그림에도 똑같은 규칙이 필요하다. 규칙을 두 벌로 만들지 않고 같은 목록에 태워 한곳에서 배치한다.
 
@@ -374,7 +374,7 @@ row list keeps a single resize handler per screen instead of two."
 
 ---
 
-## 작업 3: 픽셀 글꼴 적용
+## Task 3 — 픽셀 글꼴 적용
 
 **파일:**
 - 수정: `package.json` (의존성 추가)
@@ -530,7 +530,7 @@ already drew."
 
 ---
 
-## 작업 4: 화면 색을 설정 파일에 모으고 세 화면 배경 칠하기
+## Task 4 — 화면 색을 설정 파일에 모으고 세 화면 배경 칠하기
 
 **파일:**
 - 수정: `src/config.ts`
@@ -733,7 +733,7 @@ differently at every aspect while a camera background never can."
 
 ---
 
-## 작업 5: 타이틀 화면
+## Task 5 — 타이틀 화면
 
 **파일:**
 - 생성: `public/ui/title-scene.svg`
@@ -990,7 +990,7 @@ case crops the outer platforms rather than the characters."
 
 ---
 
-## 작업 6: 죽음 화면
+## Task 6 — 죽음 화면
 
 **파일:**
 - 생성: `public/ui/death-scene.svg`
@@ -1121,7 +1121,7 @@ never disagree about how stages are numbered."
 
 ---
 
-## 작업 7: 클리어 화면
+## Task 7 — 클리어 화면
 
 **파일:**
 - 생성: `public/ui/win-gopher.svg`
@@ -1267,7 +1267,7 @@ git commit -m "feat(win): crown the gopher on the all-stages-cleared screen"
 
 ---
 
-## 작업 8: 문서 갱신과 전체 점검
+## Task 8 — 문서 갱신과 전체 점검
 
 **파일:**
 - 수정: `README.md`
