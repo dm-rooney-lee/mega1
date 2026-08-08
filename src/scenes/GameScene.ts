@@ -82,7 +82,6 @@ export class GameScene extends Phaser.Scene {
 
   // HUD. Held so `layoutHud` can re-anchor them to the camera's view; see there
   // for why they are not simply pinned with a zero scroll factor.
-  private hudHint!: Phaser.GameObjects.Text;
   private shieldText!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
   private levelBanner?: Phaser.GameObjects.Text;
@@ -834,18 +833,7 @@ export class GameScene extends Phaser.Scene {
     const zoom = cameraZoom(this.scale.height);
     this.levelBanner = undefined;
 
-    this.hudHint = this.add
-      .text(
-        0,
-        0,
-        "Arrows / A,D to move  •  Space / W / Up to jump  •  stomp enemies, reach the flag",
-        { fontFamily: "monospace", fontSize: "15px", color: "#fff1e8" },
-      )
-      .setDepth(DEPTH.HUD);
-    this.hudHint.setStroke("#1d2b53", 4);
-    this.tweens.add({ targets: this.hudHint, alpha: 0, delay: 5000, duration: 1000 });
-
-    // Shield charge counter, just under the hint — always on, like the stage indicator.
+    // Shield charge counter, top-left — always on, like the stage indicator.
     this.shieldText = this.add
       .text(0, 0, this.shieldLabel(), {
         fontFamily: SCREEN_FONT,
@@ -894,7 +882,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private hudTexts(): Phaser.GameObjects.Text[] {
-    const texts = [this.hudHint, this.shieldText, this.stageText];
+    const texts = [this.shieldText, this.stageText];
     if (this.levelBanner) texts.push(this.levelBanner);
     if (this.debugCoordText) texts.push(this.debugCoordText);
     return texts;
@@ -928,14 +916,13 @@ export class GameScene extends Phaser.Scene {
    */
   private layoutHud(): void {
     // The camera is placed before the HUD exists, on the first frame of a level.
-    if (!this.hudHint) return;
+    if (!this.shieldText) return;
 
     const cam = this.cameras.main;
     const left = cameraViewOrigin(cam.scrollX, cam.width, cam.zoom);
     const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
     const width = cam.width / cam.zoom;
 
-    this.hudHint.setPosition(left + 16, top + 14);
     this.shieldText.setPosition(left + 16, top + 40);
     this.stageText.setPosition(left + width - 16, top + 14);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
