@@ -10,6 +10,7 @@ import type { LevelDef } from "./level1";
  * difficulty bump is gentle while there's extra challenge for those who climb.
  */
 export const level2: LevelDef = {
+  name: "Double Trouble",
   worldWidth: 3000,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },
