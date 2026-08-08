@@ -19,7 +19,7 @@ import type { LevelDef } from "./types";
  * three <=116px steps) and every unbridged pit <=120px.
  */
 export const level10: LevelDef = {
-  name: "10 — Endgame",
+  name: "Endgame",
   worldWidth: 7200,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

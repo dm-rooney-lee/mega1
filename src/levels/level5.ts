@@ -9,7 +9,7 @@ import type { LevelDef } from "./types";
  * the line", not a homing lock-on. Coordinates are world pixels; tune in play.
  */
 export const level5: LevelDef = {
-  name: "5 — Snipers",
+  name: "Snipers",
   worldWidth: 2500,
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },

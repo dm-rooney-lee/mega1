@@ -21,7 +21,7 @@ import type { LevelDef } from "./types";
  * either within that same jump range or crossed on a moving platform.
  */
 export const level9: LevelDef = {
-  name: "9 — Uprising",
+  name: "Uprising",
   worldWidth: 7200,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

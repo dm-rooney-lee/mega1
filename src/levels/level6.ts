@@ -8,7 +8,7 @@ import type { LevelDef } from "./types";
  * line grew stages 2-5, hence the renumbering).
  */
 export const level6: LevelDef = {
-  name: "6 — Bombardment",
+  name: "Bombardment",
   worldWidth: 2600,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

@@ -9,7 +9,7 @@ import type { LevelDef } from "./types";
  * expect to playtest-tune (same convention as level3/level6).
  */
 export const level8: LevelDef = {
-  name: "8 — Cogs & Pitfalls",
+  name: "Cogs & Pitfalls",
   worldWidth: 5200,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

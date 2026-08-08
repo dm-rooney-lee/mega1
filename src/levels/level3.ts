@@ -6,7 +6,7 @@ import type { LevelDef } from "./types";
  * spring over a wall → goal. Coordinates are world pixels; expect to playtest-tune.
  */
 export const level3: LevelDef = {
-  name: "3 — Machines",
+  name: "Machines",
   worldWidth: 2800,
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },

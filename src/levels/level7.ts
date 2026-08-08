@@ -23,7 +23,7 @@ import type { LevelDef } from "./types";
  * solid face within ~700px of its cannon.
  */
 export const level7: LevelDef = {
-  name: "7 — Gauntlet",
+  name: "Gauntlet",
   worldWidth: 5200,
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },

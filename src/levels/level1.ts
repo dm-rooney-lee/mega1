@@ -12,7 +12,7 @@ export type { PlatformDef, Vec2, SpikeDef, HazardDef, LevelDef } from "./types";
 import type { LevelDef } from "./types";
 
 export const level1: LevelDef = {
-  name: "1 — Warm Up",
+  name: "Warm Up",
   worldWidth: 2400,
   worldHeight: 540,
   playerSpawn: { x: 80, y: 400 },

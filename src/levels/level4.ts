@@ -7,7 +7,7 @@ import type { LevelDef } from "./types";
  * level 3 stays gentle. Coordinates are world pixels; expect to playtest-tune.
  */
 export const level4: LevelDef = {
-  name: "4 — Traps",
+  name: "Traps",
   worldWidth: 2400,
   worldHeight: 540,
   playerSpawn: { x: 70, y: 420 },
