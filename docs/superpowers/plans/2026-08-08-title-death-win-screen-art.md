@@ -1331,6 +1331,290 @@ git commit -m "docs: add the three screens to the manual test checklist"
 
 ---
 
+## Task 9 — 그림 파일이 없어도 게임이 뜨게 만들기
+
+작업 8에서 실제로 확인해 보니, 설계가 약속한 "그림을 못 받아도 배경색과 글자는 정상 표시된다"가 **성립하지 않는다.** 그림 파일 하나만 없어도 게임이 아예 뜨지 않고 빈 화면이 된다.
+
+### 왜 그런가 (재현으로 확인한 사실)
+
+세 가지가 겹친다.
+
+1. **서버가 없는 파일에 `200`과 앱 HTML 페이지를 돌려준다.** 404가 아니다. 개발 서버(`npm run dev`)와 배포 빌드 미리보기(`npm run preview`) 양쪽에서 `curl`로 확인했다.
+2. **Phaser는 상태 코드 400~599만 오류로 처리한다.** `200`이므로 정상 수신으로 보고 SVG 해석 단계로 넘어간다.
+3. **해석 단계가 응답에서 `<svg>` 요소를 꺼낸 뒤 존재 확인 없이 속성을 읽는다**(`SVGFile.js`). HTML에는 없으므로 예외가 나고, 그 예외가 불러오기 대기열을 멈춰 `BootScene.create()`조차 실행되지 않는다.
+
+작업 2에서 넣은 "그림이 없으면 건너뛴다"는 안전장치는 **그림을 배치할 때** 동작한다. 크래시는 그보다 앞선 **불러오기 단계**에서 나므로 한 번도 실행될 기회가 없다.
+
+### 어떻게 고치는가
+
+Phaser에 넘기기 **전에** 응답이 진짜 그림인지 확인한다. 확인은 게임을 만들기 전에 끝내야 하므로, 글꼴을 기다리는 바로 그 자리(`src/main.ts`)에서 함께 처리한다.
+
+**파일:**
+- 생성: `src/scenes/screenArt.ts`
+- 생성: `src/scenes/screenArt.test.ts`
+- 수정: `src/main.ts`
+- 수정: `src/scenes/BootScene.ts`
+
+**주고받는 것:**
+- 내보냄: `SCREEN_ART` — 화면 그림 3장의 이름과 주소
+- 내보냄: `looksLikeSvg(body: string): boolean` — 순수 함수
+- 내보냄: `pickUsableArt(entries, fetchText): Promise<ScreenArt[]>`
+- 내보냄: `setUsableScreenArt(art)` / `usableScreenArt()` — `main.ts`가 채우고 `BootScene`이 읽는다
+
+- [ ] **1단계: 실패하는 테스트 작성**
+
+`src/scenes/screenArt.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import { looksLikeSvg, pickUsableArt } from "./screenArt";
+
+describe("looksLikeSvg", () => {
+  // 정상 흐름
+  it("실제 그림 파일의 첫머리를 알아본다", () => {
+    expect(looksLikeSvg('<svg xmlns="http://www.w3.org/2000/svg" width="400">')).toBe(true);
+  });
+
+  // 경계값
+  it("앞에 XML 선언이 붙어 있어도 알아본다", () => {
+    expect(looksLikeSvg('<?xml version="1.0"?>\n<svg width="10" height="10"></svg>')).toBe(true);
+  });
+  it("빈 응답은 그림이 아니다", () => {
+    expect(looksLikeSvg("")).toBe(false);
+  });
+  it("공백뿐인 응답은 그림이 아니다", () => {
+    expect(looksLikeSvg("   \n\t ")).toBe(false);
+  });
+
+  // 오류 케이스 — 이게 실제로 일어나는 상황이다
+  it("서버가 대신 돌려준 앱 HTML 페이지는 그림이 아니다", () => {
+    const html = '<!doctype html>\n<html lang="en">\n  <head>\n    <title>Let\'s go!!</title>';
+    expect(looksLikeSvg(html)).toBe(false);
+  });
+  it("svg라는 낱말이 본문에 섞여 있어도 태그가 아니면 그림이 아니다", () => {
+    expect(looksLikeSvg("<p>svg 파일을 찾을 수 없습니다</p>")).toBe(false);
+  });
+});
+
+describe("pickUsableArt", () => {
+  const entries = [
+    { key: "a", url: "ui/a.svg" },
+    { key: "b", url: "ui/b.svg" },
+  ];
+
+  // 정상 흐름
+  it("전부 진짜 그림이면 전부 통과시킨다", async () => {
+    const usable = await pickUsableArt(entries, async () => "<svg></svg>");
+    expect(usable.map((e) => e.key)).toEqual(["a", "b"]);
+  });
+
+  // 경계값
+  it("목록이 비어 있으면 빈 목록을 돌려준다", async () => {
+    expect(await pickUsableArt([], async () => "<svg></svg>")).toEqual([]);
+  });
+  it("일부만 진짜면 그것만 통과시킨다", async () => {
+    const usable = await pickUsableArt(entries, async (url) =>
+      url.endsWith("a.svg") ? "<svg></svg>" : "<!doctype html>",
+    );
+    expect(usable.map((e) => e.key)).toEqual(["a"]);
+  });
+
+  // 오류 케이스
+  it("가져오기가 실패하면 그 그림만 빼고 나머지는 살린다", async () => {
+    const usable = await pickUsableArt(entries, async (url) => {
+      if (url.endsWith("a.svg")) throw new Error("network down");
+      return "<svg></svg>";
+    });
+    expect(usable.map((e) => e.key)).toEqual(["b"]);
+  });
+  it("전부 실패해도 예외를 던지지 않고 빈 목록을 돌려준다", async () => {
+    const usable = await pickUsableArt(entries, async () => {
+      throw new Error("offline");
+    });
+    expect(usable).toEqual([]);
+  });
+});
+```
+
+- [ ] **2단계: 실패 확인**
+
+실행: `npx vitest run src/scenes/screenArt.test.ts`
+예상: `Failed to resolve import "./screenArt"` 로 실패
+
+- [ ] **3단계: 구현**
+
+`src/scenes/screenArt.ts`:
+
+```ts
+import { TEX } from "../config";
+
+export type ScreenArt = { key: string; url: string };
+
+/** The three screen pictures, and where they sit under `public/`. */
+export const SCREEN_ART: readonly ScreenArt[] = [
+  { key: TEX.UI_TITLE, url: "ui/title-scene.svg" },
+  { key: TEX.UI_DEATH, url: "ui/death-scene.svg" },
+  { key: TEX.UI_WIN, url: "ui/win-gopher.svg" },
+];
+
+/**
+ * Whether a response body is really an SVG document.
+ *
+ * A successful response is not proof that the file exists. Asked for a missing
+ * file under `public/`, both the dev server and `vite preview` answer with the
+ * app's own HTML page and a 200 — measured, not assumed. Phaser's SVG loader
+ * then pulls the `<svg>` element out of whatever it was handed without checking
+ * it found one, and the resulting throw stops the load queue dead: no scene
+ * ever reaches `create`, so the game is a blank page rather than a screen
+ * missing its picture.
+ */
+export function looksLikeSvg(body: string): boolean {
+  return /^\s*(?:<\?xml[^>]*\?>\s*)?<svg[\s>]/i.test(body);
+}
+
+/**
+ * Narrows the artwork list to the entries that really are pictures.
+ *
+ * `fetchText` is injected so this stays testable without a network. Anything
+ * that fails to fetch is dropped rather than thrown: one unreachable picture
+ * must not cost the player the whole game.
+ */
+export async function pickUsableArt(
+  entries: readonly ScreenArt[],
+  fetchText: (url: string) => Promise<string>,
+): Promise<ScreenArt[]> {
+  const checked = await Promise.all(
+    entries.map(async (entry) => {
+      try {
+        return looksLikeSvg(await fetchText(entry.url)) ? entry : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return checked.filter((entry): entry is ScreenArt => entry !== null);
+}
+
+/**
+ * Decided once in `main.ts` before the game exists, read by `BootScene` when it
+ * queues its loads. A module-level value rather than scene data because the
+ * check has to finish before Phaser starts, and `BootScene` is the first thing
+ * Phaser runs.
+ */
+let usable: readonly ScreenArt[] = [];
+
+export function setUsableScreenArt(art: readonly ScreenArt[]): void {
+  usable = art;
+}
+
+export function usableScreenArt(): readonly ScreenArt[] {
+  return usable;
+}
+```
+
+- [ ] **4단계: 통과 확인**
+
+실행: `npx vitest run src/scenes/screenArt.test.ts`
+예상: 11개 통과
+
+- [ ] **5단계: `src/main.ts`에서 게임 시작 전에 확인하기**
+
+임포트에 추가:
+
+```ts
+import { pickUsableArt, SCREEN_ART, setUsableScreenArt } from "./scenes/screenArt";
+```
+
+글꼴을 기다리는 줄 **바로 아래**에 추가:
+
+```ts
+// Same reason the font is awaited here: this has to be settled before Phaser
+// exists. A missing picture answers with the app's HTML page and a 200, which
+// Phaser's SVG loader turns into a throw that stops the load queue and leaves
+// the player a blank page — so the file is checked before it is queued, and a
+// screen simply goes without its picture instead.
+setUsableScreenArt(
+  await pickUsableArt(SCREEN_ART, (url) => fetch(url).then((res) => res.text())),
+);
+```
+
+- [ ] **6단계: `BootScene`이 확인된 것만 불러오게 하기**
+
+`src/scenes/BootScene.ts` — 임포트에 추가:
+
+```ts
+import { usableScreenArt } from "./screenArt";
+```
+
+`preload()`의 그림 3줄을 아래로 교체:
+
+```ts
+// 바꾸기 전
+    this.load.svg(TEX.UI_TITLE, "ui/title-scene.svg", { scale: TEXTURE_SCALE });
+    this.load.svg(TEX.UI_DEATH, "ui/death-scene.svg", { scale: TEXTURE_SCALE });
+    this.load.svg(TEX.UI_WIN, "ui/win-gopher.svg", { scale: TEXTURE_SCALE });
+
+// 바꾼 뒤 — main.ts가 실제로 그림인지 확인해둔 것만 들어온다
+    for (const art of usableScreenArt()) {
+      this.load.svg(art.key, art.url, { scale: TEXTURE_SCALE });
+    }
+```
+
+`TEX`가 `BootScene`의 다른 곳에서도 쓰이므로 임포트는 그대로 둔다.
+
+- [ ] **7단계: 전체 검사**
+
+실행: `npm test && npm run build`
+예상: 테스트 147개 통과(기존 136 + 새 11), 빌드 통과
+
+- [ ] **8단계: 직접 확인 — 이 작업의 존재 이유**
+
+```bash
+mv public/ui/win-gopher.svg /tmp/win-gopher.svg.bak
+npm run dev
+```
+
+예상: **게임이 정상적으로 뜬다.** 타이틀과 죽음 화면은 그림까지 그대로이고, 클리어 화면만 월계관 고퍼가 빠진 채 배경색·글자가 정상 표시된다. 빈 화면이 아니다.
+
+그다음 배포 빌드에서도 확인한다:
+
+```bash
+npm run build && npm run preview
+```
+
+확인이 끝나면 반드시 되돌린다:
+
+```bash
+mv /tmp/win-gopher.svg.bak public/ui/win-gopher.svg
+git status --short   # 아무것도 안 나와야 한다
+```
+
+- [ ] **9단계: 커밋**
+
+```bash
+git add src/scenes/screenArt.ts src/scenes/screenArt.test.ts src/main.ts src/scenes/BootScene.ts
+git commit -m "fix(boot): survive a screen picture that is not there
+
+Asked for a missing file under public/, the dev server and vite preview both
+answer with the app's HTML page and a 200 rather than a 404. Phaser's SVG
+loader reads the <svg> element out of that without checking it found one, and
+the throw stops the load queue before any scene reaches create - so one absent
+picture cost the player the entire game, not just the picture.
+
+Checking the body before queueing the file restores what the design promised:
+the screen goes without its artwork and still reads."
+```
+
+**이 작업의 완료조건**
+- `npx vitest run src/scenes/screenArt.test.ts` 11개 통과
+- `npm test && npm run build` 통과
+- **그림 파일 하나를 옮겨둔 채로 게임이 정상적으로 뜬다** — 개발 서버와 배포 빌드 양쪽에서
+- 확인 후 파일을 되돌려 작업 트리가 깨끗함
+
+**스킬 매핑:** `superpowers:test-driven-development` → `code-review` 반복(중요 지적 0건까지) → `rl`로 완료조건 검증
+
+---
+
 ## 계획 전체 완료조건
 
 ### 자동 검증
