@@ -15,7 +15,8 @@
 - 논리 좌표계는 **세로 540 고정, 가로 854~1100 가변**이다. 모든 좌표·크기는 논리 단위로 쓰고, 화면 배율은 배치할 때 곱한다.
 - **게임플레이(스테이지 안) 수치·물리·소리·그림을 건드리지 않는다.** 바뀌는 것은 세 화면의 겉모습뿐이다.
 - **새 씬(화면)을 만들지 않는다.** 기존 세 화면만 고친다.
-- 색은 `src/config.ts`에 모으고, 씬 파일에 색 문자열을 직접 쓰지 않는다.
+- **이번 작업이 새로 넣는 색**은 전부 `src/config.ts`에 모은다. 씬 파일에 새 색 문자열을 직접 쓰지 않는다.
+  - 기존 코드에 이미 박혀 있는 색 문자열(`"#ff004d"`, `"#fff1e8"` 등)은 작업 5~7에서 그 줄을 통째로 다시 쓸 때 함께 사라진다. 작업 5 이전에 남아 있는 것은 위반이 아니다.
 - SVG 파일 루트에 `width`/`height`를 픽셀 값으로 **반드시** 적는다. Phaser가 이 값을 읽어 크기를 계산한다.
 - SVG 파일에 **배경을 칠하지 않는다.** 배경은 코드가 화면 전체에 칠한다.
 - 글꼴은 저장소에 포함한다. 실행 중 외부 서버에서 내려받지 않는다.
@@ -29,7 +30,7 @@
 |---|---|---|
 | `src/levels/stageLabel.ts` | `STAGE 7/8` 문구 한 줄을 만드는 순수 함수 | 신규 |
 | `src/levels/stageLabel.test.ts` | 위 함수의 단위 테스트 | 신규 |
-| `src/scenes/screen.ts` | 세 화면 공통 배치 — 글자·제목·그림·띠를 논리 좌표로 등록하고 창 크기에 맞춰 다시 배치 | `textScreen.ts`에서 이름 변경 + 확장 |
+| `src/scenes/screen.ts` | 세 화면 공통 배치 — 글자·제목·그림·띠를 논리 좌표로 등록하고 창 크기에 맞춰 다시 배치 | `textScreen.ts`에서 이름 변경 + 확장. 그림은 작업 2, 띠는 작업 4, 제목은 작업 5에서 각각 쓰이는 자리와 함께 추가 |
 | `src/scenes/MenuScene.ts` | 타이틀 화면 구성 | 수정 |
 | `src/scenes/GameOverScene.ts` | 죽음 화면 구성 | 수정 |
 | `src/scenes/WinScene.ts` | 클리어 화면 구성 | 수정 |
@@ -194,11 +195,13 @@ would drift the moment either side changes."
 
 ---
 
-## 작업 2: 화면 도우미가 그림·제목·띠도 다루게 확장
+## 작업 2: 화면 도우미가 그림도 다루게 확장
 
-지금 `textScreen.ts`는 글자 줄만 논리 좌표로 등록해두고, 창 크기가 바뀌면 배율을 곱해 다시 배치한다. 그림과 배경 띠에도 똑같은 규칙이 필요하다. 규칙을 두 벌로 만들지 않고 같은 목록에 태워 한곳에서 배치한다.
+지금 `textScreen.ts`는 글자 줄만 논리 좌표로 등록해두고, 창 크기가 바뀌면 배율을 곱해 다시 배치한다. 그림에도 똑같은 규칙이 필요하다. 규칙을 두 벌로 만들지 않고 같은 목록에 태워 한곳에서 배치한다.
 
 글자 전용이 아니게 되므로 파일과 함수 이름을 바꾼다.
+
+> 제목(외곽선 있는 큰 글자)과 배경 띠도 결국 이 도우미가 맡지만, **여기서 미리 만들지 않는다.** 띠는 작업 4가, 제목은 작업 5가 처음 쓰는 자리에서 각각 추가한다. 쓰는 데 없이 먼저 만들면 그 시점엔 아무도 부르지 않는 코드가 된다.
 
 **파일:**
 - 이름 변경: `src/scenes/textScreen.ts` → `src/scenes/screen.ts`
@@ -210,10 +213,9 @@ would drift the moment either side changes."
 - 내보냄: `SCREEN_FONT: string` — 세 화면이 쓰는 글꼴 이름
 - 내보냄: `centredScreen(scene: Phaser.Scene)` — 반환 객체의 메서드:
   - `add(y: number, size: number, content: string, color: string, bold?: boolean): Phaser.GameObjects.Text`
-  - `addTitle(y: number, size: number, content: string, color: string, edgeColor: string, edgeWidth: number): Phaser.GameObjects.Text`
   - `addImage(y: number, w: number, h: number, key: string): Phaser.GameObjects.Image | null`
-  - `addBand(yTop: number, yBottom: number, color: string): Phaser.GameObjects.Rectangle`
   - `start(): void`
+- 이후 작업이 여기에 덧붙일 것: `addBand`(작업 4), `addTitle`(작업 5)
 - 그리는 순서가 곧 겹치는 순서다. 뒤에 놓일 것(띠 → 그림 → 글자) 순으로 부른다.
 
 - [ ] **1단계: 파일 이름 바꾸기**
@@ -230,16 +232,16 @@ import { cameraZoom } from "../display";
 
 /**
  * The title, death and win screens are all the same shape: a stack of centred
- * rows — text, pictures and full-width colour bands — authored in the same
- * 540-tall logical space as the levels.
+ * rows — text and pictures — authored in the same 540-tall logical space as the
+ * levels.
  *
  * The canvas buffer is sized in physical pixels (see display.ts), so those
  * logical units get scaled up here. For text that also rasterises the glyphs at
  * the screen's real density rather than magnifying a small texture, which is
  * what made this text mushy before.
  *
- * Rows are drawn in the order they are added, so a screen adds its band first,
- * then its picture, then its text.
+ * Rows are drawn in the order they are added, so a screen adds its picture
+ * before the text that sits on top of it.
  */
 
 /**
@@ -250,9 +252,8 @@ import { cameraZoom } from "../display";
 export const SCREEN_FONT = '"Press Start 2P", monospace';
 
 type Row =
-  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number; edge: number }
-  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number }
-  | { kind: "band"; rect: Phaser.GameObjects.Rectangle; yTop: number; yBottom: number };
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
+  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number };
 
 export function centredScreen(scene: Phaser.Scene) {
   const rows: Row[] = [];
@@ -263,15 +264,8 @@ export function centredScreen(scene: Phaser.Scene) {
     for (const row of rows) {
       if (row.kind === "text") {
         row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
-        // The outline is a pixel width like the glyphs, so it has to grow with them.
-        if (row.edge > 0) row.text.setStroke(row.text.style.stroke, row.edge * scale);
-      } else if (row.kind === "image") {
-        row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
       } else {
-        // Bands span the whole canvas, however wide the window happens to be.
-        row.rect
-          .setSize(scene.scale.width, (row.yBottom - row.yTop) * scale)
-          .setPosition(cx, row.yTop * scale);
+        row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
       }
     }
   };
@@ -292,28 +286,7 @@ export function centredScreen(scene: Phaser.Scene) {
           ...(bold ? { fontStyle: "bold" } : {}),
         })
         .setOrigin(0.5);
-      rows.push({ kind: "text", text, y, size, edge: 0 });
-      return text;
-    },
-
-    /**
-     * A headline with an outline around it — the mockup draws all three screen
-     * titles that way, and against a busy picture the outline is what keeps the
-     * letters readable. `edgeWidth` is a logical width, scaled like the glyphs.
-     */
-    addTitle(
-      y: number,
-      size: number,
-      content: string,
-      color: string,
-      edgeColor: string,
-      edgeWidth: number,
-    ): Phaser.GameObjects.Text {
-      const text = scene.add
-        .text(0, 0, content, { fontFamily: SCREEN_FONT, color })
-        .setOrigin(0.5);
-      text.setStroke(edgeColor, edgeWidth);
-      rows.push({ kind: "text", text, y, size, edge: edgeWidth });
+      rows.push({ kind: "text", text, y, size });
       return text;
     },
 
@@ -331,15 +304,6 @@ export function centredScreen(scene: Phaser.Scene) {
       const image = scene.add.image(0, 0, key).setOrigin(0.5);
       rows.push({ kind: "image", image, y, w, h });
       return image;
-    },
-
-    /** A full-width horizontal band between two logical heights. */
-    addBand(yTop: number, yBottom: number, color: string): Phaser.GameObjects.Rectangle {
-      const rect = scene.add
-        .rectangle(0, 0, 1, 1, Phaser.Display.Color.HexStringToColor(color).color)
-        .setOrigin(0.5, 0);
-      rows.push({ kind: "band", rect, yTop, yBottom });
-      return rect;
     },
 
     /** Lays the rows out and keeps them right as the window changes. */
@@ -394,7 +358,7 @@ import { centredScreen } from "./screen";
 
 ```bash
 git add src/scenes/screen.ts src/scenes/MenuScene.ts src/scenes/GameOverScene.ts src/scenes/WinScene.ts
-git commit -m "refactor(screens): let the screen helper place pictures and bands
+git commit -m "refactor(screens): let the screen helper place pictures too
 
 The three non-gameplay screens are about to gain artwork, and it needs the
 same logical-units-times-scale placement the text already gets. Sharing one
@@ -473,6 +437,8 @@ console.log("소문자 확인:", c.measureText("g").width);
 - [ ] **4단계: 지금 화면의 글자 크기를 넘치지 않게 조정**
 
 새 글꼴은 지금 글꼴보다 글자가 넓다. 아직 화면을 새로 구성하기 전이므로, 현재 문구가 가장 좁은 화면(가로 854)에서 넘치지 않도록 크기만 낮춘다.
+
+> 여기서 정한 크기 대부분은 작업 5~7이 화면을 다시 구성하면서 지운다. **그래도 지금 맞춰야 한다** — 이 계획은 작업 하나가 끝날 때마다 게임이 멀쩡히 돌아가는 상태로 남기는 것을 전제로 한다. 이 단계를 건너뛰면 작업 3만 끝난 시점에 글자가 화면 밖으로 삐져나간 채로 커밋된다. 낭비가 아니라 각 작업을 독립적으로 검증 가능하게 만드는 값이다.
 
 `src/scenes/MenuScene.ts`:
 
@@ -568,11 +534,13 @@ already drew."
 
 **파일:**
 - 수정: `src/config.ts`
+- 수정: `src/scenes/screen.ts` (`addBand` 추가)
 - 수정: `src/scenes/MenuScene.ts`, `src/scenes/GameOverScene.ts`, `src/scenes/WinScene.ts`
 
 **주고받는 것:**
 - 내보냄: `SCREEN_COLORS` — 세 화면이 쓰는 색 모음 (CSS 문자열)
-- 사용: 작업 2의 `addBand`
+- 내보냄: `centredScreen`의 `addBand(yTop: number, yBottom: number, color: string): Phaser.GameObjects.Rectangle`
+- 사용: 작업 2의 `centredScreen`
 
 - [ ] **1단계: `src/config.ts`에 색 추가**
 
@@ -611,9 +579,70 @@ export const SCREEN_COLORS = {
 } as const;
 ```
 
+- [ ] **2단계: 화면 도우미에 띠 그리기 추가**
+
+죽음 화면은 위아래 색이 다르고 그 경계에 가로선이 있다. 셋 다 **화면 폭 전체**에 닿아야 하는데, 화면 폭은 창 비율에 따라 변한다. 그래서 글자·그림과 같은 목록에 태워 창 크기가 바뀔 때 함께 다시 그린다.
+
+`src/scenes/screen.ts` — `Row` 타입에 갈래를 하나 더한다:
+
+```ts
+// 바꾸기 전
+type Row =
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
+  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number };
+
+// 바꾼 뒤
+type Row =
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
+  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number }
+  | { kind: "band"; rect: Phaser.GameObjects.Rectangle; yTop: number; yBottom: number };
+```
+
+`layout()` 안의 분기를 셋으로 늘린다:
+
+```ts
+// 바꾸기 전
+      if (row.kind === "text") {
+        row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
+      } else {
+        row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
+      }
+
+// 바꾼 뒤
+      if (row.kind === "text") {
+        row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
+      } else if (row.kind === "image") {
+        row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
+      } else {
+        // Bands span the whole canvas, however wide the window happens to be.
+        row.rect
+          .setSize(scene.scale.width, (row.yBottom - row.yTop) * scale)
+          .setPosition(cx, row.yTop * scale);
+      }
+```
+
+`addImage` 다음에 메서드를 추가한다:
+
+```ts
+    /**
+     * A full-width horizontal band between two logical heights.
+     *
+     * `add.rectangle` wants a packed integer while the screen palette is CSS
+     * strings (both the camera background and Text want those), so the string
+     * is converted here rather than storing each colour twice.
+     */
+    addBand(yTop: number, yBottom: number, color: string): Phaser.GameObjects.Rectangle {
+      const rect = scene.add
+        .rectangle(0, 0, 1, 1, Phaser.Display.Color.HexStringToColor(color).color)
+        .setOrigin(0.5, 0);
+      rows.push({ kind: "band", rect, yTop, yBottom });
+      return rect;
+    },
+```
+
 세 화면 모두 이미 `import { BGM } from "../config";` 를 갖고 있다. **새 임포트 줄을 만들지 말고 그 줄을 넓힌다** — 같은 파일에서 같은 모듈을 두 번 임포트하면 안 된다.
 
-- [ ] **2단계: 타이틀 배경 칠하기**
+- [ ] **3단계: 타이틀 배경 칠하기**
 
 `src/scenes/MenuScene.ts:6`:
 
@@ -630,7 +659,7 @@ import { BGM, SCREEN_COLORS } from "../config";
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.TITLE_SKY);
 ```
 
-- [ ] **3단계: 죽음 화면 배경 칠하기 (위아래 두 톤 + 경계선)**
+- [ ] **4단계: 죽음 화면 배경 칠하기 (위아래 두 톤 + 경계선)**
 
 `src/scenes/GameOverScene.ts:4`:
 
@@ -654,7 +683,7 @@ import { BGM, SCREEN_COLORS } from "../config";
     screen.addBand(245, 249, SCREEN_COLORS.DEATH_LINE);
 ```
 
-- [ ] **4단계: 클리어 화면 배경 칠하기**
+- [ ] **5단계: 클리어 화면 배경 칠하기**
 
 `src/scenes/WinScene.ts:4`:
 
@@ -671,12 +700,12 @@ import { BGM, SCREEN_COLORS } from "../config";
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.WIN_BG);
 ```
 
-- [ ] **5단계: 전체 검사**
+- [ ] **6단계: 전체 검사**
 
 실행: `npm test && npm run build`
 예상: 전부 통과
 
-- [ ] **6단계: 직접 확인**
+- [ ] **7단계: 직접 확인**
 
 실행: `npm run dev`
 예상:
@@ -684,10 +713,10 @@ import { BGM, SCREEN_COLORS } from "../config";
 2. 죽음 화면은 위가 어두운 자주, 아래가 밝은 자주이고 그 경계에 밝은 가로선이 있다.
 3. **창을 아무리 넓혀도 가로선과 아래쪽 색이 화면 양 끝까지 닿는다.**
 
-- [ ] **7단계: 커밋**
+- [ ] **8단계: 커밋**
 
 ```bash
-git add src/config.ts src/scenes/MenuScene.ts src/scenes/GameOverScene.ts src/scenes/WinScene.ts
+git add src/config.ts src/scenes/screen.ts src/scenes/MenuScene.ts src/scenes/GameOverScene.ts src/scenes/WinScene.ts
 git commit -m "feat(screens): give the three screens their own backgrounds
 
 Painted in code rather than baked into the artwork: the logical viewport is
@@ -709,14 +738,79 @@ differently at every aspect while a camera background never can."
 **파일:**
 - 생성: `public/ui/title-scene.svg`
 - 수정: `src/config.ts` (`TEX`에 항목 1개)
+- 수정: `src/scenes/screen.ts` (`addTitle` 추가)
 - 수정: `src/scenes/BootScene.ts` (`preload`에 1줄)
 - 수정: `src/scenes/MenuScene.ts`
 
 **주고받는 것:**
 - 내보냄: `TEX.UI_TITLE`
-- 사용: 작업 2의 `addImage`·`addTitle`, 작업 4의 `SCREEN_COLORS`
+- 내보냄: `centredScreen`의 `addTitle(y: number, size: number, content: string, color: string, edgeColor: string, edgeWidth: number): Phaser.GameObjects.Text` — 작업 6·7도 이걸 쓴다
+- 사용: 작업 2의 `addImage`, 작업 4의 `SCREEN_COLORS`
 
-- [ ] **1단계: `public/ui/title-scene.svg` 생성**
+- [ ] **1단계: 화면 도우미에 제목 그리기 추가**
+
+세 화면의 큰 제목은 모두 외곽선이 둘러져 있다. 외곽선 두께도 글자 크기처럼 화면 배율을 따라야 한다 — 두께를 고정하면 큰 화면에서 실처럼 얇아진다.
+
+`src/scenes/screen.ts` — 글자 갈래에 외곽선 두께를 기억할 자리를 만든다:
+
+```ts
+// 바꾸기 전
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
+// 바꾼 뒤
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number; edge: number }
+```
+
+`layout()`의 글자 분기에 한 줄을 더한다:
+
+```ts
+// 바꾸기 전
+      if (row.kind === "text") {
+        row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
+      } else if (row.kind === "image") {
+
+// 바꾼 뒤
+      if (row.kind === "text") {
+        row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
+        // The outline is a pixel width like the glyphs, so it has to grow with them.
+        if (row.edge > 0) row.text.setStroke(row.text.style.stroke, row.edge * scale);
+      } else if (row.kind === "image") {
+```
+
+기존 `add`가 넣는 줄에 `edge: 0`을 붙인다:
+
+```ts
+// 바꾸기 전
+      rows.push({ kind: "text", text, y, size });
+// 바꾼 뒤
+      rows.push({ kind: "text", text, y, size, edge: 0 });
+```
+
+그리고 `add` 다음에 메서드를 추가한다:
+
+```ts
+    /**
+     * A headline with an outline around it — the mockup draws all three screen
+     * titles that way, and against a busy picture the outline is what keeps the
+     * letters readable. `edgeWidth` is a logical width, scaled like the glyphs.
+     */
+    addTitle(
+      y: number,
+      size: number,
+      content: string,
+      color: string,
+      edgeColor: string,
+      edgeWidth: number,
+    ): Phaser.GameObjects.Text {
+      const text = scene.add
+        .text(0, 0, content, { fontFamily: SCREEN_FONT, color })
+        .setOrigin(0.5);
+      text.setStroke(edgeColor, edgeWidth);
+      rows.push({ kind: "text", text, y, size, edge: edgeWidth });
+      return text;
+    },
+```
+
+- [ ] **2단계: `public/ui/title-scene.svg` 생성**
 
 디렉토리가 없으므로 함께 만든다: `mkdir -p public/ui`
 
@@ -799,7 +893,7 @@ differently at every aspect while a camera background never can."
 </svg>
 ```
 
-- [ ] **2단계: 그림 이름 등록**
+- [ ] **3단계: 그림 이름 등록**
 
 `src/config.ts` — `TEX` 객체의 배경 항목들 아래에 추가:
 
@@ -809,7 +903,7 @@ differently at every aspect while a camera background never can."
   UI_TITLE: "tex-ui-title",
 ```
 
-- [ ] **3단계: `BootScene`이 그림을 불러오게 하기**
+- [ ] **4단계: `BootScene`이 그림을 불러오게 하기**
 
 `src/scenes/BootScene.ts` — 임포트에 추가:
 
@@ -827,7 +921,7 @@ import { TEXTURE_SCALE } from "../display";
     this.load.svg(TEX.UI_TITLE, "ui/title-scene.svg", { scale: TEXTURE_SCALE });
 ```
 
-- [ ] **4단계: 타이틀 화면 다시 구성**
+- [ ] **5단계: 타이틀 화면 다시 구성**
 
 `src/scenes/MenuScene.ts:6` — 같은 임포트 줄에 `TEX`를 더한다:
 
@@ -861,12 +955,12 @@ import { BGM, SCREEN_COLORS, TEX } from "../config";
 
 부제 `a tiny Phaser 4 platformer` 줄은 지운다.
 
-- [ ] **5단계: 전체 검사**
+- [ ] **6단계: 전체 검사**
 
 실행: `npm test && npm run build`
 예상: 전부 통과
 
-- [ ] **6단계: 직접 확인**
+- [ ] **7단계: 직접 확인**
 
 실행: `npm run dev`
 예상:
@@ -876,10 +970,10 @@ import { BGM, SCREEN_COLORS, TEX } from "../config";
 4. **창을 세로로 길게(가장 좁은 폭) 끌어도 고퍼·적·가시가 모두 화면 안에 있다.** 양 끝 발판만 잘린다.
 5. 아무 키나 누르면 1스테이지가 시작된다.
 
-- [ ] **7단계: 커밋**
+- [ ] **8단계: 커밋**
 
 ```bash
-git add public/ui/title-scene.svg src/config.ts src/scenes/BootScene.ts src/scenes/MenuScene.ts
+git add public/ui/title-scene.svg src/config.ts src/scenes/screen.ts src/scenes/BootScene.ts src/scenes/MenuScene.ts
 git commit -m "feat(menu): give the title screen its artwork and new name
 
 The picture is 1100 wide, the widest the viewport ever gets, so the narrow
@@ -906,7 +1000,7 @@ case crops the outer platforms rather than the characters."
 
 **주고받는 것:**
 - 내보냄: `TEX.UI_DEATH`
-- 사용: 작업 1의 `stageLabel`, 작업 2의 `addImage`·`addTitle`, 작업 4의 `SCREEN_COLORS`와 이미 놓인 두 개의 띠
+- 사용: 작업 1의 `stageLabel`, 작업 2의 `addImage`, 작업 4의 `SCREEN_COLORS`와 이미 놓인 두 개의 띠, 작업 5의 `addTitle`
 
 - [ ] **1단계: `public/ui/death-scene.svg` 생성**
 
@@ -1037,7 +1131,7 @@ never disagree about how stages are numbered."
 
 **주고받는 것:**
 - 내보냄: `TEX.UI_WIN`
-- 사용: 작업 2의 `addImage`·`addTitle`, 작업 4의 `SCREEN_COLORS`
+- 사용: 작업 2의 `addImage`, 작업 4의 `SCREEN_COLORS`, 작업 5의 `addTitle`
 
 - [ ] **1단계: `public/ui/win-gopher.svg` 생성**
 
