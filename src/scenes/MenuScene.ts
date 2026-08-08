@@ -3,7 +3,7 @@ import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM, SCREEN_COLORS } from "../config";
+import { BGM, SCREEN_COLORS, TEX } from "../config";
 
 /** Title screen. Press any key (or click/tap) to start the level. */
 export class MenuScene extends Phaser.Scene {
@@ -46,9 +46,16 @@ export class MenuScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.TITLE_SKY);
 
     const screen = centredScreen(this);
-    screen.add(180, 50, "PLATFORMER POC", "#29adff", true);
-    screen.add(250, 16, "a tiny Phaser 4 platformer", "#fff1e8");
-    const prompt = screen.add(360, 18, "press any key to start", "#00e436");
+    screen.addImage(300, 1100, 180, TEX.UI_TITLE);
+    screen.addTitle(
+      150,
+      64,
+      "Let's go!!",
+      SCREEN_COLORS.TITLE_LOGO,
+      SCREEN_COLORS.TITLE_LOGO_EDGE,
+      8,
+    );
+    const prompt = screen.add(445, 18, "press any key to start", SCREEN_COLORS.PROMPT);
     screen.start();
 
     this.tweens.add({

@@ -23,7 +23,7 @@ import { cameraZoom } from "../display";
 export const SCREEN_FONT = '"Press Start 2P", monospace';
 
 type Row =
-  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
+  | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number; edge: number }
   | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number }
   | { kind: "band"; rect: Phaser.GameObjects.Rectangle; yTop: number; yBottom: number };
 
@@ -36,6 +36,8 @@ export function centredScreen(scene: Phaser.Scene) {
     for (const row of rows) {
       if (row.kind === "text") {
         row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
+        // The outline is a pixel width like the glyphs, so it has to grow with them.
+        if (row.edge > 0) row.text.setStroke(row.text.style.stroke, row.edge * scale);
       } else if (row.kind === "image") {
         row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
       } else {
@@ -63,7 +65,28 @@ export function centredScreen(scene: Phaser.Scene) {
           ...(bold ? { fontStyle: "bold" } : {}),
         })
         .setOrigin(0.5);
-      rows.push({ kind: "text", text, y, size });
+      rows.push({ kind: "text", text, y, size, edge: 0 });
+      return text;
+    },
+
+    /**
+     * A headline with an outline around it — the mockup draws all three screen
+     * titles that way, and against a busy picture the outline is what keeps the
+     * letters readable. `edgeWidth` is a logical width, scaled like the glyphs.
+     */
+    addTitle(
+      y: number,
+      size: number,
+      content: string,
+      color: string,
+      edgeColor: string,
+      edgeWidth: number,
+    ): Phaser.GameObjects.Text {
+      const text = scene.add
+        .text(0, 0, content, { fontFamily: SCREEN_FONT, color })
+        .setOrigin(0.5);
+      text.setStroke(edgeColor, edgeWidth);
+      rows.push({ kind: "text", text, y, size, edge: edgeWidth });
       return text;
     },
 

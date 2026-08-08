@@ -267,6 +267,9 @@ export const TEX = {
   BG_GRASSLAND: "tex-bg-grassland",
   BG_SUNSET: "tex-bg-sunset",
   BG_UNDERGROUND: "tex-bg-underground",
+  // Title / death / win screen artwork, loaded from public/ui rather than drawn
+  // here — see BootScene.preload.
+  UI_TITLE: "tex-ui-title",
 } as const;
 
 /**

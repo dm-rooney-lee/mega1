@@ -16,6 +16,11 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     this.load.audio("bgm", "audio/bgm.mp3");
+
+    // Screen artwork. Rasterised at load time — Phaser does not keep SVGs as
+    // vectors — so it is baked at the same density as every generated texture
+    // (see display.ts) and shrunk back down when placed.
+    this.load.svg(TEX.UI_TITLE, "ui/title-scene.svg", { scale: TEXTURE_SCALE });
   }
 
   create(): void {
