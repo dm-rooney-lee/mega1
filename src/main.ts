@@ -41,6 +41,20 @@ const config: Phaser.Types.Core.GameConfig = {
     antialias: true,
     roundPixels: false,
   },
+  // How many frames Phaser distrusts its own frame timings for. The count is armed
+  // when the loop starts and re-armed whenever the window regains focus or the tab
+  // becomes visible again — never on a scene change. While it runs, Phaser reports
+  // at most `1000 / fps.target` ms (16.66ms at the default target of 60) however
+  // long the frame really took, so on a machine not holding 60fps the physics
+  // advances less time than actually passed and everything it drives moves in slow
+  // motion. The scene clock is left alone, so the coyote and jump-buffer windows do
+  // not stretch with it and a jump can be eaten. Measured at 30fps: half speed for
+  // the whole count — four seconds at the default of 120 — easing back over the ten
+  // frames the delta average spans. Three is enough for the timings to settle.
+  //
+  // The same clamp applies for as long as the window is unfocused, and that this
+  // setting does not bound: a visible but unfocused window still runs slow.
+  fps: { panicMax: 3 },
   physics: {
     default: "arcade",
     arcade: {
