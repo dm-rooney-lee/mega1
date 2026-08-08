@@ -140,9 +140,24 @@ export function mountSurfaceOf(hazard: HazardDef): number | null {
     case "cannon":
     case "popupSpike":
       return hazard.y;
-    default:
+    case "pendulum":
+    case "gear":
+    case "thwomp":
       return null;
+    default:
+      return unregistered(hazard);
   }
+}
+
+/**
+ * Reached only by a hazard kind nobody taught this module about. Typing the
+ * parameter as `never` turns that into a compile error, so a new kind cannot be
+ * added to `HazardDef` without deciding how it is judged — otherwise it would
+ * quietly sit outside the sweep while every stage still reported green.
+ */
+function unregistered(hazard: never): null {
+  void hazard;
+  return null;
 }
 
 /**
@@ -214,8 +229,13 @@ export function hazardThreat(level: LevelDef, hazard: HazardDef): Threat | null 
       return lane(level, hazard.x, direction, shotBand(muzzleY, CANNON.BALL_DIAMETER / 2));
     }
     default:
-      return null;
+      return unregistered(hazard);
   }
+}
+
+/** An aiming turret leads the player wherever they stand, so it has no fixed danger space. */
+function aimsAtPlayer(hazard: HazardDef): boolean {
+  return hazard.kind === "turret" && (hazard.aimMode ?? "fixed") === "aim";
 }
 
 /**
@@ -229,10 +249,14 @@ export function hazardThreat(level: LevelDef, hazard: HazardDef): Threat | null 
  * player can stand and be hit. A cannon parked on the left edge of a platform
  * clips the last few pixels of it and nothing else; counting that as a threat is
  * how a purely decorative crest cannon passed for a real one.
+ *
+ * Only an aiming turret is excused. Anything else without a danger band is a kind
+ * this module has not been taught, and calling that safe would hide it.
  */
 export function threatensStandingPlayer(level: LevelDef, hazard: HazardDef): boolean {
+  if (aimsAtPlayer(hazard)) return true;
   const threat = hazardThreat(level, hazard);
-  if (!threat) return true;
+  if (!threat) return false;
   return surfacesOf(level.platforms).some(
     (surface) =>
       overlapWidth(threat.left, threat.right, surface.left, surface.right) >=

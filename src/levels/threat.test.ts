@@ -250,6 +250,11 @@ describe("threatensStandingPlayer", () => {
     const level = levelWith([{ kind: "turret", x: 1520, y: GROUND, aimMode: "aim" }]);
     expect(threatensStandingPlayer(level, level.hazards![0])).toBe(true);
   });
+
+  it("[Error] 등록되지 않은 종류는 통과가 아니라 실패다 — 조용히 빠지면 의미가 없다", () => {
+    const unknown = { kind: "trapdoor", x: 500, y: GROUND } as unknown as HazardDef;
+    expect(threatensStandingPlayer(levelWith([]), unknown)).toBe(false);
+  });
 });
 
 /**
