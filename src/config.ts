@@ -124,6 +124,9 @@ export const POPUP_SPIKE = {
 
 /** C-4 Thwomp / crusher. */
 export const THWOMP = {
+  /** Block size used when a level doesn't give one. */
+  WIDTH: 60,
+  HEIGHT: 60,
   DETECT_WIDTH: 70,
   DROP_SPEED: 900,
   RETURN_SPEED: 130,
@@ -170,6 +173,8 @@ export const SHOOTER = {
   /** Art size. Standing on a surface puts the muzzle half this height above it. */
   WIDTH: 26,
   HEIGHT: 34,
+  /** Gap between the sprite's edge and where its arrows appear, so they clear the body. */
+  MUZZLE_GAP: 6,
   INTERVAL_MS: 1600,
 } as const;
 

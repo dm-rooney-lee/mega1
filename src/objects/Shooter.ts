@@ -44,7 +44,7 @@ export class Shooter extends Phaser.Physics.Arcade.Sprite {
     if (this.sinceFireMs < this.intervalMs) return;
     this.sinceFireMs = 0;
 
-    const muzzleX = this.x + this.direction * (this.displayWidth / 2 + 6);
+    const muzzleX = this.x + this.direction * (this.displayWidth / 2 + SHOOTER.MUZZLE_GAP);
     this.pool.fire(muzzleX, this.y, this.direction * this.projectileSpeed, 0);
   }
 }
