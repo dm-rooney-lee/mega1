@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlatformDef, SpikeDef } from "./level1";
-import { patrolBoundsFor, narrowBoundsForSpikes } from "./patrol";
+import { patrolBoundsFor, narrowBoundsForSpikes, reverseAtBounds } from "./patrol";
 
 describe("patrolBoundsFor", () => {
   const ground: PlatformDef = { x: 0, y: 496, width: 640, height: 44 };
@@ -69,5 +69,34 @@ describe("narrowBoundsForSpikes", () => {
     expect(
       narrowBoundsForSpikes([groundSpikes], 1150, groundY, [760, 1660]),
     ).toEqual([760, 1660]);
+  });
+});
+
+describe("reverseAtBounds", () => {
+  it("keeps the current direction when nothing is triggered", () => {
+    expect(reverseAtBounds(500, 10, 400, 600, false, false, 1)).toBe(1);
+    expect(reverseAtBounds(500, 10, 400, 600, false, false, -1)).toBe(-1);
+  });
+
+  it("reverses to rightward at the left bound", () => {
+    expect(reverseAtBounds(405, 10, 400, 600, false, false, -1)).toBe(1);
+  });
+
+  it("reverses to leftward at the right bound", () => {
+    expect(reverseAtBounds(595, 10, 400, 600, false, false, 1)).toBe(-1);
+  });
+
+  it("reverses to rightward on a left wall bump, even mid-span", () => {
+    expect(reverseAtBounds(500, 10, 400, 600, true, false, -1)).toBe(1);
+  });
+
+  it("reverses to leftward on a right wall bump, even mid-span", () => {
+    expect(reverseAtBounds(500, 10, 400, 600, false, true, 1)).toBe(-1);
+  });
+
+  it("a wall bump wins over an opposite bound check on the same frame", () => {
+    // At the left bound (would reverse to 1) but also blocked on the right —
+    // the wall-bump checks run after the bound checks, so they have the final say.
+    expect(reverseAtBounds(405, 10, 400, 600, false, true, -1)).toBe(-1);
   });
 });

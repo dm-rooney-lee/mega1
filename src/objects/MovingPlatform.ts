@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { DEPTH, MOVING_PLATFORM, TEX } from "../config";
-import { oscillateOffset } from "../levels/motion";
+import { clampAbs, oscillateOffset } from "../levels/motion";
 
 /**
  * A-2 — a platform that patrols a straight path and carries riders.
@@ -87,9 +87,4 @@ export class MovingPlatform extends Phaser.Physics.Arcade.Sprite {
   carryDY(dtSec: number): number {
     return this.lastVY * dtSec;
   }
-}
-
-/** Clamp `v` to the range [-max, max]. */
-function clampAbs(v: number, max: number): number {
-  return v > max ? max : v < -max ? -max : v;
 }

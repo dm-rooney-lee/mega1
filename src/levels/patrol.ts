@@ -61,3 +61,25 @@ export function narrowBoundsForSpikes(
   }
   return [left, right];
 }
+
+/**
+ * Which way a ground-patrol enemy should be moving this frame: reverse at its
+ * patrol bounds, or on a wall bump (e.g. running into another platform).
+ * Pure function of the current state, shared by every enemy that patrols this
+ * way (Enemy, HammerThrower, Charger) instead of each re-deriving it.
+ */
+export function reverseAtBounds(
+  x: number,
+  halfWidth: number,
+  leftBound: number,
+  rightBound: number,
+  blockedLeft: boolean,
+  blockedRight: boolean,
+  dir: 1 | -1,
+): 1 | -1 {
+  if (x - halfWidth <= leftBound) dir = 1;
+  else if (x + halfWidth >= rightBound) dir = -1;
+  if (blockedLeft) dir = 1;
+  else if (blockedRight) dir = -1;
+  return dir;
+}

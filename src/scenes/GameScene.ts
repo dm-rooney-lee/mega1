@@ -32,6 +32,11 @@ import { isOffWorld } from "../objects/ballistics";
 import { Projectile } from "../objects/Projectile";
 import { ProjectilePool } from "../objects/ProjectilePool";
 import { worldForStage } from "../worlds";
+import { HammerThrower } from "../objects/HammerThrower";
+import { Flyer } from "../objects/Flyer";
+import { Charger } from "../objects/Charger";
+import { Dropper } from "../objects/Dropper";
+import { isStompHit } from "../objects/stomp";
 
 /**
  * The playable level. Reads a LevelDef (selected by the `level` index the scene
@@ -65,7 +70,13 @@ export class GameScene extends Phaser.Scene {
   private turrets: Turret[] = [];
   private cannons: Cannon[] = [];
   private gears: Gear[] = [];
+  private hammerThrowers: HammerThrower[] = [];
+  private flyers: Flyer[] = [];
+  private chargers: Charger[] = [];
+  private droppers: Dropper[] = [];
   private cannonballs!: Phaser.Physics.Arcade.Group;
+  private hammers!: Phaser.Physics.Arcade.Group;
+  private rocks!: Phaser.Physics.Arcade.Group;
   private pool!: ProjectilePool;
 
   // HUD. Held so `layoutHud` can re-anchor them to the camera's view; see there
@@ -111,6 +122,10 @@ export class GameScene extends Phaser.Scene {
     this.turrets = [];
     this.cannons = [];
     this.gears = [];
+    this.hammerThrowers = [];
+    this.flyers = [];
+    this.chargers = [];
+    this.droppers = [];
     this.hitCooldownUntil = 0;
 
     // World + camera bounds. Leave the bottom edge open so the player can fall
@@ -129,6 +144,8 @@ export class GameScene extends Phaser.Scene {
 
     this.pool = new ProjectilePool(this);
     this.cannonballs = this.physics.add.group({ allowGravity: false });
+    this.hammers = this.physics.add.group({ allowGravity: true });
+    this.rocks = this.physics.add.group({ allowGravity: true });
     const popupGroup = this.physics.add.group({ allowGravity: false, immovable: true });
     this.buildHazards(popupGroup);
     const shieldItems = this.buildShields();
@@ -186,6 +203,40 @@ export class GameScene extends Phaser.Scene {
     for (const turret of this.turrets) {
       this.physics.add.overlap(this.player, turret, () => this.handlePlayerTurret(turret));
     }
+
+    // Stages 9-10 new enemies: same stomp-or-die pattern as Enemy/Turret.
+    for (const g of this.flyers) {
+      this.physics.add.overlap(this.player, g, () => this.handlePlayerFlyer(g));
+    }
+    for (const dropper of this.droppers) {
+      this.physics.add.overlap(this.player, dropper, () => this.handlePlayerDropper(dropper));
+    }
+    for (const thrower of this.hammerThrowers) {
+      this.physics.add.collider(thrower, this.platforms);
+      this.physics.add.overlap(this.player, thrower, () =>
+        this.handlePlayerHammerThrower(thrower),
+      );
+    }
+    for (const charger of this.chargers) {
+      this.physics.add.collider(charger, this.platforms);
+      this.physics.add.overlap(this.player, charger, () => this.handlePlayerCharger(charger));
+    }
+
+    // Hammers/rocks: kill the player, destroyed by terrain or leaving the world.
+    this.physics.add.overlap(this.player, this.hammers, (_pl, h) => {
+      (h as Phaser.Physics.Arcade.Sprite).destroy();
+      this.handleDeath();
+    });
+    this.physics.add.collider(this.hammers, this.platforms, (h) =>
+      (h as Phaser.Physics.Arcade.Sprite).destroy(),
+    );
+    this.physics.add.overlap(this.player, this.rocks, (_pl, r) => {
+      (r as Phaser.Physics.Arcade.Sprite).destroy();
+      this.handleDeath();
+    });
+    this.physics.add.collider(this.rocks, this.platforms, (r) =>
+      (r as Phaser.Physics.Arcade.Sprite).destroy(),
+    );
 
     // Projectiles: kill the player, get blocked by terrain (cover works).
     this.physics.add.overlap(this.player, this.pool.group, (_pl, proj) => {
@@ -306,12 +357,24 @@ export class GameScene extends Phaser.Scene {
     for (const tu of this.turrets) tu.update(delta, this.player);
     for (const c of this.cannons) c.update(this.elapsedMs);
     for (const g of this.gears) g.update(this.elapsedMs, delta);
+    for (const ht of this.hammerThrowers) ht.update(delta);
+    for (const fl of this.flyers) fl.update(this.elapsedMs, delta);
+    for (const ch of this.chargers) ch.update(this.player);
+    for (const dr of this.droppers) dr.update(delta, this.player);
 
-    // Cannonballs that fly off the world are destroyed (avoid leaking objects).
-    // destroy() mutates the group's array, so iterate over a copy.
+    // Cannonballs/hammers/rocks that fly off the world are destroyed (avoid
+    // leaking objects). destroy() mutates the group's array, so iterate over a
+    // copy. Hammers and rocks fall (unlike cannonballs), so they also need a
+    // below-the-world check — the same margin the player's own pit-death uses.
     for (const ball of [...this.cannonballs.getChildren()]) {
       const b = ball as Phaser.Physics.Arcade.Sprite;
       if (isOffWorld(b.x, this.level.worldWidth)) b.destroy();
+    }
+    for (const projectile of [...this.hammers.getChildren(), ...this.rocks.getChildren()]) {
+      const p = projectile as Phaser.Physics.Arcade.Sprite;
+      if (isOffWorld(p.x, this.level.worldWidth) || p.y > this.level.worldHeight + 80) {
+        p.destroy();
+      }
     }
 
     this.shieldText.setText(this.shieldLabel());
@@ -500,7 +563,65 @@ export class GameScene extends Phaser.Scene {
           }),
         );
         break;
+      case "hammerThrower": {
+        const bounds = this.patrolBoundsForHazard(h.x, h.y);
+        this.hammerThrowers.push(
+          new HammerThrower(this, h.x, h.y, bounds[0], bounds[1], this.hammers, {
+            throwIntervalMs: h.throwIntervalMs,
+          }),
+        );
+        break;
+      }
+      case "flyer":
+        this.flyers.push(
+          new Flyer(this, h.x, h.y, {
+            axis: h.axis,
+            range: h.range,
+            speed: h.speed,
+            phase: h.phase,
+            waitMs: h.waitMs,
+          }),
+        );
+        break;
+      case "charger": {
+        const bounds = this.patrolBoundsForHazard(h.x, h.y);
+        this.chargers.push(
+          new Charger(this, h.x, h.y, bounds[0], bounds[1], {
+            detectRangeX: h.detectRangeX,
+            chargeSpeed: h.chargeSpeed,
+          }),
+        );
+        break;
+      }
+      case "dropper":
+        this.droppers.push(
+          new Dropper(this, h.x, h.y, this.rocks, {
+            detectRangeX: h.detectRangeX,
+            telegraphMs: h.telegraphMs,
+            perchThickness: this.mountedPlatformHeight(h.x, h.y),
+          }),
+        );
+        break;
     }
+  }
+
+  /** Same patrol-bounds derivation `buildEnemies` uses, shared with the ground-patrol hazards. */
+  private patrolBoundsForHazard(x: number, y: number): [number, number] {
+    const bounds = patrolBoundsFor(this.level.platforms, x, y);
+    return narrowBoundsForSpikes(this.level.spikes, x, y, bounds);
+  }
+
+  /**
+   * Height of the static platform a mounted hazard sits on at (x, y), or
+   * undefined if none is found — Dropper falls back to an assumed thickness
+   * in that case. Reading the real height (instead of assuming every perch is
+   * the usual 24px floating platform) keeps the dropped rock's spawn point
+   * correct no matter what it's mounted on.
+   */
+  private mountedPlatformHeight(x: number, y: number): number | undefined {
+    return this.level.platforms.find(
+      (p) => (p.type ?? "static") === "static" && p.y === y && x >= p.x && x <= p.x + p.width,
+    )?.height;
   }
 
   private buildShields(): ShieldItem[] {
@@ -562,6 +683,49 @@ export class GameScene extends Phaser.Scene {
 
     if (stomping) {
       turret.kill();
+      this.player.bounce();
+    } else {
+      this.handleDeath();
+    }
+  }
+
+  // Stages 9-10 new enemies: same stomp-or-die pattern as Enemy/Turret, sharing
+  // the stomp check via `isStompHit` instead of repeating it four more times.
+
+  private handlePlayerHammerThrower(m: HammerThrower): void {
+    if (this.ending || this.player.dead || m.dead) return;
+    if (isStompHit(this.player, m)) {
+      m.squash();
+      this.player.bounce();
+    } else {
+      this.handleDeath();
+    }
+  }
+
+  private handlePlayerFlyer(m: Flyer): void {
+    if (this.ending || this.player.dead || m.dead) return;
+    if (isStompHit(this.player, m)) {
+      m.kill();
+      this.player.bounce();
+    } else {
+      this.handleDeath();
+    }
+  }
+
+  private handlePlayerCharger(m: Charger): void {
+    if (this.ending || this.player.dead || m.dead) return;
+    if (isStompHit(this.player, m)) {
+      m.squash();
+      this.player.bounce();
+    } else {
+      this.handleDeath();
+    }
+  }
+
+  private handlePlayerDropper(m: Dropper): void {
+    if (this.ending || this.player.dead || m.dead) return;
+    if (isStompHit(this.player, m)) {
+      m.kill();
       this.player.bounce();
     } else {
       this.handleDeath();

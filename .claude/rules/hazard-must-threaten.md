@@ -22,7 +22,7 @@
 
 ## 새 해저드 종류는 검사에도 등록한다
 
-`src/levels/threat.ts`의 `hazardThreat()`에 위험 구간 계산을 추가하고, 바닥에 서는 종류라면 `mountSurfaceOf()`에도 추가한다. `threat.test.ts`가 `levels` 배열을 순회하므로, 등록만 하면 8개 스테이지 전부가 자동으로 검사된다.
+`src/levels/threat.ts`의 `hazardThreat()`에 위험 구간 계산을 추가하고, 바닥에 서는 종류라면 `mountSurfaceOf()`에도 추가한다. `threat.test.ts`가 `levels` 배열을 순회하므로, 등록만 하면 10개 스테이지 전부가 자동으로 검사된다.
 
 ## 가로로 긴 탄도는 지형으로 끝맺는다
 

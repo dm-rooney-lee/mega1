@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  clampAbs,
   oscillateOffset,
   pendulumAngleRad,
   pendulumCrossedBottom,
@@ -184,5 +185,25 @@ describe("trapFloorPhase", () => {
 
   it("guards a degenerate (all-zero) cycle by staying solid", () => {
     expect(trapFloorPhase(1234, 0, 0, 0)).toBe("solid");
+  });
+});
+
+describe("clampAbs", () => {
+  it("passes values already within range through unchanged", () => {
+    expect(clampAbs(50, 100)).toBe(50);
+    expect(clampAbs(-50, 100)).toBe(-50);
+  });
+
+  it("clamps a value above max down to max", () => {
+    expect(clampAbs(150, 100)).toBe(100);
+  });
+
+  it("clamps a value below -max up to -max", () => {
+    expect(clampAbs(-150, 100)).toBe(-100);
+  });
+
+  it("leaves a value exactly at the boundary unchanged", () => {
+    expect(clampAbs(100, 100)).toBe(100);
+    expect(clampAbs(-100, 100)).toBe(-100);
   });
 });

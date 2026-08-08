@@ -153,3 +153,11 @@ export function trapFloorPhase(
 function mod(a: number, n: number): number {
   return ((a % n) + n) % n;
 }
+
+/**
+ * Clamp `v` to the range [-max, max] — shared by every rail-rider that chases
+ * an `oscillateOffset` target with a velocity cap (MovingPlatform, Gear, Flyer).
+ */
+export function clampAbs(v: number, max: number): number {
+  return v > max ? max : v < -max ? -max : v;
+}

@@ -9,6 +9,7 @@ const WORLD_FOR_STAGE: World[] = [
   "grassland", "grassland", "grassland",
   "sunset", "sunset",
   "underground", "underground", "underground",
+  "underground", "underground",
 ];
 
 export function worldForStage(index: number): World {

@@ -1,5 +1,18 @@
 import Phaser from "phaser";
-import { CANNON, COLORS, PROJECTILE, SHOOTER, TEX, TURRET } from "../config";
+import {
+  CANNON,
+  CHARGER,
+  COLORS,
+  DROPPER,
+  FALLING_ROCK,
+  FLYER,
+  HAMMER,
+  HAMMER_THROWER,
+  PROJECTILE,
+  SHOOTER,
+  TEX,
+  TURRET,
+} from "../config";
 import { TEXTURE_SCALE } from "../display";
 import { usableScreenArt } from "./screenArt";
 
@@ -52,6 +65,14 @@ export class BootScene extends Phaser.Scene {
 
     // Gear hazard (level7).
     this.makeGearTexture();
+
+    // Stages 9-10 new enemies.
+    this.makeHammerThrowerTexture();
+    this.makeHammerTexture();
+    this.makeFlyerTexture();
+    this.makeChargerTexture();
+    this.makeDropperTexture();
+    this.makeFallingRockTexture();
 
     // Per-world parallax background layer (Task 9).
     this.makeBackgroundTextures();
@@ -360,6 +381,98 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0x4a4a4a, 1);
     g.fillCircle(c, c, 6); // dark hub
     this.endTexture(g, TEX.GEAR, s, s);
+  }
+
+  /** Hammer-throwing patrol enemy: beetle-like body + a raised hammer-head hint. */
+  private makeHammerThrowerTexture(): void {
+    const w = HAMMER_THROWER.WIDTH;
+    const h = HAMMER_THROWER.HEIGHT;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(2, 4, w - 4, h - 8);
+    g.fillStyle(COLORS.HAMMER_THROWER, 1);
+    g.fillRect(4, 6, w - 8, h - 12);
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(6, 10, 4, 4); // left eye
+    g.fillRect(w - 10, 10, 4, 4); // right eye
+    g.fillStyle(COLORS.HAMMER, 1);
+    g.fillRect(w - 8, 0, 8, 8); // hammer head held aloft
+    this.endTexture(g, TEX.HAMMER_THROWER, w, h);
+  }
+
+  /** Hammer projectile: a mallet (handle + head), thrown in an arc. */
+  private makeHammerTexture(): void {
+    const w = HAMMER.WIDTH;
+    const h = HAMMER.HEIGHT;
+    const g = this.beginTexture();
+    g.fillStyle(0xfff1e8, 1);
+    g.fillRect(w / 2 - 2, 4, 4, h - 4); // handle
+    g.fillStyle(COLORS.HAMMER, 1);
+    g.fillRect(2, 0, w - 4, 8); // head
+    this.endTexture(g, TEX.HAMMER, w, h);
+  }
+
+  /** Flying patrol enemy: round body + swept wings, distinct silhouette from Gear. */
+  private makeFlyerTexture(): void {
+    // Wide enough that the wingtips (FLYER.RADIUS + 10 either side of centre)
+    // stay inside the canvas — generateTexture silently clips anything drawn
+    // past its edge instead of expanding to fit.
+    const s = FLYER.RADIUS * 2 + 24;
+    const c = s / 2;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillCircle(c, c, FLYER.RADIUS + 2);
+    g.fillStyle(COLORS.FLYER, 1);
+    g.fillCircle(c, c, FLYER.RADIUS);
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillTriangle(c - FLYER.RADIUS, c, c - FLYER.RADIUS - 10, c - 8, c - FLYER.RADIUS - 10, c + 8);
+    g.fillTriangle(c + FLYER.RADIUS, c, c + FLYER.RADIUS + 10, c - 8, c + FLYER.RADIUS + 10, c + 8);
+    g.fillStyle(0xffec27, 1);
+    g.fillRect(c - 5, c - 3, 3, 3); // left eye
+    g.fillRect(c + 2, c - 3, 3, 3); // right eye
+    this.endTexture(g, TEX.FLYER, s, s);
+  }
+
+  /** Detect-and-charge enemy: beetle body + small horns to read as more aggressive. */
+  private makeChargerTexture(): void {
+    const w = CHARGER.WIDTH;
+    const h = CHARGER.HEIGHT;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(2, 4, w - 4, h - 6);
+    g.fillTriangle(2, 4, 8, 4, 5, 0); // left horn
+    g.fillTriangle(w - 8, 4, w - 2, 4, w - 5, 0); // right horn
+    g.fillStyle(COLORS.CHARGER, 1);
+    g.fillRect(4, 6, w - 8, h - 10);
+    g.fillStyle(COLORS.OUTLINE, 1);
+    g.fillRect(4, 8, 4, 4); // left eye
+    g.fillRect(w - 8, 8, 4, 4); // right eye
+    this.endTexture(g, TEX.CHARGER, w, h);
+  }
+
+  /** Mounted rock-dropping launcher: boxy body + a dark drop chute underneath. */
+  private makeDropperTexture(): void {
+    const w = DROPPER.WIDTH;
+    const h = DROPPER.HEIGHT;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.DROPPER, 1);
+    g.fillRect(0, 0, w, h);
+    g.fillStyle(0x1a0d16, 1);
+    g.fillRect(w / 2 - 5, h - 8, 10, 8); // drop chute
+    g.fillStyle(0xffec27, 1);
+    g.fillCircle(w / 2, 8, 3); // eye
+    this.endTexture(g, TEX.DROPPER, w, h);
+  }
+
+  /** Rock dropped by Dropper: a small cracked circle. */
+  private makeFallingRockTexture(): void {
+    const d = FALLING_ROCK.DIAMETER;
+    const g = this.beginTexture();
+    g.fillStyle(COLORS.FALLING_ROCK, 1);
+    g.fillCircle(d / 2, d / 2, d / 2);
+    g.fillStyle(COLORS.DIRT_DETAIL, 1);
+    g.fillRect(d / 2 - 2, d / 2 - 2, 3, 3); // crack detail
+    this.endTexture(g, TEX.FALLING_ROCK, d, d);
   }
 
   /** Projectile: a small dart pointing right (flipped when fired left). */

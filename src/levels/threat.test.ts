@@ -165,6 +165,65 @@ describe("hazardThreat", () => {
     ).toBeNull();
   });
 
+  it("[Happy] 망치 투척몹의 위험 구간은 서 있는 발판을 왕복하는 구간 전체다", () => {
+    const level = levelWith([]); // ground: x=0..3000 @ GROUND
+    const threat = hazardThreat(level, { kind: "hammerThrower", x: 1500, y: GROUND })!;
+    expect(threat.band).toEqual({ top: 458, bottom: 496 });
+    expect([threat.left, threat.right]).toEqual([0, 3000]);
+  });
+
+  it("[Happy] 감지 돌진적의 위험 구간도 왕복 구간 전체다", () => {
+    const level = levelWith([]);
+    const threat = hazardThreat(level, { kind: "charger", x: 1500, y: GROUND })!;
+    expect(threat.band).toEqual({ top: 458, bottom: 496 });
+    expect([threat.left, threat.right]).toEqual([0, 3000]);
+  });
+
+  it("[Boundary] 가시로 좁혀진 왕복 구간은 위험 구간에도 그대로 반영된다", () => {
+    // GameScene.buildHazard()가 narrowBoundsForSpikes로 좁히는 것과 동일하게,
+    // hazardThreat()도 가시 왼쪽까지만 위험하다고 보고해야 한다(전체 발판이 아님).
+    const level: LevelDef = {
+      worldWidth: 3000,
+      worldHeight: 540,
+      playerSpawn: { x: 0, y: 0 },
+      platforms: [{ x: 0, y: GROUND, width: 3000, height: 44 }],
+      enemies: [],
+      spikes: [{ x: 1200, y: GROUND - 24, tiles: 2 }], // 1200..1264
+      goal: { x: 2900, y: GROUND },
+    };
+    const threat = hazardThreat(level, { kind: "hammerThrower", x: 1000, y: GROUND })!;
+    expect([threat.left, threat.right]).toEqual([0, 1200]);
+  });
+
+  it("[Boundary] 발판이 없는 곳의 망치 투척몹은 스폰 지점 주변 고정폭으로 대체된다", () => {
+    const level = levelWith([], [{ x: 0, y: 300, width: 10, height: 10 }]);
+    const threat = hazardThreat(level, { kind: "hammerThrower", x: 5000, y: 5000 })!;
+    expect([threat.left, threat.right]).toEqual([4880, 5120]); // patrolBoundsFor의 폴백([x-120, x+120])
+  });
+
+  it("[Happy] 수직 낙하몹의 위험 구간은 자기 몸이 서 있는 한 지점이다", () => {
+    const threat = hazardThreat(levelWith([]), { kind: "dropper", x: 1500, y: GROUND })!;
+    expect(threat.band).toEqual({ top: 470, bottom: 496 }); // GROUND - DROPPER.HEIGHT(26)
+    expect([threat.left, threat.right]).toEqual([1483, 1517]); // DROPPER.WIDTH(34)/2
+  });
+
+  it("[Happy] 공중 패트롤몹의 위험 구간은 기어와 같은 축+거리 왕복 계산이다", () => {
+    const threat = hazardThreat(levelWith([]), {
+      kind: "flyer",
+      x: 500,
+      y: 300,
+      axis: "vertical",
+      range: 100,
+    })!;
+    expect(threat.band).toEqual({ top: 286, bottom: 414 }); // y-reach(14) .. y+range+reach
+    expect([threat.left, threat.right]).toEqual([486, 514]);
+  });
+
+  it("[Boundary] 왕복 범위가 0인 공중 패트롤몹은 제자리다", () => {
+    const threat = hazardThreat(levelWith([]), { kind: "flyer", x: 500, y: 300 })!;
+    expect([threat.left, threat.right]).toEqual([486, 514]);
+  });
+
   it("[Error] 알 수 없는 종류는 예외 없이 null을 돌려준다", () => {
     const unknown = { kind: "trapdoor", x: 0, y: 0 } as unknown as HazardDef;
     expect(hazardThreat(levelWith([]), unknown)).toBeNull();
@@ -176,10 +235,17 @@ describe("mountSurfaceOf", () => {
     expect(mountSurfaceOf({ kind: "cannon", x: 0, y: GROUND, direction: "left" })).toBe(GROUND);
   });
 
+  it("[Happy] 왕복형 신규 몹(망치투척몹/감지돌진적)과 낙하몹도 자기 표면을 돌려준다", () => {
+    expect(mountSurfaceOf({ kind: "hammerThrower", x: 0, y: GROUND })).toBe(GROUND);
+    expect(mountSurfaceOf({ kind: "charger", x: 0, y: GROUND })).toBe(GROUND);
+    expect(mountSurfaceOf({ kind: "dropper", x: 0, y: GROUND })).toBe(GROUND);
+  });
+
   it("[Boundary] 공중에 매달리는 해저드는 표면이 없다", () => {
     expect(mountSurfaceOf({ kind: "pendulum", x: 0, y: 250 })).toBeNull();
     expect(mountSurfaceOf({ kind: "gear", x: 0, y: 300 })).toBeNull();
     expect(mountSurfaceOf({ kind: "thwomp", x: 0, y: 110 })).toBeNull();
+    expect(mountSurfaceOf({ kind: "flyer", x: 0, y: 300 })).toBeNull();
   });
 });
 

@@ -183,6 +183,48 @@ export interface GearDef {
   rotateDegPerSec?: number;
 }
 
+/** Patrols like an Enemy, pausing on a timer to lob a Hammer in an arc. */
+export interface HammerThrowerDef {
+  kind: "hammerThrower";
+  /** Spawn point; patrol bounds are derived from the platform underneath, same as `enemies`. */
+  x: number;
+  y: number;
+  throwIntervalMs?: number;
+}
+
+/** Flies a rail like a Gear, but is stompable instead of instant-death. */
+export interface FlyerDef {
+  kind: "flyer";
+  /** Home position — where the rail path starts. */
+  x: number;
+  y: number;
+  axis?: "horizontal" | "vertical";
+  range?: number;
+  speed?: number;
+  phase?: number;
+  waitMs?: number;
+}
+
+/** Patrols like an Enemy, dashing toward the player once they're close. */
+export interface ChargerDef {
+  kind: "charger";
+  /** Spawn point; patrol bounds are derived from the platform underneath, same as `enemies`. */
+  x: number;
+  y: number;
+  detectRangeX?: number;
+  chargeSpeed?: number;
+}
+
+/** Mounted launcher (like a Turret) that drops a rock once the player passes beneath. */
+export interface DropperDef {
+  kind: "dropper";
+  x: number;
+  /** The surface it stands on. */
+  y: number;
+  detectRangeX?: number;
+  telegraphMs?: number;
+}
+
 export type HazardDef =
   | PendulumDef
   | PopupSpikeDef
@@ -190,7 +232,11 @@ export type HazardDef =
   | ShooterDef
   | TurretDef
   | CannonDef
-  | GearDef;
+  | GearDef
+  | HammerThrowerDef
+  | FlyerDef
+  | ChargerDef
+  | DropperDef;
 
 // --- Level ------------------------------------------------------------------
 

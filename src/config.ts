@@ -220,6 +220,71 @@ export const SHIELD = {
   MAX_CHARGES: 3,
 } as const;
 
+/** Hammer-throwing patrol enemy (stages 9-10) — walks like ENEMY, pauses to throw. */
+export const HAMMER_THROWER = {
+  MOVE_SPEED: 70,
+  WIDTH: 30,
+  HEIGHT: 32,
+  THROW_INTERVAL_MS: 1800,
+  /** Wind-up pause before the hammer leaves (visual telegraph — it stops walking). */
+  WIND_UP_MS: 350,
+} as const;
+
+/**
+ * Hammer projectile — unlike Cannonball/Projectile, gravity pulls it into an
+ * arc. LAUNCH_SPEED_X is deliberately short-ranged: flight time back to launch
+ * height is 2 * |LAUNCH_SPEED_Y| / PHYSICS.GRAVITY_Y ≈ 0.61s, so its ~80px
+ * horizontal reach stays well under every pit width a hammerThrower patrols
+ * next to (the narrowest is ~110px) — it can never be thrown clear across one,
+ * the way `hazard-must-threaten.md`'s "bullet-stop pillar" rule requires for
+ * a shot with a longer, terrain-terminated lane.
+ */
+export const HAMMER = {
+  WIDTH: 20,
+  HEIGHT: 20,
+  LAUNCH_SPEED_X: 130,
+  /** Negative = up. */
+  LAUNCH_SPEED_Y: -430,
+} as const;
+
+/** Flying patrol enemy — rides a rail like GEAR, but stompable (not instant-death). */
+export const FLYER = {
+  SPEED: 90,
+  RADIUS: 14,
+} as const;
+
+/** Ground enemy that patrols like ENEMY, then dashes at the player once detected. */
+export const CHARGER = {
+  PATROL_SPEED: 70,
+  CHARGE_SPEED: 190,
+  WIDTH: 30,
+  HEIGHT: 26,
+  DETECT_RANGE_X: 220,
+  /** Vertical tolerance — keeps it from "detecting" a player on a different floor. */
+  DETECT_RANGE_Y: 80,
+} as const;
+
+/** Mounted launcher that drops a rock once the player passes beneath it. */
+export const DROPPER = {
+  WIDTH: 34,
+  HEIGHT: 26,
+  DETECT_RANGE_X: 90,
+  TELEGRAPH_MS: 400,
+  /** Recovery pause after a drop before it can re-arm (same idea as THWOMP's bottom/rising phases — a guaranteed safe window after firing). */
+  COOLDOWN_MS: 900,
+  /**
+   * Fallback perch thickness, used only if GameScene can't find the actual
+   * mounting platform (it normally passes the real height in). Matches this
+   * codebase's convention of `height: 24` for every floating platform.
+   */
+  PERCH_THICKNESS: 24,
+} as const;
+
+/** Rock dropped by DROPPER — no horizontal speed, gravity does the rest. */
+export const FALLING_ROCK = {
+  DIAMETER: 18,
+} as const;
+
 /** Placeholder-art palette (swapped for real sprites in Milestone 4). */
 export const COLORS = {
   BACKGROUND: 0x1d2b53,
@@ -255,6 +320,13 @@ export const COLORS = {
   DIRT: 0xab5236,
   DIRT_DETAIL: 0x5f574f,
   GRASS_TOP: 0x00e436,
+  // Stages 9-10 new enemies.
+  HAMMER_THROWER: 0xffa300,
+  HAMMER: 0x83769c,
+  FLYER: 0x7e2553,
+  CHARGER: 0xff004d,
+  DROPPER: 0x5f574f,
+  FALLING_ROCK: 0x83769c,
 } as const;
 
 /**
@@ -314,6 +386,13 @@ export const TEX = {
   BG_GRASSLAND: "tex-bg-grassland",
   BG_SUNSET: "tex-bg-sunset",
   BG_UNDERGROUND: "tex-bg-underground",
+  // Stages 9-10 new enemies.
+  HAMMER_THROWER: "tex-hammer-thrower",
+  HAMMER: "tex-hammer",
+  FLYER: "tex-flyer",
+  CHARGER: "tex-charger",
+  DROPPER: "tex-dropper",
+  FALLING_ROCK: "tex-falling-rock",
   // Title / death / win screen artwork, loaded from public/ui rather than drawn
   // here — see BootScene.preload.
   UI_TITLE: "tex-ui-title",

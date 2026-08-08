@@ -22,6 +22,8 @@
 
 import {
   CANNON,
+  DROPPER,
+  FLYER,
   GEAR,
   PENDULUM,
   PLAYER,
@@ -32,6 +34,7 @@ import {
   TILE,
   TURRET,
 } from "../config";
+import { narrowBoundsForSpikes, patrolBoundsFor } from "./patrol";
 import type { HazardDef, LevelDef, PlatformDef } from "./types";
 
 /** A vertical span in logical units. `top` is the smaller number (screen y grows downward). */
@@ -169,10 +172,14 @@ export function mountSurfaceOf(hazard: HazardDef): number | null {
     case "turret":
     case "cannon":
     case "popupSpike":
+    case "hammerThrower":
+    case "charger":
+    case "dropper":
       return hazard.y;
     case "pendulum":
     case "gear":
     case "thwomp":
+    case "flyer":
       return null;
     default:
       return unregistered(hazard);
@@ -275,6 +282,42 @@ export function hazardThreat(level: LevelDef, hazard: HazardDef): Threat | null 
         direction * (CANNON.WIDTH / 2 + CANNON.BALL_DIAMETER / 2 + CANNON.MUZZLE_GAP);
       // Cannonballs never cull themselves, so their lane runs until terrain.
       return lane(level, muzzleX, direction, shotBand(muzzleY, CANNON.BALL_DIAMETER / 2));
+    }
+    case "hammerThrower":
+    case "charger": {
+      // Both patrol like an Enemy — same bounds (narrowed by nearby spikes,
+      // same as GameScene.buildHazard does) — and their body is lethal on
+      // contact for the whole patrol, so the danger zone is simply "wherever
+      // it walks" at the height it stands. The thrown hammer is an extra
+      // threat layered on top, not required to satisfy this check.
+      const [left, right] = narrowBoundsForSpikes(
+        level.spikes,
+        hazard.x,
+        hazard.y,
+        patrolBoundsFor(level.platforms, hazard.x, hazard.y),
+      );
+      return { band: { top: hazard.y - PLAYER.BODY_HEIGHT, bottom: hazard.y }, left, right };
+    }
+    case "dropper": {
+      // Fixed in place (like a Turret); the mounted body itself is lethal on contact.
+      const halfW = DROPPER.WIDTH / 2;
+      return {
+        band: { top: hazard.y - DROPPER.HEIGHT, bottom: hazard.y },
+        left: hazard.x - halfW,
+        right: hazard.x + halfW,
+      };
+    }
+    case "flyer": {
+      // Same rail-sweep geometry as `gear` — it flies a straight path and is lethal
+      // on contact anywhere along it.
+      const range = hazard.range ?? 0;
+      const vertical = (hazard.axis ?? "horizontal") === "vertical";
+      const reach = FLYER.RADIUS;
+      return {
+        band: { top: hazard.y - reach, bottom: hazard.y + (vertical ? range : 0) + reach },
+        left: hazard.x - reach,
+        right: hazard.x + (vertical ? 0 : range) + reach,
+      };
     }
     default:
       return unregistered(hazard);
