@@ -13,10 +13,10 @@ export class WinScene extends Phaser.Scene {
     playBgm(this, BGM.SCREEN);
 
     const screen = centredScreen(this);
-    screen.add(200, 52, "YOU WIN!", "#00e436", true);
-    screen.add(260, 20, "all stages cleared", "#fff1e8");
-    screen.add(300, 22, "press SPACE / ENTER to play again", "#fff1e8");
-    screen.add(340, 18, "ESC for menu", "#7d7460");
+    screen.add(200, 76, "YOU WIN!", "#00e436", true);
+    screen.add(260, 18, "all stages cleared", "#fff1e8");
+    screen.add(300, 14, "press SPACE / ENTER to play again", "#fff1e8");
+    screen.add(340, 14, "ESC for menu", "#7d7460");
     screen.start();
 
     const playAgain = () => this.scene.start("GameScene", { level: 0 });

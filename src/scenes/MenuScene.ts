@@ -45,9 +45,9 @@ export class MenuScene extends Phaser.Scene {
     playBgm(this, BGM.SCREEN);
 
     const screen = centredScreen(this);
-    screen.add(180, 56, "PLATFORMER POC", "#29adff", true);
-    screen.add(250, 20, "a tiny Phaser 4 platformer", "#fff1e8");
-    const prompt = screen.add(360, 24, "press any key to start", "#00e436");
+    screen.add(180, 50, "PLATFORMER POC", "#29adff", true);
+    screen.add(250, 16, "a tiny Phaser 4 platformer", "#fff1e8");
+    const prompt = screen.add(360, 18, "press any key to start", "#00e436");
     screen.start();
 
     this.tweens.add({

@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+// Latin only — every label on the screens is ASCII, and the other subsets are
+// several times the size for glyphs this game never draws.
+import "@fontsource/press-start-2p/latin-400.css";
 import { PHYSICS, COLORS } from "./config";
 import { computeDisplay } from "./display";
 import { BootScene } from "./scenes/BootScene";
@@ -53,6 +56,16 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [BootScene, MenuScene, GameScene, GameOverScene, WinScene],
 };
+
+// Phaser bakes glyphs into a texture when it creates a Text object, so a font
+// that arrives afterwards does not redraw labels already on screen — the title
+// would stay in the fallback face for the life of the page. The stylesheet above
+// declares `font-display: swap`, and this await is what stops that swap from
+// being visible.
+//
+// A missing or broken font file settles this promise too; the CSS keeps
+// `monospace` behind it, so the game still starts and still reads.
+await document.fonts.load('16px "Press Start 2P"').catch(() => {});
 
 const game = new Phaser.Game(config);
 
