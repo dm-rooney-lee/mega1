@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
-import { centredTextScreen } from "./textScreen";
+import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
 import { BGM } from "../config";
 
@@ -44,7 +44,7 @@ export class MenuScene extends Phaser.Scene {
     // 여기 닿지 않고, 플레이 화면이 자기 볼륨으로 음악을 시작한다.
     playBgm(this, BGM.SCREEN);
 
-    const screen = centredTextScreen(this);
+    const screen = centredScreen(this);
     screen.add(180, 56, "PLATFORMER POC", "#29adff", true);
     screen.add(250, 20, "a tiny Phaser 4 platformer", "#fff1e8");
     const prompt = screen.add(360, 24, "press any key to start", "#00e436");

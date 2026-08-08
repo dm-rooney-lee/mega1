@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { centredTextScreen } from "./textScreen";
+import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
 import { BGM } from "../config";
 
@@ -24,7 +24,7 @@ export class GameOverScene extends Phaser.Scene {
   create(): void {
     playBgm(this, BGM.SCREEN);
 
-    const screen = centredTextScreen(this);
+    const screen = centredScreen(this);
     screen.add(200, 56, "YOU DIED", "#ff004d", true);
     screen.add(300, 22, "press SPACE / ENTER to retry", "#fff1e8");
     screen.add(340, 18, "ESC for menu", "#7d7460");
