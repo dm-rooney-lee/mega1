@@ -11,6 +11,7 @@ import {
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
+import { stageLabel } from "../levels/stageLabel";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
 import { Goal } from "../objects/Goal";
@@ -671,7 +672,7 @@ export class GameScene extends Phaser.Scene {
 
     // Stage indicator, top-right — always on, so progress is readable mid-play.
     this.stageText = this.add
-      .text(0, 0, `STAGE ${this.levelIndex + 1}/${levels.length}`, {
+      .text(0, 0, stageLabel(this.levelIndex, levels.length), {
         fontFamily: "monospace",
         fontSize: "16px",
         color: "#00e436",
