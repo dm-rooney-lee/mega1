@@ -611,15 +611,20 @@ export const SCREEN_COLORS = {
 } as const;
 ```
 
+세 화면 모두 이미 `import { BGM } from "../config";` 를 갖고 있다. **새 임포트 줄을 만들지 말고 그 줄을 넓힌다** — 같은 파일에서 같은 모듈을 두 번 임포트하면 안 된다.
+
 - [ ] **2단계: 타이틀 배경 칠하기**
 
-`src/scenes/MenuScene.ts` — 임포트에 추가하고,
+`src/scenes/MenuScene.ts:6`:
 
 ```ts
-import { SCREEN_COLORS } from "../config";
+// 바꾸기 전
+import { BGM } from "../config";
+// 바꾼 뒤
+import { BGM, SCREEN_COLORS } from "../config";
 ```
 
-`playBgm(this);` **바로 아래**에 추가:
+`playBgm(this, BGM.SCREEN);` (45번째 줄) **바로 아래**에 추가:
 
 ```ts
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.TITLE_SKY);
@@ -627,10 +632,13 @@ import { SCREEN_COLORS } from "../config";
 
 - [ ] **3단계: 죽음 화면 배경 칠하기 (위아래 두 톤 + 경계선)**
 
-`src/scenes/GameOverScene.ts` — 임포트에 추가하고,
+`src/scenes/GameOverScene.ts:4`:
 
 ```ts
-import { SCREEN_COLORS } from "../config";
+// 바꾸기 전
+import { BGM } from "../config";
+// 바꾼 뒤
+import { BGM, SCREEN_COLORS } from "../config";
 ```
 
 `const screen = centredScreen(this);` **바로 다음 줄**에, 지금 있는 `screen.add(...)` 세 줄보다 **위에** 넣는다. 띠는 글자보다 먼저 그려져야 뒤에 깔린다:
@@ -648,13 +656,16 @@ import { SCREEN_COLORS } from "../config";
 
 - [ ] **4단계: 클리어 화면 배경 칠하기**
 
-`src/scenes/WinScene.ts` — 임포트에 추가하고,
+`src/scenes/WinScene.ts:4`:
 
 ```ts
-import { SCREEN_COLORS } from "../config";
+// 바꾸기 전
+import { BGM } from "../config";
+// 바꾼 뒤
+import { BGM, SCREEN_COLORS } from "../config";
 ```
 
-`playBgm(this);` 바로 아래에 추가:
+`playBgm(this, BGM.SCREEN);` (13번째 줄) 바로 아래에 추가:
 
 ```ts
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.WIN_BG);
@@ -818,10 +829,13 @@ import { TEXTURE_SCALE } from "../display";
 
 - [ ] **4단계: 타이틀 화면 다시 구성**
 
-`src/scenes/MenuScene.ts` — 임포트에 `TEX`를 더한다:
+`src/scenes/MenuScene.ts:6` — 같은 임포트 줄에 `TEX`를 더한다:
 
 ```ts
-import { SCREEN_COLORS, TEX } from "../config";
+// 바꾸기 전
+import { BGM, SCREEN_COLORS } from "../config";
+// 바꾼 뒤
+import { BGM, SCREEN_COLORS, TEX } from "../config";
 ```
 
 작업 3에서 손본 세 줄을 통째로 아래로 교체한다:
@@ -939,10 +953,12 @@ case crops the outer platforms rather than the characters."
 
 - [ ] **4단계: 죽음 화면 다시 구성**
 
-`src/scenes/GameOverScene.ts` — 임포트를 다음과 같이 맞춘다:
+`src/scenes/GameOverScene.ts` — 설정 임포트 줄에 `TEX`를 더하고, 스테이지 표기에 필요한 두 줄을 새로 추가한다:
 
 ```ts
-import { SCREEN_COLORS, TEX } from "../config";
+// 4번째 줄을 바꾼다
+import { BGM, SCREEN_COLORS, TEX } from "../config";
+// 아래 두 줄을 새로 추가한다
 import { levels } from "../levels/index";
 import { stageLabel } from "../levels/stageLabel";
 ```
@@ -1092,10 +1108,13 @@ never disagree about how stages are numbered."
 
 - [ ] **4단계: 클리어 화면 다시 구성**
 
-`src/scenes/WinScene.ts` — 임포트를 맞춘다:
+`src/scenes/WinScene.ts:4` — 같은 임포트 줄에 `TEX`를 더한다:
 
 ```ts
-import { SCREEN_COLORS, TEX } from "../config";
+// 바꾸기 전
+import { BGM, SCREEN_COLORS } from "../config";
+// 바꾼 뒤
+import { BGM, SCREEN_COLORS, TEX } from "../config";
 ```
 
 작업 3·4에서 손본 부분을 아래로 교체한다:
@@ -1177,9 +1196,9 @@ git commit -m "feat(win): crown the gopher on the all-stages-cleared screen"
 실행: `npm run dev` (쿼리 파라미터 없이 처음부터)
 
 순서대로 확인한다:
-1. 타이틀이 뜬다 — 배경·그림·제목·글꼴 모두 정상, 배경음악이 흐른다.
-2. 아무 키를 눌러 1스테이지 진입 — 음악이 멈추고 효과음만 난다. 우측 위 `STAGE 1/8`.
-3. 일부러 죽는다 — 죽음 화면의 배경·그림·`STAGE 1/8`·음악 확인.
+1. 타이틀이 뜬다 — 배경·그림·제목·글꼴 모두 정상, 배경음악이 또렷하게 흐른다.
+2. 아무 키를 눌러 1스테이지 진입 — 음악이 **작아지고** 효과음이 그 위로 들린다. 우측 위 `STAGE 1/8`.
+3. 일부러 죽는다 — 죽음 화면의 배경·그림·`STAGE 1/8` 확인. 음악이 다시 또렷해진다.
 4. `ESC`로 타이틀 복귀 — **음악이 끊기지 않고 이어진다**(기존 동작).
 5. `?stage=8`로 마지막 스테이지를 깬다 — 클리어 화면 확인.
 6. 창 크기를 크게·작게·세로로 길게 바꿔가며 세 화면을 다시 본다.
