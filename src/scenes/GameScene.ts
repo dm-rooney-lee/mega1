@@ -12,6 +12,7 @@ import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
 import { stageLabel } from "../levels/stageLabel";
+import { SCREEN_FONT } from "./screen";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
 import { Goal } from "../objects/Goal";
@@ -847,7 +848,7 @@ export class GameScene extends Phaser.Scene {
     // Shield charge counter, just under the hint — always on, like the stage indicator.
     this.shieldText = this.add
       .text(0, 0, this.shieldLabel(), {
-        fontFamily: "monospace",
+        fontFamily: SCREEN_FONT,
         fontSize: "18px",
         color: "#29adff",
       })
@@ -857,7 +858,7 @@ export class GameScene extends Phaser.Scene {
     // Stage indicator, top-right — always on, so progress is readable mid-play.
     this.stageText = this.add
       .text(0, 0, stageLabel(this.levelIndex, levels.length), {
-        fontFamily: "monospace",
+        fontFamily: SCREEN_FONT,
         fontSize: "16px",
         color: "#00e436",
       })
@@ -870,7 +871,7 @@ export class GameScene extends Phaser.Scene {
     // dev param for the same DEV-only convention).
     if (import.meta.env.DEV) {
       this.debugCoordText = this.add
-        .text(0, 0, "", { fontFamily: "monospace", fontSize: "14px", color: "#ff77a8" })
+        .text(0, 0, "", { fontFamily: SCREEN_FONT, fontSize: "14px", color: "#ff77a8" })
         .setDepth(DEPTH.HUD);
       this.debugCoordText.setStroke("#1d2b53", 4);
     }
@@ -879,10 +880,9 @@ export class GameScene extends Phaser.Scene {
     if (this.level.name) {
       this.levelBanner = this.add
         .text(0, 0, this.level.name, {
-          fontFamily: "monospace",
+          fontFamily: SCREEN_FONT,
           fontSize: "28px",
           color: "#ffec27",
-          fontStyle: "bold",
         })
         .setOrigin(0.5)
         .setDepth(DEPTH.HUD);
