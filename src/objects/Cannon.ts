@@ -41,7 +41,13 @@ export class Cannon extends Phaser.Physics.Arcade.Sprite {
   update(time: number): void {
     if (!shouldFire(time, this.lastFiredAt, this.intervalMs)) return;
     this.lastFiredAt = time;
-    const ball = new Cannonball(this.scene, this.x, this.y, this.direction);
+    // Clear of the barrel, so a ball never materialises inside someone standing
+    // on the cannon itself.
+    const muzzleX =
+      this.x +
+      (this.direction === "left" ? -1 : 1) *
+        (this.displayWidth / 2 + CANNON.BALL_DIAMETER / 2 + CANNON.MUZZLE_GAP);
+    const ball = new Cannonball(this.scene, muzzleX, this.y, this.direction);
     this.balls.add(ball);
     // Group#add re-applies the group's physics defaults (velocityX/Y default
     // to 0) to every member, even one that already has a body — this silently

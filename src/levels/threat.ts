@@ -69,11 +69,21 @@ function isStatic(p: PlatformDef): boolean {
 }
 
 /**
+ * Whether a player can stand on a platform long enough to be hit. Crumbling and
+ * trap floors drop away on their own timers and a spring launches its rider the
+ * moment they land, so a hazard that only reaches those has nobody to reach.
+ */
+function isStandable(p: PlatformDef): boolean {
+  const type = p.type ?? "static";
+  return type === "static" || type === "moving" || type === "conveyor";
+}
+
+/**
  * Every surface a player can stand on. A moving platform is widened by its travel
  * — a rider is carried across all of it, so the whole span is standable.
  */
 export function surfacesOf(platforms: PlatformDef[]): Surface[] {
-  return platforms.map((p) => {
+  return platforms.filter(isStandable).map((p) => {
     const range = p.type === "moving" ? (p.range ?? 0) : 0;
     const horizontal = (p.axis ?? "horizontal") === "horizontal";
     return {
@@ -86,11 +96,18 @@ export function surfacesOf(platforms: PlatformDef[]): Surface[] {
 }
 
 /**
- * Whether a platform's top edge sits exactly at `surfaceY` under `x` — the check
- * that keeps ground-mounted hazards on the ground.
+ * Whether a solid, unmoving platform's top edge sits exactly at `surfaceY` under
+ * `x` — the check that keeps ground-mounted hazards on the ground.
+ *
+ * Only static platforms count. A hazard is placed once and never re-parented, so
+ * a moving platform slides out from under it and a crumbling or trap floor
+ * vanishes, leaving exactly the hanging-in-mid-air hazard this rule exists to
+ * catch.
  */
 export function mountedOn(platforms: PlatformDef[], x: number, surfaceY: number): boolean {
-  return platforms.some((p) => p.y === surfaceY && x >= p.x && x <= p.x + p.width);
+  return platforms.some(
+    (p) => isStatic(p) && p.y === surfaceY && x >= p.x && x <= p.x + p.width,
+  );
 }
 
 /**
@@ -123,9 +140,22 @@ function shotBand(centreY: number, reach: number): Band {
   return { top: centreY - reach, bottom: centreY + reach };
 }
 
-/** The lane a shot sweeps, from its muzzle to whatever terrain stops it. */
-function lane(level: LevelDef, muzzleX: number, dir: -1 | 1, band: Band): Threat {
-  const end = laneEnd(level, muzzleX, dir, band);
+/**
+ * The lane a shot sweeps, from its muzzle to whatever stops it first. `range`
+ * caps it where the projectile culls itself: pooled projectiles die after
+ * `PROJECTILE.RANGE`, so without the cap a turret is credited with a surface its
+ * arrows expire well short of. Cannonballs have no such cull.
+ */
+function lane(
+  level: LevelDef,
+  muzzleX: number,
+  dir: -1 | 1,
+  band: Band,
+  range = Infinity,
+): Threat {
+  const terrain = laneEnd(level, muzzleX, dir, band);
+  const end =
+    dir < 0 ? Math.max(terrain, muzzleX - range) : Math.min(terrain, muzzleX + range);
   return { band, left: Math.min(muzzleX, end), right: Math.max(muzzleX, end) };
 }
 
@@ -198,22 +228,30 @@ export function hazardThreat(level: LevelDef, hazard: HazardDef): Threat | null 
       };
     }
     case "popupSpike": {
-      // Raised, the tile's top edge sits a full tile above the surface; only the
-      // spike body within it is solid.
+      // Raised, the tile's top edge sits a full tile above the surface, and only
+      // the spike body inside it is solid — on both axes, so the last tile's
+      // solid part stops short of the art's right edge.
       const spriteTop = hazard.y - TILE;
+      const tiles = hazard.tiles ?? 1;
       return {
         band: {
           top: spriteTop + SPIKE.BODY_OFFSET_Y,
           bottom: spriteTop + SPIKE.BODY_OFFSET_Y + SPIKE.BODY_HEIGHT,
         },
-        left: hazard.x,
-        right: hazard.x + (hazard.tiles ?? 1) * TILE,
+        left: hazard.x + SPIKE.BODY_OFFSET_X,
+        right: hazard.x + (tiles - 1) * TILE + SPIKE.BODY_OFFSET_X + SPIKE.BODY_WIDTH,
       };
     }
     case "arrowShooter": {
       const muzzleY = hazard.y - SHOOTER.HEIGHT / 2;
       const muzzleX = hazard.x + hazard.direction * (SHOOTER.WIDTH / 2 + SHOOTER.MUZZLE_GAP);
-      return lane(level, muzzleX, hazard.direction, shotBand(muzzleY, PROJECTILE_REACH));
+      return lane(
+        level,
+        muzzleX,
+        hazard.direction,
+        shotBand(muzzleY, PROJECTILE_REACH),
+        PROJECTILE.RANGE,
+      );
     }
     case "turret": {
       if ((hazard.aimMode ?? "fixed") === "aim") return null;
@@ -221,12 +259,22 @@ export function hazardThreat(level: LevelDef, hazard: HazardDef): Threat | null 
       // full body height above its surface.
       const muzzleY = hazard.y - TURRET.HEIGHT;
       const direction = hazard.direction ?? -1;
-      return lane(level, hazard.x, direction, shotBand(muzzleY, PROJECTILE_REACH));
+      return lane(
+        level,
+        hazard.x,
+        direction,
+        shotBand(muzzleY, PROJECTILE_REACH),
+        PROJECTILE.RANGE,
+      );
     }
     case "cannon": {
       const muzzleY = hazard.y - CANNON.HEIGHT / 2;
       const direction = hazard.direction === "left" ? -1 : 1;
-      return lane(level, hazard.x, direction, shotBand(muzzleY, CANNON.BALL_DIAMETER / 2));
+      const muzzleX =
+        hazard.x +
+        direction * (CANNON.WIDTH / 2 + CANNON.BALL_DIAMETER / 2 + CANNON.MUZZLE_GAP);
+      // Cannonballs never cull themselves, so their lane runs until terrain.
+      return lane(level, muzzleX, direction, shotBand(muzzleY, CANNON.BALL_DIAMETER / 2));
     }
     default:
       return unregistered(hazard);
@@ -243,12 +291,11 @@ function aimsAtPlayer(hazard: HazardDef): boolean {
  * to overlap the body of someone standing on a surface it covers. Hazards with no
  * fixed danger space (aiming turrets) are not judged here.
  *
- * The two axes take different rules. Vertically, any overlap at all is a hit —
- * that is exactly what Arcade does. Horizontally the hazard has to cover a whole
- * body width of the surface, because the question is whether there is anywhere a
- * player can stand and be hit. A cannon parked on the left edge of a platform
- * clips the last few pixels of it and nothing else; counting that as a threat is
- * how a purely decorative crest cannon passed for a real one.
+ * Both axes use plain overlap, matching Arcade. The horizontal test widens the
+ * surface by half a body on each side rather than demanding a body's width of
+ * coverage: a player standing at a platform's lip is still supported, and a shot
+ * clipping the last pixel of that platform still passes through them. Requiring
+ * full coverage instead reports genuinely lethal hazards as decoration.
  *
  * Only an aiming turret is excused. Anything else without a danger band is a kind
  * this module has not been taught, and calling that safe would hide it.
@@ -257,9 +304,10 @@ export function threatensStandingPlayer(level: LevelDef, hazard: HazardDef): boo
   if (aimsAtPlayer(hazard)) return true;
   const threat = hazardThreat(level, hazard);
   if (!threat) return false;
+  const reach = PLAYER.BODY_WIDTH / 2;
   return surfacesOf(level.platforms).some(
     (surface) =>
-      overlapWidth(threat.left, threat.right, surface.left, surface.right) >=
-        PLAYER.BODY_WIDTH && bandsOverlap(threat.band, standingBand(surface)),
+      overlapWidth(threat.left, threat.right, surface.left - reach, surface.right + reach) >
+        0 && bandsOverlap(threat.band, standingBand(surface)),
   );
 }

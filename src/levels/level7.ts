@@ -59,10 +59,6 @@ export const level7: LevelDef = {
       type: "moving", axis: "horizontal", range: 160, speed: 95,
     },
     { x: 4000, y: 496, width: 400, height: 44 },
-    // Emplacement for the cannon below. It stands at the moving platform's ride
-    // height so the shots cross a rider's chest; on the ground they would pass
-    // under their feet instead.
-    { x: 4300, y: 452, width: 40, height: 44 },
 
     // --- §5 turret, spring over the wall, goal run ------------------------
     { x: 4520, y: 496, width: 340, height: 44 }, // sniper ground (pit 4400..4520)
@@ -93,13 +89,15 @@ export const level7: LevelDef = {
     { kind: "popupSpike", x: 960, y: 496, tiles: 2, phase: 0.5 },
 
     // §2 — two pendulums, offset by half a period, sweeping overlapping arcs.
-    // Both anchors sit low enough for the heads to reach a standing player. Their
-    // low sweeps stay 47px apart, so the walkway can still be crossed in two
-    // timed dashes with a place to stand and wait between them.
-    { kind: "pendulum", x: 1520, y: 270, length: 180, amplitudeDeg: 60, periodMs: 2000 },
+    // Both anchors sit low enough for the heads to reach a standing player, and
+    // both moved left so their arcs stay over the walkway: at x=1700 the lowered
+    // second head swung out past the walkway's edge and into the jump across the
+    // pit. Their low sweeps stay 27px apart, leaving somewhere to stand between
+    // the two timed dashes.
+    { kind: "pendulum", x: 1500, y: 270, length: 180, amplitudeDeg: 60, periodMs: 2000 },
     {
       kind: "pendulum",
-      x: 1700, y: 300,
+      x: 1660, y: 300,
       length: 150, amplitudeDeg: 50, periodMs: 1700, phase: 0.5,
     },
 
@@ -110,7 +108,11 @@ export const level7: LevelDef = {
 
     // §4 — cannon sweeping the moving-platform crossing; its lane ends on the
     // x=3620 pillar, so the shots stay inside this section.
-    { kind: "cannon", x: 4320, y: 452, direction: "left", intervalMs: 1800 },
+    // Stands on the ground rather than at the moving platform's ride height: an
+    // emplacement up there put its muzzle inside anyone who climbed onto it and
+    // cut the guard enemy's patrol in half. On the ground it sweeps the run-up
+    // instead, and the crossing is still gated by the pit and the platform timing.
+    { kind: "cannon", x: 4380, y: 496, direction: "left", intervalMs: 1800 },
 
     // §5 — aiming turret guarding the spring (stompable, or dodge from cover).
     {

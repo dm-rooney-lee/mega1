@@ -225,7 +225,7 @@ describe("threatensStandingPlayer", () => {
     expect(threatensStandingPlayer(level, level.hazards![0])).toBe(true);
   });
 
-  it("[Boundary] 몸 폭만큼 덮으면 위협, 한 픽셀 모자라면 아니다", () => {
+  it("[Boundary] 발판 끝에 선 주인공은 몸 절반만큼 밖으로 나와 있어, 그만큼 못 미친 탄도까지 위협이다", () => {
     const crestCannonAt = (x: number): LevelDef => ({
       worldWidth: 3000,
       worldHeight: 540,
@@ -239,11 +239,12 @@ describe("threatensStandingPlayer", () => {
       hazards: [{ kind: "cannon", x, y: 220, direction: "left" }],
       goal: { x: 900, y: GROUND },
     });
-    // 몸 폭 24 기준: 1284면 24px을 덮고, 1283이면 23px이라 설 자리가 없다.
-    const covers24 = crestCannonAt(1284);
-    const covers23 = crestCannonAt(1283);
-    expect(threatensStandingPlayer(covers24, covers24.hazards![0])).toBe(true);
-    expect(threatensStandingPlayer(covers23, covers23.hazards![0])).toBe(false);
+    // 포탄은 대포 중심에서 34px 앞(포신 20 + 반지름 8 + 여유 6)에서 나오고, 발판 왼쪽
+    // 끝(1260)에 선 주인공의 몸은 1248까지 걸친다. 즉 탄도가 1248을 넘어서면 위협이다.
+    const reaches = crestCannonAt(1283); // 총구 1249
+    const stopsShort = crestCannonAt(1282); // 총구 1248 — 딱 맞닿기만 함
+    expect(threatensStandingPlayer(reaches, reaches.hazards![0])).toBe(true);
+    expect(threatensStandingPlayer(stopsShort, stopsShort.hazards![0])).toBe(false);
   });
 
   it("[Boundary] 조준형 터렛은 언제나 통과한다", () => {
@@ -284,7 +285,13 @@ describe("모든 스테이지", () => {
       }
 
       it(`[Happy] ${stage} ${where}가 서 있는 주인공을 맞힐 수 있다`, () => {
-        expect(threatensStandingPlayer(level, hazard)).toBe(true);
+        const threat = hazardThreat(level, hazard);
+        // 실패했을 때 좌표를 고칠 수 있도록 위험 구간을 그대로 보여준다.
+        const detail = threat
+          ? `위험 ${Math.round(threat.band.top)}~${Math.round(threat.band.bottom)}` +
+            ` (x ${Math.round(threat.left)}~${Math.round(threat.right)})`
+          : "위험 구간 없음 — threat.ts에 등록되지 않은 종류";
+        expect(threatensStandingPlayer(level, hazard), detail).toBe(true);
       });
     });
   });

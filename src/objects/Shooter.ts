@@ -5,7 +5,7 @@ import { TEXTURE_SCALE } from "../display";
 import { standOnSurface } from "./mount";
 
 /**
- * D-1 — a wall-mounted launcher that fires a horizontal projectile on a timer
+ * D-1 — a launcher that stands on a surface and fires a horizontal projectile on a timer
  * (the rhythmic variant; a trip-wire variant could reuse the same fire()). The
  * body itself is solid and indestructible.
  */

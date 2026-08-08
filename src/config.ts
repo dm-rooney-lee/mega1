@@ -199,6 +199,13 @@ export const CANNON = {
   HEIGHT: 30,
   /** Cannonball art size, which is also its hitbox. */
   BALL_DIAMETER: 16,
+  /**
+   * Gap between the barrel's edge and where a ball appears, matching
+   * `SHOOTER.MUZZLE_GAP`. Without it a ball spawns at the sprite's centre, i.e.
+   * inside anyone standing on the emplacement — a kill with no travel and no
+   * warning, which is not the same thing as a hazard you failed to dodge.
+   */
+  MUZZLE_GAP: 6,
   /** Fire interval (ms). */
   FIRE_INTERVAL_MS: 1500,
   /** Cannonball horizontal speed (px/s). */
