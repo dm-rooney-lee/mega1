@@ -15,3 +15,11 @@ export function stageLabel(levelIndex: number, levelCount: number): string {
   const shown = Math.min(Math.max(Math.floor(levelIndex) + 1, 1), last);
   return `STAGE ${shown}/${last}`;
 }
+
+/**
+ * "STAGE 4: Traps" — the entry banner shown briefly when a stage starts.
+ * `levelIndex` is 0-based, matching `stageLabel`.
+ */
+export function stageBanner(levelIndex: number, name: string): string {
+  return `STAGE ${levelIndex + 1}: ${name}`;
+}

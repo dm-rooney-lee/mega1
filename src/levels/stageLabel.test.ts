@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stageLabel } from "./stageLabel";
+import { stageLabel, stageBanner } from "./stageLabel";
 
 describe("stageLabel", () => {
   // 정상 흐름
@@ -28,4 +28,21 @@ describe("stageLabel", () => {
   it("정수가 아닌 인덱스는 내려서 맞춘다", () => {
     expect(stageLabel(2.7, 8)).toBe("STAGE 3/8");
   });
+});
+
+describe("stageBanner", () => {
+  // 정상 흐름
+  it("번호와 제목을 합쳐 배너 문구를 만든다", () => {
+    expect(stageBanner(3, "Traps")).toBe("STAGE 4: Traps");
+  });
+
+  // 경계값
+  it("첫 스테이지는 STAGE 1로 표시한다", () => {
+    expect(stageBanner(0, "Double Trouble")).toBe("STAGE 1: Double Trouble");
+  });
+
+  // 예외 케이스 없음: 문자열을 그대로 이어붙이기만 할 뿐 내부 분기가 없다.
+  // 제목 유무에 따른 분기(if (this.level.name))는 GameScene.ts 쪽에 있고,
+  // 이 저장소의 다른 Phaser 장면 코드와 마찬가지로 자동화 단위 테스트
+  // 대상이 아니다(수동 검증 계획 참고, Task 3).
 });
