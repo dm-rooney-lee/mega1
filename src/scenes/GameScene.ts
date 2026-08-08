@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
-import { playShieldBlock, playWin, stopBgm } from "../audio";
+import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, TEX } from "../config";
+import { playBgm, playShieldBlock, playWin } from "../audio";
 import {
   cameraViewOrigin,
   cameraZoom,
@@ -92,8 +92,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    // 플레이 중에는 효과음만 남긴다 — 음악은 타이틀·게임오버·승리 화면 전용이다.
-    stopBgm();
+    // 플레이 중에는 음악이 뒤로 물러난다 — 그래야 장애물·발사·점프 효과음이 들린다.
+    playBgm(this, BGM.GAMEPLAY);
 
     this.level = levelAt(this.levelIndex);
 

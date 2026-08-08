@@ -2,33 +2,36 @@ import Phaser from "phaser";
 import { SFX } from "./config";
 
 /**
+ * `Phaser.Sound.BaseSound` 대신 `sound.add()`가 실제로 돌려주는 타입을 쓴다.
+ * 볼륨을 바꾸는 `setVolume`이 BaseSound 타입에는 선언되어 있지 않기 때문이다.
+ */
+type Bgm = ReturnType<Phaser.Scene["sound"]["add"]>;
+
+/**
  * 게임 인스턴스 전역에 하나뿐인 Phaser 사운드 매니저가 이 음악을 보관하므로, 씬이
  * 끝나도 음악 객체는 살아남는다(scene.sound와 game.sound는 같은 인스턴스).
  *
- * 배경음악은 타이틀·게임오버·승리 화면에서만 흐르고 플레이 중에는 꺼진다. 켜고 끄는
- * 지점은 각 씬의 create()에 있다.
+ * 배경음악은 한 번 켜지면 멈추지 않는다. 대신 화면마다 볼륨이 달라진다 — 타이틀·
+ * 게임오버·승리 화면에서는 앞에 나서고, 플레이 중에는 효과음이 들리도록 뒤로
+ * 물러난다. 그 지점은 각 씬의 create()에 있다.
  */
-let bgm: Phaser.Sound.BaseSound | undefined;
+let bgm: Bgm | undefined;
 
 /**
- * 이미 재생 중이면 그대로 둔다 — 게임오버 화면에서 ESC로 타이틀에 갈 때처럼 음악이
- * 필요한 화면끼리 이동할 때 곡이 처음부터 다시 시작되지 않게 하기 위한 것이다.
+ * 음악이 `volume`으로 흐르게 만든다. 아직 안 켜졌으면 켜고, 이미 흐르고 있으면
+ * 볼륨만 바꾼다 — 화면이 바뀌어도 곡이 처음부터 다시 시작되지 않는다.
  */
-export function playBgm(scene: Phaser.Scene): void {
-  if (bgm?.isPlaying) return;
+export function playBgm(scene: Phaser.Scene, volume: number): void {
   try {
-    // 한 번 만든 음악을 계속 재사용한다. 켤 때마다 새로 만들면 죽고 재시도할 때마다
+    // 한 번 만든 음악을 계속 재사용한다. 켤 때마다 새로 만들면 화면을 오갈 때마다
     // 사운드 매니저에 쓰지 않는 음악이 쌓인다.
-    bgm ??= scene.sound.add("bgm", { loop: true, volume: 0.5 });
-    bgm.play();
+    bgm ??= scene.sound.add("bgm", { loop: true, volume });
+    if (!bgm.isPlaying) bgm.play();
+    // 두 번째 호출부터는 이 줄만 일한다 — 화면이 바뀔 때마다 볼륨이 여기서 갈린다.
+    bgm.setVolume(volume);
   } catch (e) {
     console.warn("[audio] bgm failed to load/play; continuing without music:", e);
   }
-}
-
-/** 다음 재생은 곡 처음부터 시작된다 — Phaser가 멈출 때 재생 위치를 0으로 되돌린다. */
-export function stopBgm(): void {
-  bgm?.stop();
 }
 
 type ToneOpts = { freqStart: number; freqEnd: number; durationMs: number };

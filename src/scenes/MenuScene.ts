@@ -3,6 +3,7 @@ import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
 import { centredTextScreen } from "./textScreen";
 import { playBgm } from "../audio";
+import { BGM } from "../config";
 
 /** Title screen. Press any key (or click/tap) to start the level. */
 export class MenuScene extends Phaser.Scene {
@@ -39,9 +40,9 @@ export class MenuScene extends Phaser.Scene {
       }
     }
 
-    // 타이틀·게임오버·승리 화면에서만 음악이 흐른다. 위의 개발용 분기로 타이틀을
-    // 건너뛸 때는 여기 닿지 않으므로 음악도 켜지지 않는다.
-    playBgm(this);
+    // 타이틀에서는 음악이 앞에 나선다. 위의 개발용 분기로 타이틀을 건너뛸 때는
+    // 여기 닿지 않고, 플레이 화면이 자기 볼륨으로 음악을 시작한다.
+    playBgm(this, BGM.SCREEN);
 
     const screen = centredTextScreen(this);
     screen.add(180, 56, "PLATFORMER POC", "#29adff", true);

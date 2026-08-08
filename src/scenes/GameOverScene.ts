@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { centredTextScreen } from "./textScreen";
 import { playBgm } from "../audio";
+import { BGM } from "../config";
 
 /** Shown on death. Retry restarts the level; Esc returns to the menu. */
 export class GameOverScene extends Phaser.Scene {
@@ -21,7 +22,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
-    playBgm(this);
+    playBgm(this, BGM.SCREEN);
 
     const screen = centredTextScreen(this);
     screen.add(200, 56, "YOU DIED", "#ff004d", true);

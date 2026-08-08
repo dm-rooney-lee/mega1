@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { centredTextScreen } from "./textScreen";
 import { playBgm } from "../audio";
+import { BGM } from "../config";
 
 /** Shown on reaching the goal. Play again restarts; Esc returns to the menu. */
 export class WinScene extends Phaser.Scene {
@@ -9,7 +10,7 @@ export class WinScene extends Phaser.Scene {
   }
 
   create(): void {
-    playBgm(this);
+    playBgm(this, BGM.SCREEN);
 
     const screen = centredTextScreen(this);
     screen.add(200, 52, "YOU WIN!", "#00e436", true);

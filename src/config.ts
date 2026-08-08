@@ -256,6 +256,21 @@ export const DEPTH = {
 } as const;
 
 /**
+ * 배경음악 볼륨 — 화면에 따라 다르다(src/audio.ts). 음악은 한 번 켜지면 멈추지
+ * 않고, 화면이 바뀔 때마다 이 값들 사이를 오간다.
+ *
+ * 플레이 중에는 효과음이 묻히지 않도록 음악이 뒤로 물러난다. GAMEPLAY이 SFX의
+ * MASTER_VOLUME보다 확실히 낮아야 효과음이 위로 튀어나온다 — 이 관계가 깨지면
+ * 장애물·발사·점프 소리가 음악에 잡아먹힌다.
+ */
+export const BGM = {
+  /** 타이틀·게임오버·승리 화면 — 음악이 주인공인 구간. */
+  SCREEN: 0.5,
+  /** 플레이 중 — 배경으로 깔리는 구간. */
+  GAMEPLAY: 0.2,
+} as const;
+
+/**
  * SFX 합성 튜닝 — Web Audio로 즉석 합성(외부 오디오 파일 없음, src/audio.ts).
  * freqStart/freqEnd는 Hz, durationMs는 ms. 정확한 "소리 느낌"은 플레이테스트로
  * 이 값들만 조정해 반복 튜닝한다(코드 변경 불필요).
