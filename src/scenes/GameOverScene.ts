@@ -1,7 +1,9 @@
 import Phaser from "phaser";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM, SCREEN_COLORS } from "../config";
+import { BGM, SCREEN_COLORS, TEX } from "../config";
+import { levels } from "../levels/index";
+import { stageLabel } from "../levels/stageLabel";
 
 /** Shown on death. Retry restarts the level; Esc returns to the menu. */
 export class GameOverScene extends Phaser.Scene {
@@ -33,9 +35,19 @@ export class GameOverScene extends Phaser.Scene {
     // varies (854-1100 logical units).
     screen.addBand(245, 540, SCREEN_COLORS.DEATH_BG_LOW);
     screen.addBand(245, 249, SCREEN_COLORS.DEATH_LINE);
-    screen.add(200, 80, "YOU DIED", "#ff004d", true);
-    screen.add(300, 18, "press SPACE / ENTER to retry", "#fff1e8");
-    screen.add(340, 14, "ESC for menu", "#7d7460");
+    screen.addImage(210, 400, 70, TEX.UI_DEATH);
+    screen.addTitle(
+      130,
+      80,
+      "YOU DIED",
+      SCREEN_COLORS.DEATH_TITLE,
+      SCREEN_COLORS.DEATH_TITLE_EDGE,
+      8,
+    );
+    screen.add(340, 30, "GAME OVER", SCREEN_COLORS.DEATH_SUBTITLE);
+    screen.add(385, 20, stageLabel(this.level, levels.length), SCREEN_COLORS.PROMPT);
+    screen.add(455, 16, "press SPACE / ENTER or TAP to retry", SCREEN_COLORS.PROMPT);
+    screen.add(495, 14, "ESC for menu", SCREEN_COLORS.MUTED);
     screen.start();
 
     const retry = () =>

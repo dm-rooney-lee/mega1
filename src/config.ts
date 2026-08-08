@@ -270,6 +270,7 @@ export const TEX = {
   // Title / death / win screen artwork, loaded from public/ui rather than drawn
   // here — see BootScene.preload.
   UI_TITLE: "tex-ui-title",
+  UI_DEATH: "tex-ui-death",
 } as const;
 
 /**

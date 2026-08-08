@@ -21,6 +21,7 @@ export class BootScene extends Phaser.Scene {
     // vectors — so it is baked at the same density as every generated texture
     // (see display.ts) and shrunk back down when placed.
     this.load.svg(TEX.UI_TITLE, "ui/title-scene.svg", { scale: TEXTURE_SCALE });
+    this.load.svg(TEX.UI_DEATH, "ui/death-scene.svg", { scale: TEXTURE_SCALE });
   }
 
   create(): void {
