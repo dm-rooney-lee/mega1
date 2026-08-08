@@ -1,0 +1,47 @@
+-- run 2026-08-09 08:22 --
+base: /Users/jaeyoungcho/lab/mega1
+slug: readme-glossary-consolidation
+plan: inline (writing-plans로 생성 예정)
+
+[phase 1] learnings-researcher
+  1차 출처 확인: `ls docs/solutions` → 디렉터리 없음(존재하지 않음, 정상 exit 2). Agent 'compound-engineering:ce-learnings-researcher' 도 이 환경의 등록된 agent 목록에 없음(호출 시 에러로 확인).
+  결론: 이 저장소에는 아직 학습 코퍼스가 없으므로 Phase 1은 skip. 추측으로 "교훈 없음"이라 단정하지 않고 두 경로 모두 직접 확인함.
+
+[judgment #1] @ writing-plans-handoff
+  context: 계획 실행 방식 선택 — subagent-driven-development(태스크당 fresh subagent) vs executing-plans(같은 세션 inline 실행)
+  importance: 낮음
+  tools-used: 계획 문서 자체 재검토(Read 불필요, 이미 작성 시점에 전체 내용 확정)
+  sources:
+    - docs/superpowers/plans/2026-08-09-readme-glossary-consolidation.md: Task 1~4가 순차 의존적(Task3은 Task1·2 완료가 전제)이고 각 Task가 이미 old_string/new_string까지 확정된 기계적 편집임
+  decision: superpowers:executing-plans(inline)로 진행
+  rationale: 작업이 소규모·순차 의존·이미 완전히 명세된 문서 편집이라 태스크별 fresh subagent 격리로 얻는 이득이 없고, inline 실행이 오버헤드가 적음
+
+[phase 4] 전체 검증
+  npm run build: exit 0
+  npm test: 14 files / 312 tests, all passed
+  grep game-guide (repo-wide, .md/.ts): docs/superpowers/plans/2026-08-08-*.md(과거 기록), docs/superpowers/plans/2026-08-09-*.md·specs/2026-08-09-*.md(이번 작업 기록) 뿐 — README.md/glossary.md/src/에는 참조 없음
+  design spec 완료조건 6개 항목 전부 충족 확인
+  변경 규모: README.md +67/-8, docs/glossary.md +53/-43 → 합계 100줄 이상, autopilot Phase 4 조건부 게이트(≥50줄) 충족 → /code-review 1회 실행 예정(코드 로직은 없지만 문서 정확성 재검증 목적)
+
+[judgment #2] @ phase5-ce-compound
+  context: autopilot Phase 5는 ce-compound를 mode:headless로 호출하도록 지시하는데, 이 스킬의 headless 모드는 사용자 confirm 없이 프로젝트 CLAUDE.md/AGENTS.md에 docs/solutions/ 안내 라인을 자동으로 편집 추가하며 disable 옵션이 없음(autopilot SKILL.md 자체가 이 side effect를 "사전 고지 필수"로 명시).
+  importance: 중간
+  tools-used: autopilot SKILL.md 재검토(1차 출처)
+  sources:
+    - autopilot SKILL.md Phase 5: "ce-compound가 headless에서 사용자 confirm 없이 프로젝트 CLAUDE.md 또는 AGENTS.md에 docs/solutions/ 안내 라인을 직접 편집 추가한다... disable 옵션 없음"
+  decision: 이번 실행에서는 ce-compound(headless) 호출을 생략하고, 교훈은 run.log·DIGEST.md에 직접 기록하는 것으로 대체
+  rationale: 사용자의 CLAUDE.md는 세심하게 유지되는 개인 지침 파일이며(claude-md-improver 스킬까지 별도로 존재), 자율 주행 승인이 "모든 남은 작업을 진행"이라는 의미였지 "CLAUDE.md를 무확인으로 자동 편집해도 된다"는 의미까지는 아니라고 판단함. 학습 기록이라는 Phase 5의 목적 자체는 DIGEST.md로 달성됨.
+
+[phase 5] 교훈 (직접 기록, ce-compound 미호출)
+  - 발견: docs/report/game-guide.md는 처음부터 git에 커밋된 적 없는 untracked 파일이었음 — `git rm`이 실패했고 `rm`으로 대체함. 삭제 계획을 세울 때 `git status`로 tracked 여부를 먼저 확인해야 함(이번엔 계획 문서에 `git rm` 명령을 그대로 적어뒀다가 실행 중에 발견).
+  - 발견: docs/glossary.md가 만들어진 뒤 src/levels/level2.ts에 표시 이름("Double Trouble")이 추가됐는데, glossary.md는 그 사실을 반영하지 못한 채로 남아 있었음(반면 game-guide.md는 반영돼 있었음) — 같은 사실을 다루는 문서가 여러 개면 한쪽만 갱신되고 다른 쪽은 누락되는 드리프트가 실제로 발생함을 재확인.
+  - 좋은 패턴: 브레인스토밍 단계에서 "표에 열 추가 vs 항목형 변경"처럼 구체적인 before/after 예시를 코드블록으로 보여주고 선택받은 것이 실제로 표 폭이 넓어지는 트레이드오프를 사용자가 눈으로 판단하게 해줌.
+  - 반복 실수(자기 발견): 이번 세션에서 AskUserQuestion 호출 두 번에 한글 텍스트가 일부 깨져 들어간 채로 전송됐음(예: 옵션 설명 문구). 사용자가 앞선 대화 텍스트로 맥락을 파악해 넘어갔지만, 긴 한글 문자열을 JSON 파라미터에 담을 때 전송 전 재확인이 필요함.
+
+learning-impact: 첫 실행이라 비교 대상 없음(N-1 없음).
+judgment-points: 2 (판단지점 #1 실행방식 선택[낮음], #2 ce-compound headless 생략[중간]).
+누적 실행 횟수: 1 (이 run.log의 첫 "-- run" 헤더).
+
+[phase 4] /code-review 결과
+  대상: HEAD~3..HEAD (README.md/glossary.md 재구성 커밋 3개)
+  결과: 문서 전용 diff, 코드 정합성 이슈 없음. 죽은 참조/중복 헬퍼 없음(game-guide 문자열 전체 재검색으로 재확인). 발견사항 0건.
