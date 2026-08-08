@@ -3,7 +3,7 @@ import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM } from "../config";
+import { BGM, SCREEN_COLORS } from "../config";
 
 /** Title screen. Press any key (or click/tap) to start the level. */
 export class MenuScene extends Phaser.Scene {
@@ -43,6 +43,7 @@ export class MenuScene extends Phaser.Scene {
     // 타이틀에서는 음악이 앞에 나선다. 위의 개발용 분기로 타이틀을 건너뛸 때는
     // 여기 닿지 않고, 플레이 화면이 자기 볼륨으로 음악을 시작한다.
     playBgm(this, BGM.SCREEN);
+    this.cameras.main.setBackgroundColor(SCREEN_COLORS.TITLE_SKY);
 
     const screen = centredScreen(this);
     screen.add(180, 50, "PLATFORMER POC", "#29adff", true);

@@ -212,6 +212,37 @@ export const COLORS = {
   GRASS_TOP: 0x00e436,
 } as const;
 
+/**
+ * Title / death / win screen palette, sampled pixel-by-pixel from the design
+ * mockup rather than eyeballed.
+ *
+ * CSS strings, not the numeric `COLORS` above, because everything on these
+ * screens is either a Text colour or a camera background and both take CSS.
+ *
+ * The picture files in `public/ui/` repeat the character colours (gopher blue,
+ * enemy red, grass green). Change one, check the other.
+ */
+export const SCREEN_COLORS = {
+  TITLE_SKY: "#184f88",
+  TITLE_LOGO: "#4da7e1",
+  TITLE_LOGO_EDGE: "#1d2b53",
+
+  DEATH_BG: "#440a23",
+  DEATH_BG_LOW: "#561334",
+  DEATH_LINE: "#7e153b",
+  DEATH_TITLE: "#f82a31",
+  DEATH_TITLE_EDGE: "#000000",
+  DEATH_SUBTITLE: "#d7a0a3",
+
+  WIN_BG: "#055a55",
+  WIN_TITLE: "#55e853",
+  WIN_TITLE_EDGE: "#002600",
+
+  /** Shared by all three screens. */
+  PROMPT: "#fff1e8",
+  MUTED: "#7d7460",
+} as const;
+
 /** Keys used to look up textures generated in BootScene. */
 export const TEX = {
   PLAYER: "tex-player",

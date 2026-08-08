@@ -24,7 +24,8 @@ export const SCREEN_FONT = '"Press Start 2P", monospace';
 
 type Row =
   | { kind: "text"; text: Phaser.GameObjects.Text; y: number; size: number }
-  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number };
+  | { kind: "image"; image: Phaser.GameObjects.Image; y: number; w: number; h: number }
+  | { kind: "band"; rect: Phaser.GameObjects.Rectangle; yTop: number; yBottom: number };
 
 export function centredScreen(scene: Phaser.Scene) {
   const rows: Row[] = [];
@@ -35,8 +36,13 @@ export function centredScreen(scene: Phaser.Scene) {
     for (const row of rows) {
       if (row.kind === "text") {
         row.text.setFontSize(Math.round(row.size * scale)).setPosition(cx, row.y * scale);
-      } else {
+      } else if (row.kind === "image") {
         row.image.setDisplaySize(row.w * scale, row.h * scale).setPosition(cx, row.y * scale);
+      } else {
+        // Bands span the whole canvas, however wide the window happens to be.
+        row.rect
+          .setSize(scene.scale.width, (row.yBottom - row.yTop) * scale)
+          .setPosition(cx, row.yTop * scale);
       }
     }
   };
@@ -75,6 +81,21 @@ export function centredScreen(scene: Phaser.Scene) {
       const image = scene.add.image(0, 0, key).setOrigin(0.5);
       rows.push({ kind: "image", image, y, w, h });
       return image;
+    },
+
+    /**
+     * A full-width horizontal band between two logical heights.
+     *
+     * `add.rectangle` wants a packed integer while the screen palette is CSS
+     * strings (both the camera background and Text want those), so the string
+     * is converted here rather than storing each colour twice.
+     */
+    addBand(yTop: number, yBottom: number, color: string): Phaser.GameObjects.Rectangle {
+      const rect = scene.add
+        .rectangle(0, 0, 1, 1, Phaser.Display.Color.HexStringToColor(color).color)
+        .setOrigin(0.5, 0);
+      rows.push({ kind: "band", rect, yTop, yBottom });
+      return rect;
     },
 
     /** Lays the rows out and keeps them right as the window changes. */

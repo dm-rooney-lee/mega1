@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM } from "../config";
+import { BGM, SCREEN_COLORS } from "../config";
 
 /** Shown on reaching the goal. Play again restarts; Esc returns to the menu. */
 export class WinScene extends Phaser.Scene {
@@ -11,6 +11,7 @@ export class WinScene extends Phaser.Scene {
 
   create(): void {
     playBgm(this, BGM.SCREEN);
+    this.cameras.main.setBackgroundColor(SCREEN_COLORS.WIN_BG);
 
     const screen = centredScreen(this);
     screen.add(200, 76, "YOU WIN!", "#00e436", true);
