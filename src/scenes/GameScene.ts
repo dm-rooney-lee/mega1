@@ -11,7 +11,7 @@ import {
 import { levels, levelAt, hasLevel } from "../levels/index";
 import type { LevelDef, PlatformDef, HazardDef } from "../levels/types";
 import { patrolBoundsFor, narrowBoundsForSpikes } from "../levels/patrol";
-import { stageLabel } from "../levels/stageLabel";
+import { stageLabel, stageBanner } from "../levels/stageLabel";
 import { SCREEN_FONT } from "./screen";
 import { Player } from "../objects/Player";
 import { Enemy } from "../objects/Enemy";
@@ -864,7 +864,7 @@ export class GameScene extends Phaser.Scene {
     // Brief level-name banner.
     if (this.level.name) {
       this.levelBanner = this.add
-        .text(0, 0, this.level.name, {
+        .text(0, 0, stageBanner(this.levelIndex, this.level.name), {
           fontFamily: SCREEN_FONT,
           fontSize: "28px",
           color: "#ffec27",
