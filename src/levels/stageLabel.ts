@@ -6,9 +6,9 @@
  * `levelIndex` is 0-based (an index into the `levels` registry) while the label
  * counts from 1, matching how stages are numbered everywhere else in the UI.
  *
- * Out-of-range indices are clamped rather than rejected. The death screen
- * already falls back to stage 0 when it is handed nothing, and a
- * wrong-but-plausible number reads better there than a blank or a crash.
+ * Out-of-range numbers are clamped into `1..levelCount` rather than rejected.
+ * The death screen already falls back to stage 0 when it is handed nothing,
+ * and a wrong-but-plausible number reads better there than a blank line.
  */
 export function stageLabel(levelIndex: number, levelCount: number): string {
   const last = Math.max(1, levelCount);
