@@ -6,8 +6,9 @@ import { playFire } from "../audio";
 /**
  * D — shared projectile pool. A fixed-size group of reusable Projectiles that
  * every shooter and turret fires from, so bursts never allocate mid-play. The
- * scene wires the group once: overlap(player) = death, collider(platforms) =
- * the projectile is blocked by terrain (cover works).
+ * scene wires the group once: overlap(player) = death (or a shield charge if
+ * the player has one), collider(platforms) = the projectile is blocked by
+ * terrain (cover works).
  */
 export class ProjectilePool {
   readonly group: Phaser.Physics.Arcade.Group;

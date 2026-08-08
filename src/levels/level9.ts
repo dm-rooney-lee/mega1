@@ -11,7 +11,7 @@ import type { LevelDef } from "./types";
  *   §3  2100..3200  flyer, paired with a pendulum + a vertical gear
  *   §4  3200..4300  charger, paired with a trap floor, a thwomp corridor, and a crumbling bridge
  *   §5  4300..5600  dropper, paired with a shielded crest cannon and an aiming turret
- *   §6  5600..7200  recap gauntlet (pop-up spikes, arrow gauntlet, spring-over-wall) + a
+ *   §6  5600..7200  recap gauntlet (pop-up spikes, a charger guarding a spring-over-wall) + a
  *                   reprise hammerThrower and a final cannon before the goal
  *
  * Reachability: the player's jump envelope is ~165px up / ~250px across at run
@@ -64,8 +64,8 @@ export const level9: LevelDef = {
 
     // --- §6 recap gauntlet + reprise + goal (5600-7200) -------------------
     { x: 5600, y: 496, width: 400, height: 44 }, // pop-up spike ground
-    { x: 6000, y: 496, width: 460, height: 44 }, // arrow gauntlet ground
-    { x: 6300, y: 360, width: 40, height: 136 }, // cover pillar — contains the gauntlet's lane
+    { x: 6000, y: 496, width: 460, height: 44 }, // charger's ground, right up to the spring
+    { x: 6300, y: 360, width: 40, height: 136 }, // jump obstacle before the spring
     { x: 6460, y: 496, width: 60, height: 24, type: "spring" },
     { x: 6620, y: 240, width: 40, height: 300 }, // wall — only the spring clears it
     { x: 6660, y: 496, width: 540, height: 44 }, // landing + reprise hammerThrower + goal
@@ -104,12 +104,13 @@ export const level9: LevelDef = {
     { kind: "cannon", x: 5060, y: 260, direction: "left" },
     { kind: "turret", x: 5300, y: 496, aimMode: "aim", projectileSpeed: 250, intervalMs: 2000 },
 
-    // §6 — the stage-7-style recap: staggered pop-up spikes, an arrow gauntlet
-    // contained by the x=6300 pillar, then a reprise hammerThrower (faster
-    // than §2's) and a final cannon sweeping the goal run.
+    // §6 — the stage-7-style recap: staggered pop-up spikes, a charger guarding
+    // the spring (replaces an arrow shooter that fired away from the player's
+    // approach and so never actually threatened anyone), then a reprise
+    // hammerThrower (faster than §2's) and a final cannon sweeping the goal run.
     { kind: "popupSpike", x: 5700, y: 496, tiles: 2, phase: 0 },
     { kind: "popupSpike", x: 5880, y: 496, tiles: 2, phase: 0.5 },
-    { kind: "arrowShooter", x: 6420, y: 496, direction: -1, intervalMs: 1500 },
+    { kind: "charger", x: 6420, y: 496 },
     { kind: "hammerThrower", x: 6900, y: 496, throwIntervalMs: 1400 },
     { kind: "cannon", x: 7100, y: 496, direction: "left" },
   ],

@@ -214,9 +214,9 @@ export const CANNON = {
   HIT_COOLDOWN_MS: 150,
 } as const;
 
-/** E-2 Shield pickup (blocks a number of cannonball hits before breaking). */
+/** E-2 Shield pickup (blocks a number of projectile/cannonball hits before breaking). */
 export const SHIELD = {
-  /** Charges granted on pickup (number of cannonballs it can absorb). */
+  /** Charges granted on pickup (number of hits it can absorb). */
   MAX_CHARGES: 3,
 } as const;
 

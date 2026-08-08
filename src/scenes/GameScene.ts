@@ -85,6 +85,7 @@ export class GameScene extends Phaser.Scene {
   private shieldText!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
   private levelBanner?: Phaser.GameObjects.Text;
+  private debugCoordText?: Phaser.GameObjects.Text;
 
   /** ms until the player can take another cannonball hit (debounces one volley). */
   private hitCooldownUntil = 0;
@@ -238,11 +239,11 @@ export class GameScene extends Phaser.Scene {
       (r as Phaser.Physics.Arcade.Sprite).destroy(),
     );
 
-    // Projectiles: kill the player, get blocked by terrain (cover works).
-    this.physics.add.overlap(this.player, this.pool.group, (_pl, proj) => {
-      (proj as Projectile).deactivate();
-      this.handleDeath();
-    });
+    // Projectiles (arrow shooters and turrets): blocked by terrain (cover works);
+    // a hit is absorbed by a shield charge if the player has one, otherwise lethal.
+    this.physics.add.overlap(this.player, this.pool.group, (_pl, proj) =>
+      this.handleProjectileHit(proj as Projectile),
+    );
     this.physics.add.collider(this.pool.group, this.platforms, (proj) =>
       (proj as Projectile).deactivate(),
     );
@@ -342,6 +343,7 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     // Death/win arc keeps playing under physics, but the world freezes (G6).
     this.player.update(this.time.now);
+    this.debugCoordText?.setText(`x: ${Math.round(this.player.x)}`);
     if (this.ending) return;
 
     this.updateCamera(delta);
@@ -736,7 +738,23 @@ export class GameScene extends Phaser.Scene {
   private handleCannonballHit(ball: Phaser.Physics.Arcade.Sprite): void {
     if (this.ending || this.player.dead || !ball.active) return;
     ball.destroy();
+    this.absorbOrDie();
+  }
 
+  /** A turret/shooter projectile hit: absorbed by a shield charge if the player has one, else lethal. */
+  private handleProjectileHit(proj: Projectile): void {
+    if (this.ending || this.player.dead || !proj.active) return;
+    proj.deactivate();
+    this.absorbOrDie();
+  }
+
+  /**
+   * Shared by every shield-blockable hazard hit: absorbs a shield charge if the
+   * player has one, else kills the player. A brief shared cooldown means two
+   * near-simultaneous hits (e.g. a cannonball and a turret shot) only cost one
+   * charge, not two.
+   */
+  private absorbOrDie(): void {
     if (this.time.now < this.hitCooldownUntil) return;
     this.hitCooldownUntil = this.time.now + CANNON.HIT_COOLDOWN_MS;
 
@@ -847,6 +865,16 @@ export class GameScene extends Phaser.Scene {
       .setDepth(DEPTH.HUD);
     this.stageText.setStroke("#1d2b53", 4);
 
+    // Dev-only: live player x, so a level author can pinpoint a hazard's
+    // coordinate without guessing (never shipped — see main.ts's `?stage=`/`?x=`
+    // dev param for the same DEV-only convention).
+    if (import.meta.env.DEV) {
+      this.debugCoordText = this.add
+        .text(0, 0, "", { fontFamily: "monospace", fontSize: "14px", color: "#ff77a8" })
+        .setDepth(DEPTH.HUD);
+      this.debugCoordText.setStroke("#1d2b53", 4);
+    }
+
     // Brief level-name banner.
     if (this.level.name) {
       this.levelBanner = this.add
@@ -867,7 +895,9 @@ export class GameScene extends Phaser.Scene {
 
   private hudTexts(): Phaser.GameObjects.Text[] {
     const texts = [this.hudHint, this.shieldText, this.stageText];
-    return this.levelBanner ? [...texts, this.levelBanner] : texts;
+    if (this.levelBanner) texts.push(this.levelBanner);
+    if (this.debugCoordText) texts.push(this.debugCoordText);
+    return texts;
   }
 
   /**
@@ -909,5 +939,6 @@ export class GameScene extends Phaser.Scene {
     this.shieldText.setPosition(left + 16, top + 40);
     this.stageText.setPosition(left + width - 16, top + 14);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
+    this.debugCoordText?.setPosition(left + 16, top + 66);
   }
 }

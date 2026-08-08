@@ -17,7 +17,7 @@ type Keys = {
  *   - coyote time: a short grace period to still jump just after walking off a ledge
  *   - jump buffering: a jump pressed slightly before landing still fires on touchdown
  *   - variable jump height: releasing early cuts the jump short (tap = hop, hold = full)
- * Also tracks shield state (absorbing charges that block a cannonball hit).
+ * Also tracks shield state (absorbing charges that block a cannon/turret/shooter hit).
  */
 export class Player extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;

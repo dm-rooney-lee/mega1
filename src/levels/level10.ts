@@ -10,8 +10,8 @@ import type { LevelDef } from "./types";
  *   §2  1000..2200  hammerThrower and charger share one corridor, split by a spike
  *   §3  2200..3400  flyer overhead while a staircase climbs to a crest cannon + aiming turret
  *   §4  3400..4600  dropper, paired with a trap floor and a crumbling bridge
- *   §5  4600..6000  the total-war section: every stages-9-10 enemy plus a thwomp,
- *                   pop-up spikes and an arrow shooter, all in one long corridor
+ *   §5  4600..6000  the total-war section: every stages-9-10 enemy plus a thwomp
+ *                   and pop-up spikes, all in one long corridor
  *   §6  6000..7200  cannon + spring-over-wall + a final aiming turret, then the goal
  *
  * Reachability: same envelope as stage 9 (~165px up / ~250px across at run
@@ -65,6 +65,7 @@ export const level10: LevelDef = {
     { x: 2400, y: 456 }, // §3, before the staircase
     { x: 4450, y: 456 }, // §4, past the dropper
     { x: 5150, y: 456 }, // §5, in the thick of it
+    { x: 5950, y: 456 }, // §5, replaces the old arrow shooter near the x=5800 spike
     { x: 6200, y: 456 }, // §6, before the spring
     { x: 6820, y: 456 }, // §6, guarding the goal run
   ],
@@ -94,15 +95,16 @@ export const level10: LevelDef = {
     // §4 — the first dropper of this stage, on its own perch.
     { kind: "dropper", x: 4270, y: 360, detectRangeX: 100 },
 
-    // §5 — total war: every stages-9-10 enemy at once, plus a thwomp, pop-up
-    // spikes and an arrow shooter, all sharing one long corridor.
+    // §5 — total war: every stages-9-10 enemy at once, plus a thwomp and
+    // pop-up spikes, all sharing one long corridor. A plain patrol enemy (see
+    // the `enemies` list, x=5950) closes it out, in place of an arrow shooter
+    // that used to sit there.
     { kind: "thwomp", x: 5040, y: 110, width: 70, height: 70, dropDistance: 300, detectWidth: 90 },
     { kind: "hammerThrower", x: 4900, y: 496, throwIntervalMs: 1400 },
     { kind: "charger", x: 5250, y: 496, detectRangeX: 240, chargeSpeed: 200 },
     { kind: "flyer", x: 5650, y: 330, axis: "vertical", range: 150, speed: 100 }, // clear of the x=5400 perch below
     { kind: "dropper", x: 5470, y: 360, detectRangeX: 100 },
     { kind: "popupSpike", x: 5700, y: 496, tiles: 2, phase: 0 },
-    { kind: "arrowShooter", x: 5950, y: 496, direction: -1, intervalMs: 1300 },
 
     // §6 — a callback cannon before the spring, then a final aiming turret
     // guarding the goal run.
