@@ -801,7 +801,7 @@ export class GameScene extends Phaser.Scene {
   // --- Presentation ---
 
   private drawBackground(): void {
-    const world = worldForStage(this.levelIndex);
+    const world = worldForStage(this.levelIndex, levels.length);
     const fillColor =
       world === "grassland" ? COLORS.PLAYER : world === "sunset" ? COLORS.SKY_DUSK_TOP : COLORS.BACKGROUND;
     this.add
