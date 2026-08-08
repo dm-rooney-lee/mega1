@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { COLORS, TEX } from "../config";
 import { TEXTURE_SCALE } from "../display";
+import { usableScreenArt } from "./screenArt";
 
 /**
  * Generates all placeholder textures procedurally (no image files needed) and
@@ -20,9 +21,9 @@ export class BootScene extends Phaser.Scene {
     // Screen artwork. Rasterised at load time — Phaser does not keep SVGs as
     // vectors — so it is baked at the same density as every generated texture
     // (see display.ts) and shrunk back down when placed.
-    this.load.svg(TEX.UI_TITLE, "ui/title-scene.svg", { scale: TEXTURE_SCALE });
-    this.load.svg(TEX.UI_DEATH, "ui/death-scene.svg", { scale: TEXTURE_SCALE });
-    this.load.svg(TEX.UI_WIN, "ui/win-gopher.svg", { scale: TEXTURE_SCALE });
+    for (const art of usableScreenArt()) {
+      this.load.svg(art.key, art.url, { scale: TEXTURE_SCALE });
+    }
   }
 
   create(): void {

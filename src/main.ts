@@ -9,6 +9,7 @@ import { MenuScene } from "./scenes/MenuScene";
 import { GameScene } from "./scenes/GameScene";
 import { GameOverScene } from "./scenes/GameOverScene";
 import { WinScene } from "./scenes/WinScene";
+import { pickUsableArt, SCREEN_ART, setUsableScreenArt } from "./scenes/screenArt";
 
 const initial = computeDisplay(
   window.innerWidth,
@@ -66,6 +67,15 @@ const config: Phaser.Types.Core.GameConfig = {
 // A missing or broken font file settles this promise too; the CSS keeps
 // `monospace` behind it, so the game still starts and still reads.
 await document.fonts.load('16px "Press Start 2P"').catch(() => {});
+
+// Same reason the font is awaited here: this has to be settled before Phaser
+// exists. A missing picture answers with the app's HTML page and a 200, which
+// Phaser's SVG loader turns into a throw that stops the load queue and leaves
+// the player a blank page — so the file is checked before it is queued, and a
+// screen simply goes without its picture instead.
+setUsableScreenArt(
+  await pickUsableArt(SCREEN_ART, (url) => fetch(url).then((res) => res.text())),
+);
 
 const game = new Phaser.Game(config);
 
