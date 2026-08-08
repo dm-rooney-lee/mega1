@@ -271,6 +271,7 @@ export const TEX = {
   // here — see BootScene.preload.
   UI_TITLE: "tex-ui-title",
   UI_DEATH: "tex-ui-death",
+  UI_WIN: "tex-ui-win",
 } as const;
 
 /**
