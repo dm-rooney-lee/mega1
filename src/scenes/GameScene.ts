@@ -859,7 +859,7 @@ export class GameScene extends Phaser.Scene {
         fontSize: "16px",
         color: "#00e436",
       })
-      .setOrigin(1, 0)
+      .setOrigin(1, 0.5)
       .setDepth(DEPTH.HUD);
     this.stageText.setStroke("#1d2b53", 4);
 
@@ -939,8 +939,12 @@ export class GameScene extends Phaser.Scene {
     const width = cam.width / cam.zoom;
 
     this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, top + 40));
-    this.stageText.setPosition(left + width - 16, top + 14);
-    this.gearIcon.setPosition(left + width - 16, top + 40);
+    // 톱니바퀴와 스테이지 표시를 같은 줄에 나란히 둔다(겹치지 않게) — 톱니바퀴가
+    // 오른쪽 끝에 붙고, 스테이지 표시는 그 왼쪽에 간격을 두고 이어진다.
+    const gearRight = left + width - 16;
+    const rowY = top + 20;
+    this.gearIcon.setPosition(gearRight, rowY);
+    this.stageText.setPosition(gearRight - this.gearIcon.displayWidth - 10, rowY);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
     this.debugCoordText?.setPosition(left + 16, top + 76);
   }
