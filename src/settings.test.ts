@@ -80,8 +80,18 @@ describe("settings", () => {
     expect(() => getBgmVolume()).not.toThrow();
     expect(getBgmVolume()).toBe(1);
     expect(() => setBgmVolume(0.5)).not.toThrow();
-    // 저장(setItem)은 실패했지만, 메모리 캐시는 갱신됐으므로 같은 세션에서
-    // 다시 읽으면 기본값(1)이 아니라 방금 설정한 값(0.5)이어야 한다.
+    // 저장(setItem)은 실패했지만, 이번 세션 동안은 방금 설정한 값(0.5)이
+    // 기본값(1)으로 되돌아가지 않아야 한다.
     expect(getBgmVolume()).toBe(0.5);
+  });
+
+  it("[Boundary] 저장에 성공한 뒤에는 디스크 값을 다시 신뢰한다 — 다른 탭이 그 사이 바꾼 값을 덮어쓰지 않는다", async () => {
+    const { setBgmVolume, setSfxVolume, getBgmVolume, STORAGE_KEY } = await freshSettings();
+    setBgmVolume(0.5); // 저장 성공.
+    // 다른 탭이 그 사이 bgm을 0.9로 바꿔 저장했다고 가정한다.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ bgm: 0.9, sfx: 1 }));
+    setSfxVolume(0.3); // 이 세션은 sfx만 조절하는 중이었다.
+    // sfx를 조절한 것이 다른 탭의 bgm 변경을 0.5로 되돌려서는 안 된다.
+    expect(getBgmVolume()).toBe(0.9);
   });
 });

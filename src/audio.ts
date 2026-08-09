@@ -79,10 +79,7 @@ function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): void {
 
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    // exponentialRampToValueAtTime의 목표값은 정확히 0이면 RangeError를 던진다
-    // (Web Audio 스펙). 효과음 볼륨을 0으로 낮춘 사용자에게는 매번 이 예외가
-    // 나므로, 이미 위/아래에서 쓰는 것과 같은 미세한 바닥값으로 대신 잘라낸다.
-    gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     osc.connect(gain);
@@ -120,7 +117,7 @@ function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: number): v
 
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     noise.connect(filter);
@@ -142,8 +139,15 @@ function playWinJingle(scene: Phaser.Scene, opts: JingleOpts, volume: number): v
   });
 }
 
+/**
+ * `exponentialRampToValueAtTime`의 목표값이 정확히 0이면 Web Audio가
+ * RangeError를 던진다(효과음 볼륨을 0으로 낮춘 사용자가 효과음을 낼 때마다
+ * 겪는다) — `playTone`/`playNoiseBurst` 양쪽 다 이 값을 그 목표값으로 그대로
+ * 쓰므로, 두 곳에서 각자 잘라내는 대신 여기 한 곳에서 들리지 않을 만큼 작은
+ * 값(0.0001)으로 바닥을 둔다.
+ */
 function effectiveSfxVolume(): number {
-  return SFX.MASTER_VOLUME * getSfxVolume();
+  return Math.max(SFX.MASTER_VOLUME * getSfxVolume(), 0.0001);
 }
 
 export function playJump(scene: Phaser.Scene): void {

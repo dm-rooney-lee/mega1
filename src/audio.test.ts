@@ -195,11 +195,22 @@ function fakeWebAudioScene() {
   const scene = {
     sound: { context, masterMuteNode: {} },
   } as unknown as Phaser.Scene;
-  return { scene, rampTargets };
+  return { scene, rampTargets, context };
 }
 
-describe("효과음 볼륨 0(완전 무음)", () => {
-  it("[Boundary] playJump가 exponentialRampToValueAtTime에 정확히 0을 넘기지 않는다(Web Audio는 0을 거부한다)", async () => {
+describe("효과음 볼륨", () => {
+  it("[Happy] 평소 볼륨(100%)에서는 바닥값 없이 그대로 재생된다", async () => {
+    const { playJump } = await freshAudio();
+    const f = fakeWebAudioScene();
+
+    playJump(f.scene);
+
+    // SFX.JUMP는 SFX.MASTER_VOLUME(0.4) × 100% = 0.4를 목표값으로 램프해야
+    // 한다 — 볼륨 0 방지용 바닥값(0.0001)에 걸리지 않는다.
+    expect(f.rampTargets).toContain(0.4);
+  });
+
+  it("[Boundary] 효과음 볼륨을 0으로 낮춰도 exponentialRampToValueAtTime에 정확히 0을 넘기지 않는다 — 넘기면 Web Audio가 RangeError를 던진다", async () => {
     const { playJump } = await freshAudio();
     const { setSfxVolume } = await import("./settings");
     setSfxVolume(0);
@@ -214,7 +225,7 @@ describe("효과음 볼륨 0(완전 무음)", () => {
     warn.mockRestore();
   });
 
-  it("[Boundary] playCannonFire(노이즈 버스트 계열)도 마찬가지로 0을 넘기지 않는다", async () => {
+  it("[Boundary] playCannonFire(노이즈 버스트 계열)도 볼륨 0에서 마찬가지로 0을 넘기지 않는다", async () => {
     const { playCannonFire } = await freshAudio();
     const { setSfxVolume } = await import("./settings");
     setSfxVolume(0);
@@ -225,6 +236,34 @@ describe("효과음 볼륨 0(완전 무음)", () => {
 
     expect(f.rampTargets.some((v) => v === 0)).toBe(false);
     expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
+
+  it("[Error] 순음 합성(playTone 계열)이 실패해도 예외를 밖으로 내보내지 않는다", async () => {
+    const { playJump } = await freshAudio();
+    const f = fakeWebAudioScene();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    f.context.createOscillator = vi.fn(() => {
+      throw new Error("oscillator unavailable");
+    });
+
+    expect(() => playJump(f.scene)).not.toThrow();
+    expect(warn).toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
+
+  it("[Error] 노이즈 합성(playNoiseBurst 계열)이 실패해도 예외를 밖으로 내보내지 않는다", async () => {
+    const { playCannonFire } = await freshAudio();
+    const f = fakeWebAudioScene();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    f.context.createBufferSource = vi.fn(() => {
+      throw new Error("buffer source unavailable");
+    });
+
+    expect(() => playCannonFire(f.scene)).not.toThrow();
+    expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();
   });
