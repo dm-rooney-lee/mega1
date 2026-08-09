@@ -73,14 +73,23 @@ describe("settings", () => {
     expect(getSfxVolume()).toBe(1);
   });
 
+  it("[Boundary] -Infinity/Infinity가 들어와도 각각 0과 1로(반대로 뒤집히지 않고) 잘린다", async () => {
+    const { STORAGE_KEY } = await freshSettings();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ bgm: "-Infinity", sfx: "Infinity" }));
+    const { getBgmVolume, getSfxVolume } = await freshSettings();
+    expect(getBgmVolume()).toBe(0);
+    expect(getSfxVolume()).toBe(1);
+  });
+
   it("[Error] localStorage에 깨진 JSON이 들어있으면 기본값으로 폴백한다", async () => {
-    localStorage.setItem("mega1-audio-settings", "{not valid json");
+    const { STORAGE_KEY } = await freshSettings();
+    localStorage.setItem(STORAGE_KEY, "{not valid json");
     const { getBgmVolume, getSfxVolume } = await freshSettings();
     expect(getBgmVolume()).toBe(1);
     expect(getSfxVolume()).toBe(1);
   });
 
-  it("[Error] localStorage 접근 자체가 예외를 던져도 기본값을 반환하고 예외를 내보내지 않는다", async () => {
+  it("[Error] localStorage 접근 자체가 예외를 던져도 기본값을 반환하고 예외를 내보내지 않으며, 저장이 실패해도 이번 세션 동안은 방금 조절한 값이 유지된다", async () => {
     vi.stubGlobal("localStorage", {
       getItem: () => {
         throw new Error("blocked");
@@ -93,5 +102,8 @@ describe("settings", () => {
     expect(() => getBgmVolume()).not.toThrow();
     expect(getBgmVolume()).toBe(1);
     expect(() => setBgmVolume(0.5)).not.toThrow();
+    // 저장(setItem)은 실패했지만, 메모리 캐시는 갱신됐으므로 같은 세션에서
+    // 다시 읽으면 기본값(1)이 아니라 방금 설정한 값(0.5)이어야 한다.
+    expect(getBgmVolume()).toBe(0.5);
   });
 });
