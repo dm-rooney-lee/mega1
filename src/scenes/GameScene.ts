@@ -938,16 +938,19 @@ export class GameScene extends Phaser.Scene {
     const top = cameraViewOrigin(cam.scrollY, cam.height, cam.zoom);
     const width = cam.width / cam.zoom;
 
-    this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, top + 40));
-    // 톱니바퀴와 스테이지 표시를 같은 줄에 나란히 둔다(겹치지 않게), 왼쪽의
-    // 방패 아이콘 줄과도 같은 높이(top + 40)로 맞춘다 — 톱니바퀴가 오른쪽
-    // 끝에 붙고, 스테이지 표시는 그 왼쪽에 간격을 두고 이어진다. 톱니바퀴는
-    // 중심 기준(origin 0.5)이라 왼쪽 끝은 중심에서 displayWidth의 절반만큼
-    // 떨어져 있다 — 절반을 안 나누면 실제 간격이 의도한 값의 몇 배로 벌어진다.
-    const gearRight = left + width - 16;
-    const rowY = top + 40;
-    this.gearIcon.setPosition(gearRight, rowY);
-    this.stageText.setPosition(gearRight - this.gearIcon.displayWidth / 2 - 10, rowY);
+    // 방패 아이콘·톱니바퀴·스테이지 표시를 전부 같은 높이(top + 40)에 맞춘다 —
+    // 리터럴을 두 번 쓰지 않고 한 변수를 공유해, 한쪽만 고치다가 줄이 다시
+    // 어긋나는 실수를 막는다.
+    const hudRowY = top + 40;
+    this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, hudRowY));
+    // 톱니바퀴가 오른쪽 끝에서 16px 안쪽에 붙고, 스테이지 표시는 그 왼쪽에
+    // 간격을 두고 이어진다. 톱니바퀴는 중심 기준(origin 0.5)이라 오른쪽 끝은
+    // 중심에서 displayWidth의 절반만큼 떨어져 있다 — 절반을 안 나누면
+    // 톱니바퀴 자신도(가장자리에 거의 붙어버림), 스테이지 표시와의 간격도
+    // 의도한 값과 달라진다.
+    const gearRightEdge = left + width - 16;
+    this.gearIcon.setPosition(gearRightEdge - this.gearIcon.displayWidth / 2, hudRowY);
+    this.stageText.setPosition(gearRightEdge - this.gearIcon.displayWidth - 10, hudRowY);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
     this.debugCoordText?.setPosition(left + 16, top + 76);
   }
