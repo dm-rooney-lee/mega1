@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM, SCREEN_COLORS, TEX } from "../config";
+import { SCREEN_COLORS, TEX } from "../config";
 import { levels } from "../levels/index";
 import { stageLabel } from "../levels/stageLabel";
 
@@ -24,7 +24,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
-    playBgm(this, BGM.SCREEN);
+    playBgm(this);
 
     const screen = centredScreen(this);
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.DEATH_BG);

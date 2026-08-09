@@ -1,5 +1,24 @@
 import Phaser from "phaser";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BGM_VOLUME } from "./config";
+
+function fakeLocalStorage(): Storage {
+  const store = new Map<string, string>();
+  return {
+    getItem: (key: string) => (store.has(key) ? (store.get(key) as string) : null),
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => store.clear(),
+    get length() {
+      return store.size;
+    },
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+  } as Storage;
+}
 
 /**
  * 배경음악 객체는 모듈 안에 남아 다음 호출로 이어진다. 테스트끼리 그 상태가 새지
@@ -43,64 +62,66 @@ function brokenScene(): Phaser.Scene {
   } as unknown as Phaser.Scene;
 }
 
+beforeEach(() => {
+  vi.stubGlobal("localStorage", fakeLocalStorage());
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("playBgm", () => {
-  it("[Happy] 처음 부르면 음악을 만들어 요청한 볼륨으로 재생한다", async () => {
+  it("[Happy] 처음 부르면 음악을 만들어 기준 볼륨(BGM_VOLUME)으로 재생한다", async () => {
     const { playBgm } = await freshAudio();
     const f = fakeScene();
 
-    playBgm(f.scene, 0.5);
+    playBgm(f.scene);
 
     expect(f.add).toHaveBeenCalledWith("bgm", expect.objectContaining({ loop: true }));
     expect(f.bgm.play).toHaveBeenCalledTimes(1);
-    expect(f.bgm.volume).toBe(0.5);
+    expect(f.bgm.volume).toBe(BGM_VOLUME);
   });
 
-  it("[Happy] 이미 재생 중이면 다시 재생하지 않고 볼륨만 바꾼다", async () => {
+  it("[Happy] 사용자가 배경음악 배율을 낮춰두면 재생 볼륨도 그만큼 낮아진다", async () => {
+    const { playBgm } = await freshAudio();
+    const { setBgmVolume } = await import("./settings");
+    setBgmVolume(0.5);
+    const f = fakeScene();
+
+    playBgm(f.scene);
+
+    expect(f.bgm.volume).toBeCloseTo(BGM_VOLUME * 0.5);
+  });
+
+  it("[Happy] 이미 재생 중이면 다시 재생하지 않고 볼륨만 다시 맞춘다", async () => {
     const { playBgm } = await freshAudio();
     const f = fakeScene();
 
-    playBgm(f.scene, 0.5);
-    playBgm(f.scene, 0.2);
+    playBgm(f.scene);
+    playBgm(f.scene);
 
     expect(f.bgm.play).toHaveBeenCalledTimes(1);
-    expect(f.bgm.volume).toBe(0.2);
     expect(f.bgm.isPlaying).toBe(true);
+    expect(f.bgm.volume).toBe(BGM_VOLUME);
   });
 
   it("[Boundary] 화면을 여러 번 오가도 음악 객체는 하나만 만들어진다", async () => {
     const { playBgm } = await freshAudio();
     const f = fakeScene();
 
-    // 타이틀 → 플레이 → 죽음 → 재시도 → 타이틀
-    playBgm(f.scene, 0.5);
-    playBgm(f.scene, 0.2);
-    playBgm(f.scene, 0.5);
-    playBgm(f.scene, 0.2);
-    playBgm(f.scene, 0.5);
+    playBgm(f.scene);
+    playBgm(f.scene);
+    playBgm(f.scene);
 
     expect(f.add).toHaveBeenCalledTimes(1);
     expect(f.bgm.play).toHaveBeenCalledTimes(1);
-    expect(f.bgm.volume).toBe(0.5);
-  });
-
-  it("[Boundary] 같은 볼륨으로 연달아 불러도 중복 재생하지 않는다 — 스테이지가 넘어갈 때마다 불린다", async () => {
-    const { playBgm } = await freshAudio();
-    const f = fakeScene();
-
-    playBgm(f.scene, 0.2);
-    playBgm(f.scene, 0.2);
-    playBgm(f.scene, 0.2);
-
-    expect(f.add).toHaveBeenCalledTimes(1);
-    expect(f.bgm.play).toHaveBeenCalledTimes(1);
-    expect(f.bgm.volume).toBe(0.2);
   });
 
   it("[Error] 음악을 만들지 못해도 예외를 밖으로 내보내지 않는다", async () => {
     const { playBgm } = await freshAudio();
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    expect(() => playBgm(brokenScene(), 0.5)).not.toThrow();
+    expect(() => playBgm(brokenScene())).not.toThrow();
     expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();
@@ -114,9 +135,28 @@ describe("playBgm", () => {
       throw new Error("playback blocked");
     });
 
-    expect(() => playBgm(f.scene, 0.5)).not.toThrow();
+    expect(() => playBgm(f.scene)).not.toThrow();
     expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();
+  });
+});
+
+describe("refreshBgmVolume", () => {
+  it("[Happy] 이미 흐르는 곡에 새 배율을 즉시 반영한다", async () => {
+    const { playBgm, refreshBgmVolume } = await freshAudio();
+    const { setBgmVolume } = await import("./settings");
+    const f = fakeScene();
+
+    playBgm(f.scene);
+    setBgmVolume(0.3);
+    refreshBgmVolume();
+
+    expect(f.bgm.volume).toBeCloseTo(BGM_VOLUME * 0.3);
+  });
+
+  it("[Boundary] 음악이 아직 만들어지지 않았으면 아무 일도 하지 않는다", async () => {
+    const { refreshBgmVolume } = await freshAudio();
+    expect(() => refreshBgmVolume()).not.toThrow();
   });
 });

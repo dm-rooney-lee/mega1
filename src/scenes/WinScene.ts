@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { BGM, SCREEN_COLORS, TEX } from "../config";
+import { SCREEN_COLORS, TEX } from "../config";
 
 /** Shown on reaching the goal. Play again restarts; Esc returns to the menu. */
 export class WinScene extends Phaser.Scene {
@@ -10,7 +10,7 @@ export class WinScene extends Phaser.Scene {
   }
 
   create(): void {
-    playBgm(this, BGM.SCREEN);
+    playBgm(this);
     this.cameras.main.setBackgroundColor(SCREEN_COLORS.WIN_BG);
 
     const screen = centredScreen(this);

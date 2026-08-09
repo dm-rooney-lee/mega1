@@ -393,6 +393,9 @@ export const TEX = {
   CHARGER: "tex-charger",
   DROPPER: "tex-dropper",
   FALLING_ROCK: "tex-falling-rock",
+  // Settings 아이콘 — UI_TITLE/UI_DEATH/UI_WIN(SVG 로드)과 달리 BootScene에서
+  // beginTexture()/endTexture()로 절차적으로 그린다(makeGearTexture 등과 같은 방식).
+  UI_GEAR: "tex-ui-gear",
   // Title / death / win screen artwork, loaded from public/ui rather than drawn
   // here — see BootScene.preload.
   UI_TITLE: "tex-ui-title",
@@ -418,19 +421,15 @@ export const DEPTH = {
 } as const;
 
 /**
- * 배경음악 볼륨 — 화면에 따라 다르다(src/audio.ts). 음악은 한 번 켜지면 멈추지
- * 않고, 화면이 바뀔 때마다 이 값들 사이를 오간다.
+ * 배경음악 기준 볼륨(사용자가 설정 화면에서 낮추기 전 값, src/settings.ts).
+ * 타이틀·플레이·죽음·승리 4개 화면 전부 이 값 하나를 쓴다 — 화면별로 다르게
+ * 주던 것은 2026-08-09에 통일했다(docs/superpowers/specs/2026-08-09-
+ * bgm-volume-unify-and-settings-design.md).
  *
- * 플레이 중에는 효과음이 묻히지 않도록 음악이 뒤로 물러난다. GAMEPLAY이 SFX의
- * MASTER_VOLUME보다 확실히 낮아야 효과음이 위로 튀어나온다 — 이 관계가 깨지면
- * 장애물·발사·점프 소리가 음악에 잡아먹힌다.
+ * SFX.MASTER_VOLUME보다 확실히 낮아야 한다 — 이 관계가 깨지면 장애물·발사·
+ * 점프 소리가 음악에 잡아먹힌다.
  */
-export const BGM = {
-  /** 타이틀·게임오버·승리 화면 — 음악이 주인공인 구간. */
-  SCREEN: 0.5,
-  /** 플레이 중 — 배경으로 깔리는 구간. */
-  GAMEPLAY: 0.2,
-} as const;
+export const BGM_VOLUME = 0.2;
 
 /**
  * SFX 합성 튜닝 — Web Audio로 즉석 합성(외부 오디오 파일 없음, src/audio.ts).

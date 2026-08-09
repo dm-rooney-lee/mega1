@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { BGM, CAMERA, CANNON, COLORS, DEPTH, PARALLAX, SHIELD, SPIKE, TEX, THWOMP } from "../config";
+import { CAMERA, CANNON, COLORS, DEPTH, PARALLAX, SHIELD, SPIKE, TEX, THWOMP } from "../config";
 import { playBgm, playShieldBlock, playWin } from "../audio";
 import {
   cameraViewOrigin,
@@ -107,7 +107,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     // 플레이 중에는 음악이 뒤로 물러난다 — 그래야 장애물·발사·점프 효과음이 들린다.
-    playBgm(this, BGM.GAMEPLAY);
+    playBgm(this);
 
     this.level = levelAt(this.levelIndex);
 

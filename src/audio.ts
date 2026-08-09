@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { SFX } from "./config";
+import { BGM_VOLUME, SFX } from "./config";
+import { getBgmVolume, getSfxVolume } from "./settings";
 
 /**
  * `Phaser.Sound.BaseSound` 대신 `sound.add()`가 실제로 돌려주는 타입을 쓴다.
@@ -11,27 +12,38 @@ type Bgm = ReturnType<Phaser.Scene["sound"]["add"]>;
  * 게임 인스턴스 전역에 하나뿐인 Phaser 사운드 매니저가 이 음악을 보관하므로, 씬이
  * 끝나도 음악 객체는 살아남는다(scene.sound와 game.sound는 같은 인스턴스).
  *
- * 배경음악은 한 번 켜지면 멈추지 않는다. 대신 화면마다 볼륨이 달라진다 — 타이틀·
- * 게임오버·승리 화면에서는 앞에 나서고, 플레이 중에는 효과음이 들리도록 뒤로
- * 물러난다. 그 지점은 각 씬의 create()에 있다.
+ * 배경음악은 한 번 켜지면 멈추지 않는다. 볼륨은 기준값(config.ts의
+ * BGM_VOLUME) × 사용자가 설정 화면에서 고른 배율(settings.ts)이다.
  */
 let bgm: Bgm | undefined;
 
+function effectiveBgmVolume(): number {
+  return BGM_VOLUME * getBgmVolume();
+}
+
 /**
- * 음악이 `volume`으로 흐르게 만든다. 아직 안 켜졌으면 켜고, 이미 흐르고 있으면
- * 볼륨만 바꾼다 — 화면이 바뀌어도 곡이 처음부터 다시 시작되지 않는다.
+ * 음악이 기준 볼륨 × 사용자 배율로 흐르게 만든다. 아직 안 켜졌으면 켜고,
+ * 이미 흐르고 있으면 볼륨만 다시 계산해 맞춘다.
  */
-export function playBgm(scene: Phaser.Scene, volume: number): void {
+export function playBgm(scene: Phaser.Scene): void {
   try {
+    const volume = effectiveBgmVolume();
     // 한 번 만든 음악을 계속 재사용한다. 켤 때마다 새로 만들면 화면을 오갈 때마다
     // 사운드 매니저에 쓰지 않는 음악이 쌓인다.
     bgm ??= scene.sound.add("bgm", { loop: true, volume });
     if (!bgm.isPlaying) bgm.play();
-    // 두 번째 호출부터는 이 줄만 일한다 — 화면이 바뀔 때마다 볼륨이 여기서 갈린다.
     bgm.setVolume(volume);
   } catch (e) {
     console.warn("[audio] bgm failed to load/play; continuing without music:", e);
   }
+}
+
+/**
+ * 설정 화면에서 배경음악 슬라이더를 옮길 때, 지금 흐르는 곡에 새 배율을 바로
+ * 반영한다. 음악이 아직 만들어지지 않았으면 아무 일도 하지 않는다.
+ */
+export function refreshBgmVolume(): void {
+  bgm?.setVolume(effectiveBgmVolume());
 }
 
 type ToneOpts = { freqStart: number; freqEnd: number; durationMs: number };
@@ -127,46 +139,50 @@ function playWinJingle(scene: Phaser.Scene, opts: JingleOpts, volume: number): v
   });
 }
 
+function effectiveSfxVolume(): number {
+  return SFX.MASTER_VOLUME * getSfxVolume();
+}
+
 export function playJump(scene: Phaser.Scene): void {
-  playTone(scene, SFX.JUMP, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.JUMP, effectiveSfxVolume());
 }
 
 export function playEnemyKill(scene: Phaser.Scene): void {
-  playTone(scene, SFX.ENEMY_KILL, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.ENEMY_KILL, effectiveSfxVolume());
 }
 
 export function playFire(scene: Phaser.Scene): void {
-  playTone(scene, SFX.FIRE, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.FIRE, effectiveSfxVolume());
 }
 
 export function playCannonFire(scene: Phaser.Scene): void {
-  playNoiseBurst(scene, SFX.CANNON, SFX.MASTER_VOLUME);
+  playNoiseBurst(scene, SFX.CANNON, effectiveSfxVolume());
 }
 
 export function playShieldBlock(scene: Phaser.Scene): void {
-  playTone(scene, SFX.SHIELD_BLOCK, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.SHIELD_BLOCK, effectiveSfxVolume());
 }
 
 export function playRockDrop(scene: Phaser.Scene): void {
-  playNoiseBurst(scene, SFX.ROCK_DROP, SFX.MASTER_VOLUME);
+  playNoiseBurst(scene, SFX.ROCK_DROP, effectiveSfxVolume());
 }
 
 export function playDeath(scene: Phaser.Scene): void {
-  playTone(scene, SFX.DEATH, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.DEATH, effectiveSfxVolume());
 }
 
 export function playPendulumSwing(scene: Phaser.Scene): void {
-  playNoiseBurst(scene, SFX.PENDULUM_SWING, SFX.MASTER_VOLUME);
+  playNoiseBurst(scene, SFX.PENDULUM_SWING, effectiveSfxVolume());
 }
 
 export function playWin(scene: Phaser.Scene): void {
-  playWinJingle(scene, SFX.WIN, SFX.MASTER_VOLUME);
+  playWinJingle(scene, SFX.WIN, effectiveSfxVolume());
 }
 
 export function playShieldPickup(scene: Phaser.Scene): void {
-  playTone(scene, SFX.SHIELD_PICKUP, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.SHIELD_PICKUP, effectiveSfxVolume());
 }
 
 export function playSpringBounce(scene: Phaser.Scene): void {
-  playTone(scene, SFX.SPRING_BOUNCE, SFX.MASTER_VOLUME);
+  playTone(scene, SFX.SPRING_BOUNCE, effectiveSfxVolume());
 }
