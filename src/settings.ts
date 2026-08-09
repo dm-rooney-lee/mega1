@@ -41,14 +41,18 @@ function loadFromStorage(): AudioSettings {
 }
 
 /**
- * 이번 세션에서 조절했지만 디스크에 반영하지 못한 값 — `persist()`가 저장에
- * 실패했을 때만 채워진다. `current()`가 디스크 값 위에 이걸 덮어써서 반영한다.
+ * 이번 세션에서 조절했지만 디스크에 반영하지 못한 필드만 담는다 —
+ * `persist()`가 저장에 실패한 그 필드만 추가하고, 성공하면 전부 비운다.
+ * `current()`가 디스크 값 위에 이걸 덮어써서 반영한다.
+ *
+ * "실패한 필드만"이 핵심이다. 실패할 때마다 병합된 전체 객체를 통째로
+ * 담으면, 그 안에 들어있던 다른 필드의 disk-read 스냅샷이 계속 남아 있다가
+ * 나중에 그 필드가 성공적으로 저장될 때 다시 튀어나와 — 그 사이 다른 탭이
+ * 저장한 값을 덮어써버린다. 실패한 필드 하나만 기억해두면 그런 일이 없다.
  *
  * 매번 디스크에서 새로 읽는 이유: 값을 한 번 캐시해두고 계속 재사용하면, 다른
  * 탭에서 그 사이 저장한 값(또는 이 세션이 이미 성공적으로 저장한 값)을 다음
- * 조절이 조용히 덮어써버린다 — 저장이 하나라도 실패했을 때만 그 필드를
- * 기억해두면 두 문제(실패 시 되돌아감, 성공한 다른 변경을 덮어씀)가 동시에
- * 해결된다.
+ * 조절이 조용히 덮어써버린다.
  */
 let unsaved: Partial<AudioSettings> = {};
 
@@ -57,17 +61,18 @@ function current(): AudioSettings {
 }
 
 /**
- * 저장에 성공하면 `unsaved`를 비운다(다음부터는 디스크 값을 그대로 믿는다).
- * 실패하면(프라이빗 브라우징 등) 이번 세션 동안은 방금 조절한 값을 계속
- * 덮어씌우도록 `unsaved`에 남긴다 — 새로고침하면 저장된 적이 없으니 다시
- * 디스크 값(또는 기본값)부터 시작한다.
+ * 저장에 성공하면 `unsaved`를 비운다 — 이번에 쓴 값은 `current()`(디스크 +
+ * 그때까지의 unsaved)를 그대로 반영하므로, 그 스냅샷 전체가 이제 디스크와
+ * 일치해 더 기억해둘 필요가 없다. 실패하면(프라이빗 브라우징 등) 지금 바꾸려던
+ * 그 필드만 `unsaved`에 남겨, 이번 세션 동안은 방금 조절한 값이 유지된다.
  */
-function persist(settings: AudioSettings): void {
+function persist(field: keyof AudioSettings, value: number): void {
+  const settings = { ...current(), [field]: value };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     unsaved = {};
   } catch {
-    unsaved = settings;
+    unsaved = { ...unsaved, [field]: value };
   }
 }
 
@@ -80,9 +85,9 @@ export function getSfxVolume(): number {
 }
 
 export function setBgmVolume(value: number): void {
-  persist({ ...current(), bgm: clamp01(value) });
+  persist("bgm", clamp01(value));
 }
 
 export function setSfxVolume(value: number): void {
-  persist({ ...current(), sfx: clamp01(value) });
+  persist("sfx", clamp01(value));
 }

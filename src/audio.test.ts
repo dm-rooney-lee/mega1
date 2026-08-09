@@ -249,7 +249,10 @@ describe("효과음 볼륨", () => {
     });
 
     expect(() => playJump(f.scene)).not.toThrow();
-    expect(warn).toHaveBeenCalled();
+    // 어느 쪽 합성이 실패했는지 구분되는 메시지인지까지 확인한다 — 그냥
+    // "불렸다"만 보면, playTone/playNoiseBurst의 메시지가 나중에 서로
+    // 뒤바뀌거나 하나로 뭉개져도 이 테스트는 여전히 통과해버린다.
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("tone synthesis failed"), expect.anything());
 
     warn.mockRestore();
   });
@@ -263,7 +266,7 @@ describe("효과음 볼륨", () => {
     });
 
     expect(() => playCannonFire(f.scene)).not.toThrow();
-    expect(warn).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("noise synthesis failed"), expect.anything());
 
     warn.mockRestore();
   });

@@ -94,4 +94,26 @@ describe("settings", () => {
     // sfx를 조절한 것이 다른 탭의 bgm 변경을 0.5로 되돌려서는 안 된다.
     expect(getBgmVolume()).toBe(0.9);
   });
+
+  it("[Boundary] 한 필드의 저장이 실패해도, 그 실패가 나중에 다른 필드의 성공한 저장에 실려서 다른 탭의 변경을 덮어쓰지 않는다", async () => {
+    const { setBgmVolume, setSfxVolume, getBgmVolume, STORAGE_KEY } = await freshSettings();
+    setBgmVolume(0.5); // 저장 성공.
+
+    // sfx 저장이 이번 한 번만 실패한다고 가정한다(예: 순간적인 저장 공간 문제).
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = () => {
+      throw new Error("temporary failure");
+    };
+    setSfxVolume(0.2); // 저장 실패 — sfx만 unsaved에 남아야 한다(bgm은 남지 않아야 한다).
+    localStorage.setItem = originalSetItem;
+
+    // 다른 탭이 그 사이 bgm을 0.9로 성공적으로 저장했다고 가정한다.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ bgm: 0.9, sfx: 1 }));
+
+    setSfxVolume(0.3); // 이번엔 저장 성공.
+
+    // sfx를 다시 조절한 것이(그 이전에 실패했던 sfx 조절까지 포함해서) 다른
+    // 탭의 bgm 변경(0.9)을 덮어써서는 안 된다.
+    expect(getBgmVolume()).toBe(0.9);
+  });
 });
