@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { cameraZoom } from "../display";
+import { cameraZoom, TEXTURE_SCALE } from "../display";
+import { DEPTH, TEX } from "../config";
 
 /**
  * The title, death and win screens are all the same shape: a stack of centred
@@ -122,4 +123,46 @@ export function centredScreen(scene: Phaser.Scene) {
       });
     },
   };
+}
+
+/**
+ * Settings 톱니바퀴 버튼, 화면 우측 상단에 고정. `MenuScene`/`GameOverScene`/
+ * `WinScene`이 공유한다 — 이 화면들은 카메라 배율이 1이라 `centredScreen`의
+ * row들과 마찬가지로 논리 좌표를 `cameraZoom()`으로 직접 환산해야 한다
+ * (`GameScene`은 카메라가 스크롤·줌되므로 `layoutHud()` 안에서 따로 배치한다).
+ *
+ * 누르면 이 화면을 멈추고 `SettingsScene`을 그 위에 띈다. 이 화면들은 화면
+ * 전체에 `this.input.once("pointerdown", ...)`로 "아무 데나 클릭하면
+ * 시작/재시도"를 걸어 두므로, 톱니바퀴 클릭이 그 리스너까지 함께 발동시키지
+ * 않도록 `event.stopPropagation()`으로 전파를 끊는다.
+ */
+export function addSettingsGear(scene: Phaser.Scene): void {
+  const gear = scene.add
+    .image(0, 0, TEX.UI_GEAR)
+    .setDepth(DEPTH.HUD)
+    .setInteractive({ useHandCursor: true });
+
+  const layout = (): void => {
+    const scale = cameraZoom(scene.scale.height);
+    gear.setScale(scale / TEXTURE_SCALE).setPosition(scene.scale.width - 28 * scale, 28 * scale);
+  };
+  layout();
+  scene.scale.on(Phaser.Scale.Events.RESIZE, layout);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    scene.scale.off(Phaser.Scale.Events.RESIZE, layout);
+  });
+
+  gear.on(
+    "pointerdown",
+    (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      event.stopPropagation();
+      scene.scene.pause();
+      scene.scene.run("SettingsScene", { returnKey: scene.scene.key });
+    },
+  );
 }
