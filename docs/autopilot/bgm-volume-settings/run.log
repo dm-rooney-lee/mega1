@@ -157,3 +157,15 @@ plan: inline (spec: docs/superpowers/specs/2026-08-09-bgm-volume-unify-and-setti
   context: 사용자가 지적한 HUD 겹침을 고친 수정(스테이지 텍스트+톱니바퀴를 한 줄로 배치)에 대한 코드 리뷰가 내가 만든 2개의 새 결함을 확인 — (1) 간격 계산에서 gear의 중심 기준(origin 0.5) 좌표계를 고려하지 않고 전체 너비를 빼서 실제 간격이 의도한 10px가 아니라 24px로 벌어짐(이 코드베이스의 다른 모든 중심 기준 오프셋 계산(Shooter/Cannon/Gear/Pendulum/Flyer)은 예외 없이 절반을 뺌), (2) 방패 아이콘 줄(top+40)과의 정렬을 깨고 top+20으로 옮기며 위쪽 여백이 6px로 줄어 이 HUD의 다른 여백 관례(16px)에 못 미침.
   decision: 두 곳 모두 수정 — gap 계산에 displayWidth/2 적용, rowY를 top+40으로 되돌려 방패 아이콘 줄과 정렬 + 여백 확보. 실제 브라우저(줌 3.19배의 극단적으로 큰 창 포함)에서 재확인 — 겹치지 않고, 간격이 적절하고, 설정 화면 열기/드래그 모두 정상 동작.
   rationale: 사용자가 실제로 발견한 버그를 고치면서 내가 새 버그 2개를 만들었다 — 오프셋 계산 시 origin(중심 기준)을 놓친 것은 이 코드베이스에 이미 확립된 패턴(Shooter.ts 등)을 확인했다면 피할 수 있었다. 코드 리뷰 루프가 없었다면 "고쳤다"고 보고했을 상태로 남았을 것.
+
+[judgment #17] @ HUD-fix-recheck-2
+  context: 직전 수정(judgment #16, gap 계산에 origin 절반 반영)에 대한 재검토가 또 새 결함을 확인 — stageText에는 displayWidth/2 보정을 적용했지만, gearIcon 자기 자신의 위치(gearRight 그대로 사용)에는 같은 보정을 빠뜨려 톱니바퀴 우측 여백이 의도한 16px가 아니라 약 2px로 좁아짐. 방패 아이콘 줄과 톱니바퀴 줄 사이에 "top+40" 리터럴이 두 곳(shieldIcons.forEach, 새 rowY 변수)에 중복돼 있다는 지적도 있었음.
+  decision: gearIcon 위치 자체도 `gearRightEdge - displayWidth/2`로 고쳐 우측 여백을 16px로 복원. "top+40"을 `hudRowY` 변수 하나로 통합해 shieldIcons와 gear/stageText가 같은 변수를 공유하도록 정리. 실제 브라우저(1512x862, 확대 3.19배)에서 재확인 — 여백이 적절하고 톱니바퀴가 화면 밖으로 안 나감.
+  rationale: 같은 종류의 실수(origin 보정)를 한 줄 건너 또 저질렀다 — stageText를 고치면서 "옆에 있는 gearIcon 자신도 같은 원리로 재배치해야 하는지"를 점검하지 않았다. 코드 리뷰 루프를 반복 적용하지 않았다면 여전히 남아있었을 결함.
+
+[judgment #18] @ Task1-fix-recheck-2
+  context: settings.ts의 "실패 시 unsaved" 재설계(judgment #13)에 대한 재검토가 그 재설계 자체의 결함을 확인 — persist()가 실패할 때 "이번에 바꾸려던 필드"가 아니라 current()로 병합된 전체 객체를 unsaved에 통째로 저장해, 그 안에 있던 다른 필드의 스냅샷이 나중에 그 필드가 성공적으로 저장될 때 다시 튀어나와 다른 탭의 변경을 덮어쓸 수 있었다(재현 테스트로 확인: bgm 성공 저장 → sfx 저장 1회 실패 → 다른 탭이 bgm을 성공적으로 바꿈 → sfx 재조절이 성공 → 다른 탭의 bgm 변경이 사라짐).
+  decision: persist(field, value) 형태로 바꿔, 실패 시 그 필드 하나만 unsaved에 추가/유지하도록 설계. 성공 시에는 전체를 비운다(그 시점 스냅샷 전체가 디스크와 일치하므로). 재현 시나리오를 그대로 테스트로 추가하고, 이전 설계로 되돌려 이 테스트가 실패하는 것 → 새 설계로 다시 통과하는 것까지 확인.
+  rationale: "실패한 필드만 기억한다"는 원래 의도였는데 구현이 "실패 시점의 전체 스냅샷"을 저장해버려 의도와 다르게 동작했다 — 코드 리뷰가 정확한 재현 시나리오를 제시했고, 직접 재현 테스트를 만들어 고치기 전/후 동작 차이를 확인했다.
+
+[note] Task2-fix 재검토가 추가로 지적한 2건: (1) getBgmVolume/getSfxVolume이 매번 localStorage를 왕복하는 성능 우려 — 드래그 중 매 pointermove마다 발생하지만, 작은 JSON 문자열의 동기 I/O는 실측 없이도 이 정도 호출 빈도에서 체감 지연을 일으킬 만큼 느리지 않다고 판단해 그대로 둠(교차 탭 정확성이 더 중요한 트레이드오프, judgment #13에서 이미 의도적으로 선택). (2) 볼륨 0 방지 바닥값이 playTone/playNoiseBurst 자체가 아니라 effectiveSfxVolume() 한 곳에만 있어 "미래에 이 함수를 안 거치는 새 호출자가 생기면" 재발할 수 있다는 PLAUSIBLE(낮은 확신) 지적 — 현재 모든 호출자가 이미 거치고 있어 YAGNI로 그대로 둠. audio.test.ts의 [Error] 테스트가 toHaveBeenCalled()만 확인해 메시지가 서로 바뀌어도 못 잡는다는 지적은 실제로 고침(stringContaining으로 메시지 내용까지 확인).
