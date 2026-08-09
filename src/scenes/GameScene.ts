@@ -939,12 +939,15 @@ export class GameScene extends Phaser.Scene {
     const width = cam.width / cam.zoom;
 
     this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, top + 40));
-    // 톱니바퀴와 스테이지 표시를 같은 줄에 나란히 둔다(겹치지 않게) — 톱니바퀴가
-    // 오른쪽 끝에 붙고, 스테이지 표시는 그 왼쪽에 간격을 두고 이어진다.
+    // 톱니바퀴와 스테이지 표시를 같은 줄에 나란히 둔다(겹치지 않게), 왼쪽의
+    // 방패 아이콘 줄과도 같은 높이(top + 40)로 맞춘다 — 톱니바퀴가 오른쪽
+    // 끝에 붙고, 스테이지 표시는 그 왼쪽에 간격을 두고 이어진다. 톱니바퀴는
+    // 중심 기준(origin 0.5)이라 왼쪽 끝은 중심에서 displayWidth의 절반만큼
+    // 떨어져 있다 — 절반을 안 나누면 실제 간격이 의도한 값의 몇 배로 벌어진다.
     const gearRight = left + width - 16;
-    const rowY = top + 20;
+    const rowY = top + 40;
     this.gearIcon.setPosition(gearRight, rowY);
-    this.stageText.setPosition(gearRight - this.gearIcon.displayWidth - 10, rowY);
+    this.stageText.setPosition(gearRight - this.gearIcon.displayWidth / 2 - 10, rowY);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
     this.debugCoordText?.setPosition(left + 16, top + 76);
   }

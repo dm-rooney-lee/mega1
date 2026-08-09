@@ -172,15 +172,17 @@ export class SettingsScene extends Phaser.Scene {
     this.updateRowVisual(row);
   }
 
+  /**
+   * 손잡이 위치/트랙 채움처럼 매 프레임(드래그 중 pointermove마다) 바뀌는
+   * 것만 갱신한다. 손잡이 크기·테두리는 창 크기가 바뀔 때만 바뀌므로
+   * `layout()`에서 한 번만 다시 계산한다 — 드래그마다 매번 `setSize`를
+   * 다시 부르는 건 낭비다.
+   */
   private updateRowVisual(row: Row): void {
-    const scale = cameraZoom(this.scale.height);
     const value = row.get();
     const fillWidth = Math.max(1, row.trackWidth * value);
     row.fill.setSize(fillWidth, row.track.height * 0.6).setPosition(row.trackLeft, row.track.y);
-    row.handle
-      .setSize(10 * scale, 18 * scale)
-      .setStrokeStyle(2 * scale, COLORS.OUTLINE)
-      .setPosition(row.trackLeft + fillWidth, row.track.y);
+    row.handle.setPosition(row.trackLeft + fillWidth, row.track.y);
     row.pct.setText(`${Math.round(value * 100)}%`);
   }
 
@@ -209,6 +211,7 @@ export class SettingsScene extends Phaser.Scene {
         .setSize(TRACK_W * scale, 10 * scale)
         .setStrokeStyle(2 * scale, hex(SCREEN_COLORS.PROMPT))
         .setPosition(trackLeft, rowY);
+      row.handle.setSize(10 * scale, 18 * scale).setStrokeStyle(2 * scale, COLORS.OUTLINE);
       row.pct.setPosition(cx + PCT_DX * scale, rowY).setFontSize(Math.round(12 * scale));
       this.updateRowVisual(row);
     }
