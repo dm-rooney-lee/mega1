@@ -108,7 +108,7 @@ export function setSfxVolume(value: number): void
 
 **`MenuScene`/`GameOverScene`/`WinScene`는 화면 전체에 `this.input.once("pointerdown", ...)`로 "아무 데나 클릭하면 시작/재시도"를 걸어 둔다.** 톱니바퀴를 클릭했을 때 이 전역 리스너까지 함께 발동하면, 설정을 열려는 클릭이 동시에 게임을 시작/재시도시켜 버린다. 톱니바퀴의 `pointerdown` 콜백은 네 번째 인자로 받는 `event`의 `event.stopPropagation()`을 반드시 호출해 이 전역 리스너로 전파되지 않게 막는다(Phaser의 이벤트 전파 순서: 게임 오브젝트 → 전역 `pointerdown` — 앞 단계에서 멈추면 뒷 단계가 실행되지 않는다). `GameScene`은 이런 전역 리스너가 없어 이 문제가 없지만, 구현은 4개 화면에 동일하게 적용한다.
 
-**아이콘은 유니코드 글자(⚙)나 시스템 폰트가 아니라, 이 게임의 다른 UI 그림(`TEX.UI_TITLE`, `TEX.UI_DEATH`, `TEX.UI_WIN`)과 같은 방식으로 그린다.** 이 프로젝트는 모든 그림을 `BootScene`에서 `beginTexture()`/`endTexture()`로 직접 픽셀을 찍어 만든다(`CLAUDE.md`의 "알려진 함정" 절) — 유니코드 이모지는 이 파이프라인을 벗어나 시스템 폰트로 렌더링되므로 나머지 픽셀아트와 이질감이 난다. 톱니바퀴도 새 텍스처(`TEX.UI_GEAR`류)로 `BootScene`에 추가하고, 스프라이트로 쓸 때는 `setDisplaySize()`로 논리 크기로 되돌린다(같은 절이 경고하는 "텍스처가 `TEXTURE_SCALE`배로 커진 채 남는" 실수를 피한다).
+**아이콘은 유니코드 글자(⚙)나 시스템 폰트가 아니라, `BootScene`이 해저드·픽업 아이콘을 그리는 것과 같은 방식(`makeGearTexture()`의 회전 기어 해저드, `makeShieldTexture()`의 방패 픽업 등 — `beginTexture()`/`endTexture()`로 직접 픽셀을 찍는 절차적 드로잉)으로 그린다.** 유니코드 이모지는 이 파이프라인을 벗어나 시스템 폰트로 렌더링되므로 나머지 픽셀아트와 이질감이 난다. (참고: `TEX.UI_TITLE`/`UI_DEATH`/`UI_WIN`은 이것과 다른, `public/ui/*.svg` 파일을 불러오는 별도 파이프라인이다 — 손으로 그린 삽화용이고 이번 작은 아이콘에는 맞지 않는다.) 톱니바퀴도 새 텍스처(`TEX.UI_GEAR`류)로 `BootScene`에 추가하고, 스프라이트로 쓸 때는 `setDisplaySize()`로 논리 크기로 되돌린다(`CLAUDE.md`의 "알려진 함정" 절이 경고하는 "텍스처가 `TEXTURE_SCALE`배로 커진 채 남는" 실수를 피한다).
 
 ## 4. `scene.pause()` + `scene.run()` 조합이 안전한 이유 (Phaser 소스로 검증, 추측 아님)
 
