@@ -9,6 +9,7 @@ import { MenuScene } from "./scenes/MenuScene";
 import { GameScene } from "./scenes/GameScene";
 import { GameOverScene } from "./scenes/GameOverScene";
 import { WinScene } from "./scenes/WinScene";
+import { SettingsScene } from "./scenes/SettingsScene";
 import { pickUsableArt, SCREEN_ART, setUsableScreenArt } from "./scenes/screenArt";
 
 const initial = computeDisplay(
@@ -69,7 +70,7 @@ const config: Phaser.Types.Core.GameConfig = {
       fps: 120,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene, WinScene],
+  scene: [BootScene, MenuScene, GameScene, GameOverScene, WinScene, SettingsScene],
 };
 
 // Phaser bakes glyphs into a texture when it creates a Text object, so a font

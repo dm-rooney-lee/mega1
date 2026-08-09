@@ -63,6 +63,9 @@ export class BootScene extends Phaser.Scene {
     this.makeCannonballTexture();
     this.makeShieldTexture();
 
+    // Settings 톱니바퀴 아이콘 — 4개 화면 전부에서 볼륨 설정을 여는 버튼.
+    this.makeSettingsIconTexture();
+
     // Gear hazard (level7).
     this.makeGearTexture();
 
@@ -360,6 +363,31 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(38, 22, 8, 10); // right eye
     g.fillRect(18, 44, 24, 5); // gritted mouth
     this.endTexture(g, TEX.THWOMP, w, h);
+  }
+
+  /**
+   * Settings 버튼 아이콘. makeGearTexture()(레벨8 회전 기어 해저드)와 같은
+   * 절차적 드로잉 방식이지만 별도 텍스처(TEX.UI_GEAR)로 — 크기와 색이
+   * 해저드용과 다르고, 해저드 텍스처를 UI에 재사용하면 둘의 튜닝이 엉킨다.
+   */
+  private makeSettingsIconTexture(): void {
+    const s = 24;
+    const c = s / 2;
+    const g = this.beginTexture();
+    g.fillStyle(0xfff1e8, 1); // SCREEN_COLORS.PROMPT — 어느 화면 배경에도 또렷하게 보인다.
+    g.fillCircle(c, c, 10);
+    const teeth = 8;
+    for (let i = 0; i < teeth; i++) {
+      const a = (i / teeth) * Math.PI * 2;
+      g.save();
+      g.translateCanvas(c + Math.cos(a) * 10, c + Math.sin(a) * 10);
+      g.rotateCanvas(a);
+      g.fillRect(-3, -3, 6, 6);
+      g.restore();
+    }
+    g.fillStyle(0x1d2b53, 1); // COLORS.BACKGROUND — 어두운 허브로 톱니와 대비.
+    g.fillCircle(c, c, 4);
+    this.endTexture(g, TEX.UI_GEAR, s, s);
   }
 
   /** Gear: a circular hub with square teeth around the rim (distinct silhouette from the pendulum's spikes). */
