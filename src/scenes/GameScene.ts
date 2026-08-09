@@ -87,6 +87,7 @@ export class GameScene extends Phaser.Scene {
   private stageText!: Phaser.GameObjects.Text;
   private levelBanner?: Phaser.GameObjects.Text;
   private debugCoordText?: Phaser.GameObjects.Text;
+  private gearIcon!: Phaser.GameObjects.Image;
 
   /** ms until the player can take another cannonball hit (debounces one volley). */
   private hitCooldownUntil = 0;
@@ -840,6 +841,17 @@ export class GameScene extends Phaser.Scene {
     }
     this.updateShieldIcons();
 
+    // Settings button — pauses play and opens the volume overlay.
+    this.gearIcon = this.add
+      .image(0, 0, TEX.UI_GEAR)
+      .setScale(1 / TEXTURE_SCALE)
+      .setDepth(DEPTH.HUD)
+      .setInteractive({ useHandCursor: true });
+    this.gearIcon.on("pointerdown", () => {
+      this.scene.pause();
+      this.scene.run("SettingsScene", { returnKey: this.scene.key });
+    });
+
     // Stage indicator, top-right — always on, so progress is readable mid-play.
     this.stageText = this.add
       .text(0, 0, stageLabel(this.levelIndex, levels.length), {
@@ -928,6 +940,7 @@ export class GameScene extends Phaser.Scene {
 
     this.shieldIcons.forEach((icon, i) => icon.setPosition(left + 16 + i * 30, top + 40));
     this.stageText.setPosition(left + width - 16, top + 14);
+    this.gearIcon.setPosition(left + width - 16, top + 40);
     this.levelBanner?.setPosition(left + width / 2, top + 80);
     this.debugCoordText?.setPosition(left + 16, top + 76);
   }

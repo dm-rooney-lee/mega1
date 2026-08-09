@@ -3,7 +3,8 @@ import { levels } from "../levels/index";
 import { resolveSpawnX, resolveStartLevel } from "../levels/startLevel";
 import { centredScreen } from "./screen";
 import { playBgm } from "../audio";
-import { SCREEN_COLORS, TEX } from "../config";
+import { DEPTH, SCREEN_COLORS, TEX } from "../config";
+import { TEXTURE_SCALE } from "../display";
 
 /** Title screen. Press any key (or click/tap) to start the level. */
 export class MenuScene extends Phaser.Scene {
@@ -57,6 +58,35 @@ export class MenuScene extends Phaser.Scene {
     );
     const prompt = screen.add(445, 18, "press any key to start", SCREEN_COLORS.PROMPT);
     screen.start();
+
+    const gear = this.add
+      .image(0, 0, TEX.UI_GEAR)
+      .setScale(1 / TEXTURE_SCALE)
+      .setDepth(DEPTH.HUD)
+      .setInteractive({ useHandCursor: true });
+    const repositionGear = () => gear.setPosition(this.scale.width - 28, 28);
+    repositionGear();
+    this.scale.on(Phaser.Scale.Events.RESIZE, repositionGear);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, repositionGear);
+    });
+    // 이 화면은 아래 this.input.once("pointerdown", start)로 "아무 데나
+    // 클릭하면 시작"을 걸어 둔다. 톱니바퀴 클릭이 그 리스너까지 함께
+    // 발동시키면 설정을 열려는 클릭이 동시에 게임을 시작시켜 버리므로,
+    // stopPropagation()으로 여기서 전파를 끊는다.
+    gear.on(
+      "pointerdown",
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation();
+        this.scene.pause();
+        this.scene.run("SettingsScene", { returnKey: this.scene.key });
+      },
+    );
 
     this.tweens.add({
       targets: prompt,
