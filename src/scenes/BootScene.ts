@@ -366,26 +366,45 @@ export class BootScene extends Phaser.Scene {
   }
 
   /**
+   * Square teeth evenly spaced around a circle of `orbitRadius`, shared by
+   * makeSettingsIconTexture()/makeGearTexture() so both stay in sync if the
+   * tooth shape ever changes.
+   */
+  private drawGearTeeth(
+    g: Phaser.GameObjects.Graphics,
+    cx: number,
+    cy: number,
+    orbitRadius: number,
+    teeth: number,
+    halfSize: number,
+  ): void {
+    for (let i = 0; i < teeth; i++) {
+      const a = (i / teeth) * Math.PI * 2;
+      g.save();
+      g.translateCanvas(cx + Math.cos(a) * orbitRadius, cy + Math.sin(a) * orbitRadius);
+      g.rotateCanvas(a);
+      g.fillRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
+      g.restore();
+    }
+  }
+
+  /**
    * Settings 버튼 아이콘. makeGearTexture()(레벨8 회전 기어 해저드)와 같은
    * 절차적 드로잉 방식이지만 별도 텍스처(TEX.UI_GEAR)로 — 크기와 색이
    * 해저드용과 다르고, 해저드 텍스처를 UI에 재사용하면 둘의 튜닝이 엉킨다.
+   *
+   * 캔버스는 28(반지름 14)로 둔다 — 톱니 바깥 끝(허브 반지름 10 + 톱니
+   * 반폭 3 = 13)이 반캔버스(12) 밖으로 나가 카디널 방향 4개 톱니가
+   * generateTexture에서 잘리는 걸 막으려면 최소 13보다 커야 한다.
    */
   private makeSettingsIconTexture(): void {
-    const s = 24;
+    const s = 28;
     const c = s / 2;
     const g = this.beginTexture();
     g.fillStyle(0xfff1e8, 1); // SCREEN_COLORS.PROMPT — 어느 화면 배경에도 또렷하게 보인다.
     g.fillCircle(c, c, 10);
-    const teeth = 8;
-    for (let i = 0; i < teeth; i++) {
-      const a = (i / teeth) * Math.PI * 2;
-      g.save();
-      g.translateCanvas(c + Math.cos(a) * 10, c + Math.sin(a) * 10);
-      g.rotateCanvas(a);
-      g.fillRect(-3, -3, 6, 6);
-      g.restore();
-    }
-    g.fillStyle(0x1d2b53, 1); // COLORS.BACKGROUND — 어두운 허브로 톱니와 대비.
+    this.drawGearTeeth(g, c, c, 10, 8, 3);
+    g.fillStyle(COLORS.BACKGROUND, 1); // 어두운 허브로 톱니와 대비.
     g.fillCircle(c, c, 4);
     this.endTexture(g, TEX.UI_GEAR, s, s);
   }
@@ -397,15 +416,7 @@ export class BootScene extends Phaser.Scene {
     const g = this.beginTexture();
     g.fillStyle(COLORS.GEAR, 1);
     g.fillCircle(c, c, 15);
-    const teeth = 8;
-    for (let i = 0; i < teeth; i++) {
-      const a = (i / teeth) * Math.PI * 2;
-      g.save();
-      g.translateCanvas(c + Math.cos(a) * 15, c + Math.sin(a) * 15);
-      g.rotateCanvas(a);
-      g.fillRect(-4, -4, 8, 8);
-      g.restore();
-    }
+    this.drawGearTeeth(g, c, c, 15, 8, 4);
     g.fillStyle(0x4a4a4a, 1);
     g.fillCircle(c, c, 6); // dark hub
     this.endTexture(g, TEX.GEAR, s, s);

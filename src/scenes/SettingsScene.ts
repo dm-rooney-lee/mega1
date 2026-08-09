@@ -173,10 +173,14 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private updateRowVisual(row: Row): void {
+    const scale = cameraZoom(this.scale.height);
     const value = row.get();
     const fillWidth = Math.max(1, row.trackWidth * value);
     row.fill.setSize(fillWidth, row.track.height * 0.6).setPosition(row.trackLeft, row.track.y);
-    row.handle.setPosition(row.trackLeft + fillWidth, row.track.y);
+    row.handle
+      .setSize(10 * scale, 18 * scale)
+      .setStrokeStyle(2 * scale, COLORS.OUTLINE)
+      .setPosition(row.trackLeft + fillWidth, row.track.y);
     row.pct.setText(`${Math.round(value * 100)}%`);
   }
 
@@ -187,7 +191,10 @@ export class SettingsScene extends Phaser.Scene {
     const cy = this.scale.height / 2;
 
     this.dim.setSize(this.scale.width, this.scale.height);
-    this.panel.setSize(PANEL_W * scale, PANEL_H * scale).setPosition(cx, cy);
+    this.panel
+      .setSize(PANEL_W * scale, PANEL_H * scale)
+      .setStrokeStyle(4 * scale, hex(SCREEN_COLORS.PROMPT))
+      .setPosition(cx, cy);
     this.title.setPosition(cx, cy - 65 * scale).setFontSize(Math.round(18 * scale));
     this.hint.setPosition(cx, cy + 65 * scale).setFontSize(Math.round(10 * scale));
 
@@ -198,7 +205,10 @@ export class SettingsScene extends Phaser.Scene {
       row.trackWidth = TRACK_W * scale;
 
       row.label.setPosition(cx + LABEL_DX * scale, rowY).setFontSize(Math.round(12 * scale));
-      row.track.setSize(TRACK_W * scale, 10 * scale).setPosition(trackLeft, rowY);
+      row.track
+        .setSize(TRACK_W * scale, 10 * scale)
+        .setStrokeStyle(2 * scale, hex(SCREEN_COLORS.PROMPT))
+        .setPosition(trackLeft, rowY);
       row.pct.setPosition(cx + PCT_DX * scale, rowY).setFontSize(Math.round(12 * scale));
       this.updateRowVisual(row);
     }
