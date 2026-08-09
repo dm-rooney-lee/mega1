@@ -101,17 +101,27 @@ export function setSfxVolume(value: number): void
 
 ### 3.5 4개 화면에 톱니바퀴 아이콘 추가
 
-`MenuScene`/`GameScene`/`GameOverScene`/`WinScene`의 `create()`에 클릭/탭 가능한 아이콘을 하나씩 그리고, 누르면 `this.scene.pause()` 후 `this.scene.launch("SettingsScene", { returnKey: this.scene.key })`를 부른다.
+`MenuScene`/`GameScene`/`GameOverScene`/`WinScene`의 `create()`에 클릭/탭 가능한 아이콘을 하나씩 그리고, 누르면 `this.scene.pause()` 후 `this.scene.run("SettingsScene", { returnKey: this.scene.key })`를 부른다. `run()`을 쓰는 이유는 4절에서 설명한다.
 
 - `GameScene`에서는 기존 HUD(우측 상단 `STAGE N/10`)와 겹치지 않는 위치에 둔다. `GameScene.layoutHud()`가 이미 `cameras.main.worldView` 기준으로 HUD를 재배치하는 로직을 갖고 있으므로, 톱니바퀴도 그 로직 안에서 같은 방식으로 배치한다(이 프로젝트가 `.claude/rules`에서 강조하는, 화면 크기에 따라 위치가 계산돼야 하는 요소이기 때문).
 - 나머지 3개 화면은 `centredScreen`이 만드는 고정 배치 화면이라, 톱니바퀴는 그 레이아웃 시스템 바깥에 화면 모서리 절대 위치로 둔다.
 
+**`MenuScene`/`GameOverScene`/`WinScene`는 화면 전체에 `this.input.once("pointerdown", ...)`로 "아무 데나 클릭하면 시작/재시도"를 걸어 둔다.** 톱니바퀴를 클릭했을 때 이 전역 리스너까지 함께 발동하면, 설정을 열려는 클릭이 동시에 게임을 시작/재시도시켜 버린다. 톱니바퀴의 `pointerdown` 콜백은 네 번째 인자로 받는 `event`의 `event.stopPropagation()`을 반드시 호출해 이 전역 리스너로 전파되지 않게 막는다(Phaser의 이벤트 전파 순서: 게임 오브젝트 → 전역 `pointerdown` — 앞 단계에서 멈추면 뒷 단계가 실행되지 않는다). `GameScene`은 이런 전역 리스너가 없어 이 문제가 없지만, 구현은 4개 화면에 동일하게 적용한다.
+
 **아이콘은 유니코드 글자(⚙)나 시스템 폰트가 아니라, 이 게임의 다른 UI 그림(`TEX.UI_TITLE`, `TEX.UI_DEATH`, `TEX.UI_WIN`)과 같은 방식으로 그린다.** 이 프로젝트는 모든 그림을 `BootScene`에서 `beginTexture()`/`endTexture()`로 직접 픽셀을 찍어 만든다(`CLAUDE.md`의 "알려진 함정" 절) — 유니코드 이모지는 이 파이프라인을 벗어나 시스템 폰트로 렌더링되므로 나머지 픽셀아트와 이질감이 난다. 톱니바퀴도 새 텍스처(`TEX.UI_GEAR`류)로 `BootScene`에 추가하고, 스프라이트로 쓸 때는 `setDisplaySize()`로 논리 크기로 되돌린다(같은 절이 경고하는 "텍스처가 `TEXTURE_SCALE`배로 커진 채 남는" 실수를 피한다).
 
-## 4. 확인이 필요한 기술적 위험 (구현 중 검증, 추측 금지)
+## 4. `scene.pause()` + `scene.run()` 조합이 안전한 이유 (Phaser 소스로 검증, 추측 아님)
 
-- **`scene.pause()`가 그 씬의 입력 리스너까지 멈추는지 실제로 확인한다.** `MenuScene`은 `this.input.keyboard!.once("keydown", start)`와 `this.input.once("pointerdown", start)`로 "아무 키/클릭 → 게임 시작"을 걸어 둔다. `GameOverScene`/`WinScene`도 비슷하게 `.once()` 리스너가 있다. `SettingsScene`을 그 위에 얹었을 때 이 리스너들이 여전히 살아있으면, 설정 화면에서 슬라이더를 조작하려고 클릭한 것이 뒤에서 "재시도/시작"으로도 처리되는 버그가 생길 수 있다. Phaser 소스나 실제 동작으로 확인하고, 살아있다면 열 때 `scene.input.enabled = false`로 명시적으로 꺼야 한다.
-- **`GameScene`의 물리 스텝이 씬 일시정지로 확실히 멈추는지 확인한다.** 이 프로젝트는 120Hz 고정 스텝 물리를 쓰고, `main.ts`의 fps 보정 로직과도 얽혀 있다 — `scene.pause()`가 그 시스템까지 멈추는지 실제로 재생해 확인한다(추측하지 않는다).
+이 저장소에 설치된 `node_modules/phaser` 소스에서 직접 확인했다.
+
+| 확인한 것 | 결과 | 근거 |
+|---|---|---|
+| `pause()`가 그 씬의 입력 리스너(`.once("keydown", ...)` 등)까지 멈추는가 | ✅ 그렇다. `InputPlugin.isActive()`가 `scene.sys.canInput()`을 보는데, `canInput()`은 `status <= RUNNING`만 참이고 `pause()`가 세팅하는 `PAUSED`는 이보다 크다 | `src/scene/Systems.js:585-590`(`canInput`), `src/input/InputPlugin.js:536`(`isActive`) |
+| `pause()`가 물리·타이머·트윈(전부 씬의 `update` 스텝에 얹혀 있음)까지 멈추는가 | ✅ 그렇다. `SceneManager.update()`가 `status <= RUNNING`인 씬만 `sys.step()`을 부른다 | `src/scene/SceneManager.js:565-576` |
+| 멈춘 씬이 화면에서 사라지는가 | ❌ 아니다. 렌더는 `status < SLEEPING`이면 계속되므로, 멈춘 프레임 그대로 화면에 남는다(우리가 원하는 "얼어붙은 배경") | `src/scene/SceneManager.js:589-596` |
+| 설정 화면을 여닫는 데 `scene.launch()`와 `scene.run()` 중 무엇을 써야 하는가 | `run()`. Phaser 자체 문서가 "`pause()`로 현재 씬을 멈추고 `run()`으로 모달 씬을 연다"를 이 정확한 용도로 명시하고, sleeping→wake/paused→resume/그 외→start를 전부 안전하게 처리한다. `launch()`는 단순히 start를 큐에 넣을 뿐이라 이미 있는 씬 상태를 고려하지 않는다 | `src/scene/ScenePlugin.js:502`(`run` 독스트링), `src/scene/SceneManager.js:1145-1172`(`run`의 상태별 분기) |
+
+따라서 `SettingsScene`을 열 때는 `scene.input.enabled` 같은 별도 방어 코드가 필요 없다 — `pause()` 하나로 입력·물리·타이머가 함께 멈춘다. 닫을 때는 `scene.stop()`으로 완전히 정지시키고, 다음에 열 때 `run()`이 "실행 중이 아님"으로 판단해 새로 시작(=`create()` 재실행)한다 — 매번 최신 볼륨 값으로 슬라이더가 그려진다.
 
 ## 5. 완료조건
 
