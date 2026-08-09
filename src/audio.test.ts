@@ -1,24 +1,7 @@
 import Phaser from "phaser";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BGM_VOLUME } from "./config";
-
-function fakeLocalStorage(): Storage {
-  const store = new Map<string, string>();
-  return {
-    getItem: (key: string) => (store.has(key) ? (store.get(key) as string) : null),
-    setItem: (key: string, value: string) => {
-      store.set(key, value);
-    },
-    removeItem: (key: string) => {
-      store.delete(key);
-    },
-    clear: () => store.clear(),
-    get length() {
-      return store.size;
-    },
-    key: (i: number) => Array.from(store.keys())[i] ?? null,
-  } as Storage;
-}
+import { fakeLocalStorage } from "./testHelpers";
 
 /**
  * 배경음악 객체는 모듈 안에 남아 다음 호출로 이어진다. 테스트끼리 그 상태가 새지
@@ -105,6 +88,20 @@ describe("playBgm", () => {
     expect(f.bgm.volume).toBe(BGM_VOLUME);
   });
 
+  it("[Happy] 두 번째 호출도 그 시점의 사용자 배율을 다시 읽어 반영한다(첫 호출 때 배율을 고정해두지 않는다)", async () => {
+    const { playBgm } = await freshAudio();
+    const { setBgmVolume } = await import("./settings");
+    const f = fakeScene();
+
+    playBgm(f.scene);
+    expect(f.bgm.volume).toBe(BGM_VOLUME);
+
+    setBgmVolume(0.25);
+    playBgm(f.scene);
+
+    expect(f.bgm.volume).toBeCloseTo(BGM_VOLUME * 0.25);
+  });
+
   it("[Boundary] 화면을 여러 번 오가도 음악 객체는 하나만 만들어진다", async () => {
     const { playBgm } = await freshAudio();
     const f = fakeScene();
@@ -158,5 +155,77 @@ describe("refreshBgmVolume", () => {
   it("[Boundary] 음악이 아직 만들어지지 않았으면 아무 일도 하지 않는다", async () => {
     const { refreshBgmVolume } = await freshAudio();
     expect(() => refreshBgmVolume()).not.toThrow();
+  });
+});
+
+/**
+ * playTone/playNoiseBurst가 실제로 부르는 Web Audio 노드들을 최소한으로
+ * 흉내낸다. `gain.exponentialRampToValueAtTime`은 실제 브라우저처럼 목표값이
+ * 정확히 0이면 RangeError를 던지게 해서, 효과음 코드가 0을 그대로 넘기면
+ * 이 가짜도 똑같이 걸려서 잡아낸다.
+ */
+function fakeWebAudioScene() {
+  const rampTargets: number[] = [];
+  const gain = {
+    setValueAtTime: vi.fn(),
+    exponentialRampToValueAtTime: vi.fn((value: number) => {
+      rampTargets.push(value);
+      if (value === 0) throw new RangeError("exponential ramp target cannot be 0");
+    }),
+  };
+  const node = { connect: vi.fn() };
+  const oscillator = {
+    type: "",
+    frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+    connect: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+  };
+  const bufferSource = { buffer: null, connect: vi.fn(), start: vi.fn(), stop: vi.fn() };
+  const filter = { type: "", frequency: { setValueAtTime: vi.fn() }, connect: vi.fn() };
+  const context = {
+    currentTime: 0,
+    sampleRate: 44100,
+    createOscillator: vi.fn(() => oscillator),
+    createGain: vi.fn(() => ({ ...node, gain })),
+    createBuffer: vi.fn(() => ({ getChannelData: () => new Float32Array(4) })),
+    createBufferSource: vi.fn(() => bufferSource),
+    createBiquadFilter: vi.fn(() => filter),
+  };
+  const scene = {
+    sound: { context, masterMuteNode: {} },
+  } as unknown as Phaser.Scene;
+  return { scene, rampTargets };
+}
+
+describe("효과음 볼륨 0(완전 무음)", () => {
+  it("[Boundary] playJump가 exponentialRampToValueAtTime에 정확히 0을 넘기지 않는다(Web Audio는 0을 거부한다)", async () => {
+    const { playJump } = await freshAudio();
+    const { setSfxVolume } = await import("./settings");
+    setSfxVolume(0);
+    const f = fakeWebAudioScene();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    playJump(f.scene);
+
+    expect(f.rampTargets.some((v) => v === 0)).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
+  });
+
+  it("[Boundary] playCannonFire(노이즈 버스트 계열)도 마찬가지로 0을 넘기지 않는다", async () => {
+    const { playCannonFire } = await freshAudio();
+    const { setSfxVolume } = await import("./settings");
+    setSfxVolume(0);
+    const f = fakeWebAudioScene();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    playCannonFire(f.scene);
+
+    expect(f.rampTargets.some((v) => v === 0)).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
+
+    warn.mockRestore();
   });
 });

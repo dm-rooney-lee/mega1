@@ -79,7 +79,10 @@ function playTone(scene: Phaser.Scene, opts: ToneOpts, volume: number): void {
 
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
+    // exponentialRampToValueAtTime의 목표값은 정확히 0이면 RangeError를 던진다
+    // (Web Audio 스펙). 효과음 볼륨을 0으로 낮춘 사용자에게는 매번 이 예외가
+    // 나므로, 이미 위/아래에서 쓰는 것과 같은 미세한 바닥값으로 대신 잘라낸다.
+    gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     osc.connect(gain);
@@ -117,7 +120,7 @@ function playNoiseBurst(scene: Phaser.Scene, opts: NoiseOpts, volume: number): v
 
     const gain = context.createGain();
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(volume, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(Math.max(volume, 0.0001), now + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.001, now + durationSec);
 
     noise.connect(filter);
