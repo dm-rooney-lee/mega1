@@ -303,11 +303,11 @@ Expected: 아무것도 매칭되지 않아야 함.
 - [ ] **Step 5: git commit**
 
 ```bash
-git add docs/report/ai-usage-report.md
+git add docs/report/04-AI활용기술문서.md
 git commit -m "$(cat <<'EOF'
 docs(report): rewrite AI usage report in first-person, split by activity
 
-Rewrites docs/report/ai-usage-report.md from third-person/informal to
+Rewrites docs/report/04-AI활용기술문서.md from third-person/informal to
 first-person/formal Korean, and reorganizes it around the three areas
 AI was actually used in (development, background music, design) instead
 of how it was investigated. Adds Gemini (music + image generation) as
